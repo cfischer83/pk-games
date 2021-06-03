@@ -1,0 +1,150 @@
+<html>
+<head>
+<title>Game of Chase</title>
+<style type="text/css">
+body {
+	margin:0;
+	background: #9999FF;
+}
+.box {
+	display: block;
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	border-radius: 5px;
+}
+.red {
+	background: red;
+}
+.blue {
+	background: blue;
+}
+p {
+	color: #FFF;
+	text-align: center;
+	width: 50%;
+	font-family: Helvetica Neue, Helvetica, Sans-serif;
+	margin: 0 auto;
+}
+</style>
+<script type="text/javascript">
+var global_increment_by = 10;
+var global_box_size = 50;
+var global_window_size = window.innerWidth;
+var global_it = 'red';
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	var redBox = document.getElementById("redBox");
+	var blueBox = document.getElementById("blueBox");
+	resetBlocks(blueBox, redBox);
+});
+
+
+
+window.addEventListener("keyup", function(event) {
+	var key = event.keyCode;
+	var redBox = document.getElementById("redBox");
+	var blueBox = document.getElementById("blueBox");
+
+	// RED BOX
+	if (key == 37) { // left
+		moveBlockLeft(redBox);
+	}
+	if (key == 38) { // up
+		moveBlockUp(redBox);
+	}
+	if (key == 39) { // right 
+		moveBlockRight(redBox);
+	}
+	if (key == 40) { // down
+		moveBlockDown(redBox);
+	}
+
+	// BLUE BOX
+	if (key == 65) { // "a" left
+		moveBlockLeft(blueBox);
+	}
+	if (key == 87) { // "w" up
+		moveBlockUp(blueBox);
+	}
+	if (key == 68) { // "d" right 
+		moveBlockRight(blueBox);
+	}
+	if (key == 83) { // "s" down
+		moveBlockDown(blueBox);
+	}
+	setTimeout('doBlocksOverLap(blueBox, redBox)', 50);
+});
+
+function moveBlockLeft(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft - global_increment_by;
+	if (newMarginLeft >= 0) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+function moveBlockRight(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft + global_increment_by;
+	if (newMarginLeft <= (global_window_size-global_box_size)) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+function moveBlockUp(block) {
+	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
+	var newMarginTop = marginTop - global_increment_by;
+	if (newMarginTop >= 0) {
+		block.style.marginTop = newMarginTop + "px";
+	}
+}
+function moveBlockDown(block) {
+	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
+	var newMarginTop = marginTop + global_increment_by;
+	block.style.marginTop = newMarginTop + "px";
+}
+
+function doBlocksOverLap(box1, box2) {
+	var box1XStart	= box1.style.marginLeft ? parseInt(box1.style.marginLeft) : 0;
+	var box1XEnd 	= box1XStart + global_box_size;
+	var box1YStart	= box1.style.marginTop ? parseInt(box1.style.marginTop) : 0;
+	var box1YEnd	= box1YStart + global_box_size;
+
+	var box2XStart	= box2.style.marginLeft ? parseInt(box2.style.marginLeft) : 0;
+	var box2XEnd 	= box2XStart + global_box_size;
+	var box2YStart	= box2.style.marginTop ? parseInt(box2.style.marginTop) : 0;
+	var box2YEnd	= box2YStart + global_box_size;
+
+	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+		alert("You're it!");
+		resetBlocks(box1, box2)
+	}
+}
+function resetBlocks(box1, box2) {
+	box1.style.marginLeft = "0px";
+	box1.style.marginTop = "0px";
+	box2.style.marginLeft = (global_window_size-global_box_size) + "px";
+	box2.style.marginTop = "0px";
+	if (global_it == 'blue') {
+		global_it = 'red';
+		document.body.style.background = '#FF9999';
+	} else {
+		global_it = 'blue';
+		document.body.style.background = '#9999FF';
+	}
+
+}
+</script>
+</head>
+<body>
+
+	<p>Two player. Background color is "it". Other color should run away. Red uses arrow keys &#x2191; &#x2192; &#x2193; &#x2B07;. Blue uses W A S D keys.</p>
+
+<div class="box blue" id="blueBox"></div>
+<div class="box red" id="redBox"></div>
+
+</body>
+</html>
