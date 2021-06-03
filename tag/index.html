@@ -12,12 +12,17 @@ body {
 	width: 50px;
 	height: 50px;
 	border-radius: 5px;
+	background-image: url(scared-face.png);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+
 }
 .red {
-	background: red;
+	background-color: red;
 }
 .blue {
-	background: blue;
+	background-color: blue;
 }
 p {
 	color: #FFF;
@@ -25,6 +30,12 @@ p {
 	width: 50%;
 	font-family: Helvetica Neue, Helvetica, Sans-serif;
 	margin: 0 auto;
+}
+.it {
+	background-image: url(mad-face.png);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
 }
 </style>
 <script type="text/javascript">
@@ -130,9 +141,13 @@ function resetBlocks(box1, box2) {
 	box2.style.marginTop = "0px";
 	if (global_it == 'blue') {
 		global_it = 'red';
+		document.getElementById("redBox").classList.add("it")
+		document.getElementById("blueBox").classList.remove("it")
 		document.body.style.background = '#FF9999';
 	} else {
 		global_it = 'blue';
+		document.getElementById("blueBox").classList.add("it")
+		document.getElementById("redBox").classList.remove("it")
 		document.body.style.background = '#9999FF';
 	}
 
