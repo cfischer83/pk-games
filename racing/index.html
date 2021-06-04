@@ -109,6 +109,17 @@ var max_rock_x = global_window_size - global_box_size;
 var global_it = 'red';
 var gameInterval = null;
 
+function pkAnalytics(action, label) {
+	if (ga) {
+		ga('send', {
+			hitType: 'event',
+			eventCategory: 'Game',
+			eventAction: action,
+			eventLabel: label
+		});
+	}
+}
+
 document.addEventListener("DOMContentLoaded", function(event) { 
 	var car = document.getElementById("car");
 	if ( window.location.hash == "#hard") {
@@ -267,11 +278,17 @@ function startGame() {
 	document.getElementById("start-btn").style.display = "none";
 	document.getElementById("restart-btn").style.display = "block";
 	gameInterval = setInterval('checkAllRocks()', 200);
+	pkAnalytics("racing:start", getMode());
+}
+
+function getMode() {
+	return document.controls.mode.value;
 }
 
 function winGame() {
 	clearInterval(gameInterval);
 	runConfetti();
+	pkAnalytics("racing:win", getMode());
 }
 
 function loseGame() {
@@ -289,6 +306,7 @@ function loseGame() {
         lastKey = 0;
     }
 	alert("You hit a rock!");
+	pkAnalytics("racing:lose", getMode());
 }
 
 function easyMode() {
@@ -328,12 +346,14 @@ function restartGame() {
 <body>
 
 <div id="commands">
-	<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
-	<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
-	<p>Use the left & right key to avoid the rocks!</p>
-	<label><input type="radio" id="easy" name="mode" onclick="easyMode(); window.location.hash = 'easy'; this.blur();" checked="checked"> Easy Mode</label><br />
-	<label><input type="radio" id="hard" name="mode" onclick="hardMode(); window.location.hash = 'hard';this.blur();"> Hard Mode</label><br />
-	<label><input type="radio" id="impossible" name="mode" onclick="impossibleMode(); window.location.hash = 'impossible';this.blur();"> Impossible Mode</label>
+	<form name="controls">
+		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
+		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
+		<p>Use the left & right key to avoid the rocks!</p>
+		<label><input type="radio" id="easy" value="easy" name="mode" onclick="easyMode(); window.location.hash = 'easy'; this.blur();" checked="checked"> Easy Mode</label><br />
+		<label><input type="radio" id="hard" value="hard" name="mode" onclick="hardMode(); window.location.hash = 'hard';this.blur();"> Hard Mode</label><br />
+		<label><input type="radio" id="impossible" value="impossible" name="mode" onclick="impossibleMode(); window.location.hash = 'impossible';this.blur();"> Impossible Mode</label>
+	</form>
 </div>
 
 
