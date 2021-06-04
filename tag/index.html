@@ -5,6 +5,7 @@
 body {
 	margin:0;
 	background: #9999FF;
+	font-family: Helvetica-Neue, Helvetica, Sans-serif;
 }
 .box {
 	display: block;
@@ -22,6 +23,10 @@ body {
 }
 .blue {
 	background-color: blue;
+}
+h1 {
+	text-align: center;
+	color: #FFF;
 }
 p {
 	color: #FFF;
@@ -155,11 +160,16 @@ function resetBlocks(box1, box2) {
 </head>
 <body>
 
-	<p>Two player. Background color is "it". Other color should run away. Red uses arrow keys &#x2191; &#x2192; &#x2193; &#x2B07;. Blue uses W A S D keys.</p>
+	<p id="instructions">Two player. Background color is "it". Other color should run away. Red uses arrow keys &#x2191; &#x2192; &#x2193; &#x2B07;. Blue uses W A S D keys.</p>
 
 <div class="box blue" id="blueBox"></div>
 <div class="box red" id="redBox"></div>
 
+<script type="text/javascript">
+if ('ontouchstart' in document.documentElement) {
+	document.getElementById("instructions").outerHTML = "<h1>This is a desktop-only game :( but you can try one of the other games!<br /><a href='../racing'>Racing</a> is mobile friendly.";
+}
+</script>
 <script>(function() {
 	(function (i, s, o, g, r, a, m) {
 		i['GoogleAnalyticsObject'] = r;
