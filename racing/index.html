@@ -10,7 +10,7 @@ window.confetti = module.exports;
 </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.0/ace.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.7.5/beautify.min.js"></script>
-<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
 
 
 <style type="text/css">
@@ -99,7 +99,37 @@ body, p, li, label {
 #car.right {
 	transform: rotate(-25deg);
 }
+#touch-controls {
+	display: none;
+}
+#touch-controls.touch {
+	display: block;
+}
+#touch-left {
+	position: absolute;
+	bottom: 20px;
+	left: 10px;
+}
+#touch-right {
+	position: absolute;
+	bottom: 20px;
+	right: 10px;
+}
+.arrow-right {
+	width: 0; 
+	height: 0; 
+	border-top: 75px solid transparent;
+	border-bottom: 75px solid transparent;
+	border-left: 175px solid white;
+}
 
+.arrow-left {
+	width: 0; 
+	height: 0; 
+	border-top: 75px solid transparent;
+	border-bottom: 75px solid transparent; 
+	border-right:175px solid white; 
+}
 </style>
 <script type="text/javascript">
 var global_increment_by = 10;
@@ -133,6 +163,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	} else {
 		setTimeout('document.getElementById("easy").blur();', 50);
 		easyMode();
+	}
+
+	if ('ontouchstart' in document.documentElement) {
+		document.getElementById("touch-controls").classList.add("touch");
 	}
 });
 
@@ -193,7 +227,124 @@ $(document).ready(function() {
         	car.classList.remove("right");
 	    }
 	});
+
 });
+
+
+
+
+
+
+$(document).ready(function() {
+	if ('ontouchstart' in document.documentElement) {
+		var leftTouch = document.querySelector("#touch-left");
+		var rightTouch = document.querySelector("#touch-right");
+
+		var timerID;
+		var counter = 0;
+
+		var pressHoldEventLeft = new CustomEvent("pressHoldLeft");
+		var pressHoldEventRight = new CustomEvent("pressHoldRight");
+
+		// Increase or decreae value to adjust how long
+		// one should keep pressing down before the pressHold
+		// event fires
+		var pressHoldDuration = 200;
+
+	    // leftTouch.addEventListener("mousedown", pressingDownLeft, false);
+	    // leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
+	    // leftTouch.addEventListener("mouseleave", notPressingDownLeft, false);
+		leftTouch.addEventListener("touchstart", pressingDownLeft, false);
+		leftTouch.addEventListener("touchend", notPressingDownLeft, false);
+
+	    // rightTouch.addEventListener("mousedown", pressingDownRight, false);
+	    // rightTouch.addEventListener("mouseup", notPressingDownRight, false);
+	    // rightTouch.addEventListener("mouseleave", notPressingDownRight, false);
+		rightTouch.addEventListener("touchstart", pressingDownRight, false);
+		rightTouch.addEventListener("touchend", notPressingDownRight, false);
+
+		// Listening for our custom pressHold event
+		rightTouch.addEventListener("pressHold", moveBlockRight(car), false);
+		rightTouch.addEventListener("pressHold", moveBlockRight(car), false);
+
+		function pressingDownRight(e) {
+			// Start the timer
+			requestAnimationFrame(timerRight);
+			car.classList.add("right");
+
+			e.preventDefault();
+			moveBlockRight(car);
+
+			console.log("Pressing!");
+		}
+
+		function notPressingDownRight(e) {
+			// Stop the timer
+			cancelAnimationFrame(timerID);
+			counter = 0;
+			car.classList.remove("right");
+
+			console.log("Not pressing!");
+		}
+
+		function pressingDownLeft(e) {
+			// Start the timer
+			requestAnimationFrame(timerLeft);
+			car.classList.add("left");
+
+			e.preventDefault();
+			moveBlockRight(car);
+
+			console.log("Pressing!");
+		}
+
+		function notPressingDownLeft(e) {
+			// Stop the timer
+			cancelAnimationFrame(timerID);
+			counter = 0;
+			car.classList.remove("left");
+
+			console.log("Not pressing!");
+		}
+
+		//
+		// Runs at 60fps when you are pressing down
+		//
+		function timerLeft() {
+			console.log("Timer tick!");
+			if (counter % 2 !== 0) {
+				moveBlockLeft(car);
+			}
+
+			if (counter < pressHoldDuration) {
+				timerID = requestAnimationFrame(timerLeft);
+				counter++;
+			} else {
+				console.log("Press threshold reached!");
+				leftTouch.dispatchEvent(pressHoldEventLeft);
+			}
+		}
+		function timerRight() {
+			console.log("Timer tick!");
+			if (counter % 2 !== 0) {
+				moveBlockRight(car);
+			}
+
+			if (counter < pressHoldDuration) {
+				timerID = requestAnimationFrame(timerRight);
+				counter++;
+			} else {
+				console.log("Press threshold reached!");
+				rightTouch.dispatchEvent(pressHoldEventLeft);
+			}
+		}
+	}
+});
+
+
+
+
+
 
 function moveBlockLeft(block) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
@@ -209,7 +360,6 @@ function moveBlockRight(block) {
 		block.style.marginLeft = newMarginLeft + "px";
 	}
 }
-
 
 function doBlocksOverLap(box1, box2) {
 	var box1viewportOffset = box1.getBoundingClientRect();
@@ -348,11 +498,16 @@ function restartGame() {
 	<form name="controls" onsubmit="return false;">
 		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
 		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
-		<p>Use the left & right key to avoid the rocks!</p>
+		<p>Use the left & right arrow key<br /> to avoid the rocks!</p>
 		<label><input type="radio" id="easy" value="easy" name="mode" onclick="easyMode(); window.location.hash = 'easy'; this.blur();" checked="checked"> Easy Mode</label><br />
 		<label><input type="radio" id="hard" value="hard" name="mode" onclick="hardMode(); window.location.hash = 'hard';this.blur();"> Hard Mode</label><br />
 		<label><input type="radio" id="impossible" value="impossible" name="mode" onclick="impossibleMode(); window.location.hash = 'impossible';this.blur();"> Impossible Mode</label>
 	</form>
+</div>
+
+<div id="touch-controls" class="">
+	<div id="touch-left" class="arrow-left"></div>
+	<div id="touch-right" class="arrow-right"></div>
 </div>
 
 
