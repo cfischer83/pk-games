@@ -93,6 +93,12 @@ body, p, li, label {
 	background-size: 50px 50px;
 	transition: all 50ms linear;
 }
+#car.left {
+	transform: rotate(25deg);
+}
+#car.right {
+	transform: rotate(-25deg);
+}
 
 </style>
 <script type="text/javascript">
@@ -141,7 +147,6 @@ var downTimer;
 var lastKey;
 $(document).ready(function() {
 	$(document.body).keydown(function(e) {
-	    console.log("keydown");
 	    // if not still the same key, stop the timer
 	    if (e.which !== lastKey) {
 	        if (downTimer) {
@@ -154,12 +159,16 @@ $(document).ready(function() {
 	    if (!downTimer) {
 	        // start timer
 	        downTimer = setInterval(function() {
-	        	console.log(e.which);
 	            if (e.which == 37) {
+	            	car.classList.add("left");
 					moveBlockLeft(car);
 	            }
-	            if (e.which == 39) {
+	            else if (e.which == 39) {
+	            	car.classList.add("right");
 	            	moveBlockRight(car);
+	            } else {
+	            	car.classList.remove("left");
+	            	car.classList.remove("right");
 	            }
 	        }, 35);
 	    }
@@ -169,6 +178,8 @@ $(document).ready(function() {
 	        clearInterval(downTimer);
 	        downTimer = null;
 	        lastKey = 0;
+	        car.classList.remove("left");
+        	car.classList.remove("right");
 	    }
 	});
 });
