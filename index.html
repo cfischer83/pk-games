@@ -1,0 +1,94 @@
+<html>
+<head>
+<title>Game of Chase</title>
+<style type="text/css">
+body {
+	margin:0;
+	background: #336633;
+}
+h1 {
+	font-family: Helvetica Neue, Helvetica, Sans-serif;
+	color: #FFF;
+	text-align: center;
+	margin: 20px 0;
+	font-weight: normal;
+	font-size: 40px;
+}
+p {
+	color: #FFF;
+	text-align: center;
+	width: 50%;
+	font-family: Helvetica Neue, Helvetica, Sans-serif;
+	margin: 0 auto;
+}
+.game-container {
+	max-width: 1200px;
+	margin: 0 auto;
+	display: flex;
+}
+.game {
+	width: 50%;
+	margin: 50px 20px;
+	background: #CDC;
+	padding: 20px;
+	border-radius: 10px;
+}
+.game:hover {
+	background: #8A8;
+}
+.game:hover p {
+	color: #FFF;
+}
+.game p {
+	font-size: 25px;
+	padding: 20px 0;
+	color: #000;
+}
+.game a {
+	text-decoration: none;
+}
+.game-container img {
+	max-width: 100%;
+}
+</style>
+
+</head>
+<body>
+
+	<h1>Planet Kodiak Games</h1>
+
+	<div class="game-container">
+		<div id="tag" class="game">
+			<a href="tag/">
+				<img src="tag/cover.jpg" alt="Tag" />
+				<p>Two player game (on same keyboard). Play tag with someone!</p>
+			</a>
+		</div>
+		<div id="racing" class="game">
+			<a href="racing/">
+				<img src="racing/cover.jpg" alt="Tag" />
+				<p>Single player. Race a car and avoid rocks!</p>
+			</a>
+		</div>
+	</div>
+
+	<p>&copy; Cory Fischer. All games created by Cory Fischer for fun.</p>
+	<script>(function() {
+		(function (i, s, o, g, r, a, m) {
+			i['GoogleAnalyticsObject'] = r;
+			i[r] = i[r] || function () {
+					(i[r].q = i[r].q || []).push(arguments)
+				}, i[r].l = 1 * new Date();
+			a = s.createElement(o),
+				m = s.getElementsByTagName(o)[0];
+			a.async = 1;
+			a.src = g;
+			m.parentNode.insertBefore(a, m)
+		})(window, document, 'script', 'https://google-analytics.com/analytics.js', 'ga');
+		
+		ga('create', 'UA-3392560-1', 'auto');
+				ga('send', 'pageview');
+		})();
+	 </script> 
+</body>
+</html>
