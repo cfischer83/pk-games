@@ -295,7 +295,6 @@ function loseGame() {
 	clearInterval(gameInterval);
 	var road = document.getElementById("road");
 	var computedStyle = window.getComputedStyle(road);
-	console.log(computedStyle);
 	var marginTop = computedStyle.getPropertyValue('margin-top');
 	console.log(marginTop);
 	road.style.marginTop = marginTop;
@@ -346,7 +345,7 @@ function restartGame() {
 <body>
 
 <div id="commands">
-	<form name="controls">
+	<form name="controls" onsubmit="return false;">
 		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
 		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
 		<p>Use the left & right key to avoid the rocks!</p>
