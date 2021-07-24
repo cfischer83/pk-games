@@ -1,0 +1,661 @@
+<html>
+<head>
+<title>Jump!</title>
+<script type="text/javascript">
+window.module = {};
+</script>
+<script type="text/javascript" src="confetti.js"></script>
+<script type="text/javascript">
+window.confetti = module.exports;
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.0/ace.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
+
+
+<style type="text/css">
+body {
+	margin:0;
+	background: #71c5e7;
+}
+body, p, li, label {
+	color: #FFF;
+	font-family: Helvetica Neue, Sans-serif;
+	text-shadow: 3px 3px 6px #000;
+}
+.box {
+	display: block;
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	border-radius: 5px;
+}
+#plane {
+	width: 292px;
+	position: absolute;
+	height: 152px;
+	margin-top: 56px;
+	background: url(plane.gif);
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+#cloud1 {
+	z-index: 0;
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 35000px;
+	background: url(clouds-1.gif) bottom center repeat;
+}
+#cloud1.start {
+	transition: all 40000ms linear;
+	transform: translateY(-8000px);
+}
+#cloud2 {
+	z-index: 0;
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 10000px;
+	background: url(clouds-2.gif) bottom center repeat;
+}
+#cloud2.start {
+	transition: all 40000ms linear;
+	transform: translateY(-4000px);
+}
+#road-container {
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	margin: 0 auto;
+	position: relative;
+}
+.start {
+/*	margin-top: -16000px;
+*/	transition: all 40000ms linear;
+	transform: translateY(-16000px);
+}
+#road {
+	width: 100%;
+	height: 16000px;
+}
+#commands {
+	position: absolute;
+	margin: 10px;
+	z-index: 9;
+}
+.btn {
+	background: #71c5e7;
+	border: 3px solid #FFF;
+	color: #FFF;
+	border-radius: 5px;
+	padding: 10px 20px;
+	font-size: 20px;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+.btn:hover {
+	background: #225;
+}
+#start-btn {
+	display: block;
+}
+#restart-btn {
+	display: none;
+}
+#finish-line {
+	width: 100%;
+	height: 600px;
+	background: url(ground.gif) bottom left repeat-x;
+	z-index: 8;
+}
+.bird {
+	width: 50px;
+	height: 35px;
+	position: absolute;
+	z-index: 3;
+}
+.bird:before {
+	content: "";
+	margin-top: -10px;
+	display: block;
+	width:50px;
+	height:50px;
+	background: url(flying-bird.gif) 0 0 no-repeat transparent;
+	background-size: contain;
+}
+#track {
+	z-index: 2;
+}
+#skydiver {
+	margin-top: 50px;
+	margin-left: 50%;
+	background: url(guy-standing.png) 0 0 no-repeat;
+	background-size: 50px 50px;
+	transition: all 50ms linear;
+	z-index: 9;
+}
+#skydiver.falling {
+	height: 32px;
+	background: url(guy-falling.png) center center no-repeat;
+	background-size: cover;
+}
+#skydiver.chuted,#skydiver.landed {
+	height: 100px;
+	width: 71px;
+	background: none;
+	background-size: contain;
+}
+#skydiver.chuted:before, #skydiver.landed:before {
+	display: block;
+	content: "";
+	height: 100px;
+	width: 71px;
+	background: url(guy-chuted.png) 0 0 no-repeat;
+	background-size: contain;
+}
+#skydiver.landed:before {
+	background: url(guy-landed.png) 0 0 no-repeat;
+	background-size: contain;
+}
+#skydiver.land {
+	transition: all 4000ms ease-out;
+}
+#skydiver.left {
+	transform: rotate(-25deg);
+}
+#skydiver.right {
+	transform: rotate(25deg);
+}
+#touch-controls {
+	display: none;
+}
+#touch-controls.touch {
+	display: block;
+}
+#touch-left {
+	position: absolute;
+	bottom: 20px;
+	left: 10px;
+}
+#touch-right {
+	position: absolute;
+	bottom: 20px;
+	right: 10px;
+}
+.arrow-right {
+	width: 0; 
+	height: 0; 
+	border-top: 75px solid transparent;
+	border-bottom: 75px solid transparent;
+	border-left: 175px solid white;
+}
+
+.arrow-left {
+	width: 0; 
+	height: 0; 
+	border-top: 75px solid transparent;
+	border-bottom: 75px solid transparent; 
+	border-right:175px solid white; 
+}
+</style>
+<script type="text/javascript">
+var global_increment_by = 10;
+var global_box_size = 50;
+var global_window_size = window.innerWidth;
+var max_bird_x = global_window_size - global_box_size;
+var gameInterval = null;
+
+function pkAnalytics(action, label) {
+	if (ga) {
+		ga('send', {
+			hitType: 'event',
+			eventCategory: 'Game',
+			eventAction: action,
+			eventLabel: label
+		});
+	}
+}
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	var skydiver = document.getElementById("skydiver");
+		skydiver.style.marginLeft = parseInt(window.innerWidth / 2) - 25;
+	var plane = document.getElementById("plane");
+		plane.style.marginLeft = parseInt(window.innerWidth / 2) - 170;
+	var finishLine = document.getElementById("finish-line");
+		finishLine.style.height = window.innerHeight;
+	var track = document.getElementById("track");
+	if ( window.location.hash == "#hard") {
+		document.getElementById("hard").checked = true;
+		setTimeout('document.getElementById("hard").blur();', 50);
+		hardMode();
+	} else if (window.location.hash == "#impossible") {
+		document.getElementById("impossible").checked = true;
+		setTimeout('document.getElementById("impossible").blur();', 50);
+		impossibleMode();
+	} else if (window.location.hash == "#god") {
+		godMode();
+	} else {
+		setTimeout('document.getElementById("easy").blur();', 50);
+		easyMode();
+	}
+
+	if ('ontouchstart' in document.documentElement) {
+		document.getElementById("touch-controls").classList.add("touch");
+	}
+});
+
+
+
+// window.addEventListener("keydown", function(event) {
+// 	var key = event.keyCode;
+// 	var skydiver = document.getElementById("skydiver");
+
+// 	// RED BOX
+// 	if (key == 37) { // left
+// 		//moveBlockLeft(skydiver);
+// 	}
+// 	if (key == 39) { // right 
+// 		//moveBlockRight(skydiver);
+// 	}
+	
+
+// 	//setTimeout('doBlocksOverLap(skydiver, redBox)', 50);
+// });
+
+var downTimer;
+var lastKey;
+$(document).ready(function() {
+	$(document.body).keydown(function(e) {
+	    // if not still the same key, stop the timer
+	    if (e.which !== lastKey) {
+	        if (downTimer) {
+	            clearInterval(downTimer);
+	            downTimer = null;
+	        }
+	    }
+	    // remember previous key
+	    lastKey = e.which;
+	    if (!downTimer) {
+	        // start timer
+	        downTimer = setInterval(function() {
+	            if (e.which == 37) {
+	            	skydiver.classList.add("left");
+					moveBlockLeft(skydiver);
+	            }
+	            else if (e.which == 39) {
+	            	skydiver.classList.add("right");
+	            	moveBlockRight(skydiver);
+	            } else {
+	            	skydiver.classList.remove("left");
+	            	skydiver.classList.remove("right");
+	            }
+	        }, 35);
+	    }
+	}).keyup(function(e) {
+	    // stop timer
+	    if (downTimer) {
+	        clearInterval(downTimer);
+	        downTimer = null;
+	        lastKey = 0;
+	        skydiver.classList.remove("left");
+        	skydiver.classList.remove("right");
+	    }
+	});
+
+});
+
+
+
+
+
+
+$(document).ready(function() {
+	if ('ontouchstart' in document.documentElement) {
+		var leftTouch = document.querySelector("#touch-left");
+		var rightTouch = document.querySelector("#touch-right");
+
+		var timerID;
+		var counter = 0;
+
+		var pressHoldEventLeft = new CustomEvent("pressHoldLeft");
+		var pressHoldEventRight = new CustomEvent("pressHoldRight");
+
+		// Increase or decreae value to adjust how long
+		// one should keep pressing down before the pressHold
+		// event fires
+		var pressHoldDuration = 200;
+
+	    // leftTouch.addEventListener("mousedown", pressingDownLeft, false);
+	    // leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
+	    // leftTouch.addEventListener("mouseleave", notPressingDownLeft, false);
+		leftTouch.addEventListener("touchstart", pressingDownLeft, false);
+		leftTouch.addEventListener("touchend", notPressingDownLeft, false);
+
+	    // rightTouch.addEventListener("mousedown", pressingDownRight, false);
+	    // rightTouch.addEventListener("mouseup", notPressingDownRight, false);
+	    // rightTouch.addEventListener("mouseleave", notPressingDownRight, false);
+		rightTouch.addEventListener("touchstart", pressingDownRight, false);
+		rightTouch.addEventListener("touchend", notPressingDownRight, false);
+
+		// Listening for our custom pressHold event
+		rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
+		rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
+
+		function pressingDownRight(e) {
+			// Start the timer
+			requestAnimationFrame(timerRight);
+			skydiver.classList.add("right");
+
+			e.preventDefault();
+			moveBlockRight(skydiver);
+
+			console.log("Pressing!");
+		}
+
+		function notPressingDownRight(e) {
+			// Stop the timer
+			cancelAnimationFrame(timerID);
+			counter = 0;
+			skydiver.classList.remove("right");
+
+			console.log("Not pressing!");
+		}
+
+		function pressingDownLeft(e) {
+			// Start the timer
+			requestAnimationFrame(timerLeft);
+			skydiver.classList.add("left");
+
+			e.preventDefault();
+			moveBlockRight(skydiver);
+
+			console.log("Pressing!");
+		}
+
+		function notPressingDownLeft(e) {
+			// Stop the timer
+			cancelAnimationFrame(timerID);
+			counter = 0;
+			skydiver.classList.remove("left");
+
+			console.log("Not pressing!");
+		}
+
+		//
+		// Runs at 60fps when you are pressing down
+		//
+		function timerLeft() {
+			console.log("Timer tick!");
+			if (counter % 2 !== 0) {
+				moveBlockLeft(skydiver);
+			}
+
+			if (counter < pressHoldDuration) {
+				timerID = requestAnimationFrame(timerLeft);
+				counter++;
+			} else {
+				console.log("Press threshold reached!");
+				leftTouch.dispatchEvent(pressHoldEventLeft);
+			}
+		}
+		function timerRight() {
+			console.log("Timer tick!");
+			if (counter % 2 !== 0) {
+				moveBlockRight(skydiver);
+			}
+
+			if (counter < pressHoldDuration) {
+				timerID = requestAnimationFrame(timerRight);
+				counter++;
+			} else {
+				console.log("Press threshold reached!");
+				rightTouch.dispatchEvent(pressHoldEventLeft);
+			}
+		}
+	}
+});
+
+
+
+
+
+
+function moveBlockLeft(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft - global_increment_by;
+	if (newMarginLeft >= 0) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+function moveBlockRight(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft + global_increment_by;
+	if (newMarginLeft <= (global_window_size-global_box_size)) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+
+function doBlocksOverLap(box1, box2) {
+	var box1viewportOffset = box1.getBoundingClientRect();
+	var box1XStart	= box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0;
+	var box1XEnd 	= box1XStart + global_box_size;
+	var box1YStart	= box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0;
+	var box1YEnd	= box1YStart + global_box_size;
+
+	var box2viewportOffset = box2.getBoundingClientRect();
+	var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
+	var box2XEnd 	= box2XStart + box2.getBoundingClientRect().width;
+	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
+	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
+
+	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function placebirds(num) {
+	birdNumber = num;
+	var startingPos = 400;
+	var endintPos = 15500;
+	var road = document.getElementById("road");
+	for (var i = 0; i < birdNumber; i++) {
+		var bird = document.createElement("div");
+			bird.classList.add("bird");
+		road.appendChild(bird);
+		var marginTop = randomNumber(startingPos, endintPos);
+		// if (marginTop < startingPos) {
+		// 	marginTop = marginTop + startingPos;
+		// }
+		var marginLeft = randomNumber(0, max_bird_x);
+		bird.style.marginTop = marginTop + "px";
+		bird.style.marginLeft = marginLeft + "px";
+	}
+}
+
+function randomNumber(min, max) { 
+    return Math.random() * (max - min) + min;
+} 
+
+function checkAllbirds() {
+	var birds = document.getElementsByClassName("bird");
+	var skydiverStyle = skydiver.currentStyle || window.getComputedStyle(skydiver);
+	for (i = 0; i < birds.length; i++) {
+		birdStyle = birds[i].currentStyle || window.getComputedStyle(birds[i]);
+		if (doBlocksOverLap(skydiver, birds[i])) {
+			loseGame();
+		}
+	}
+	var finishLine = document.getElementById("finish-line");
+	if (doBlocksOverLap(skydiver, finishLine)) {
+		winGame();
+	}
+}
+
+function startGame() {
+	document.getElementById("skydiver").classList.add("falling");
+	document.getElementById("cloud1").classList.add("start");
+	document.getElementById("cloud2").classList.add("start");
+	document.getElementById("track").classList.add("start");
+	document.getElementById("start-btn").style.display = "none";
+	document.getElementById("restart-btn").style.display = "block";
+	document.getElementById("commands").style.display = "none";
+	gameInterval = setInterval('checkAllbirds()', 200);
+	pkAnalytics("skydiving:start", getMode());
+}
+
+function getMode() {
+	return document.controls.mode.value;
+}
+
+function parachuted() {
+	document.getElementById("skydiver").classList.remove("falling");
+	document.getElementById("skydiver").classList.add("chuted");
+	document.getElementById("skydiver").classList.add("land");
+	ml = parseInt(skydiver.style.marginLeft);
+	document.getElementById("skydiver").style.marginLeft = ml - 11 + "px";
+	// find the ground
+	ground = window.innerHeight - 290;
+	document.getElementById("skydiver").style.marginTop = ground + "px";
+}
+
+var globalSkydiverMarginTop;
+function winGame() {
+	clearInterval(gameInterval);
+	parachuted();
+	document.getElementById("commands").style.display = "block";
+	//runConfetti();
+	pkAnalytics("skydiving:win", getMode());
+	globalSkydiverMarginTop = window.innerHeight - 190 - 50;
+
+	setTimeout('document.getElementById("skydiver").classList.add("landed");',4000);
+}
+
+function loseGame() {
+	clearInterval(gameInterval);
+
+	var track = document.getElementById("track");
+	var computedStyle = window.getComputedStyle(track);
+	var matrix = new WebKitCSSMatrix(computedStyle.transform);
+	var marginTop = matrix.m42;
+	track.style.marginTop = marginTop;
+	track.classList.remove("start");
+	
+	var clouds1 = document.getElementById("cloud1");
+	var computedStyle2 = window.getComputedStyle(clouds1);
+	var matrix2 = new WebKitCSSMatrix(computedStyle2.transform);
+	var marginTop2 = matrix2.m42;
+	clouds1.style.marginTop = marginTop2;
+	clouds1.classList.remove("start");
+
+	var clouds2 = document.getElementById("cloud2");
+	var computedStyle3 = window.getComputedStyle(clouds2);
+	var matrix3 = new WebKitCSSMatrix(computedStyle3.transform);
+	var marginTop3 = matrix3.m42;
+	clouds2.style.marginTop = marginTop3;
+	clouds2.classList.remove("start");
+
+	if (downTimer) {
+        clearInterval(downTimer);
+        downTimer = null;
+        lastKey = 0;
+    }
+    document.getElementById("commands").style.display = "block";
+	setTimeout('alert("You hit a bird!");',20);
+	pkAnalytics("skydiving:lose", getMode());
+}
+
+function godMode() {
+	document.getElementById("road").innerHTML = "";
+}
+
+function easyMode() {
+	document.getElementById("road").innerHTML = "";
+	placebirds(200);
+}
+
+function hardMode() {
+	document.getElementById("road").innerHTML = "";
+	placebirds(200);
+}
+function impossibleMode() {
+	document.getElementById("road").innerHTML = "";
+	placebirds(200);
+}
+function runConfetti() {
+	confetti({
+		particleCount: 200,
+		spread: 70,
+		origin: { y: 0.6 }
+	});
+}
+
+function restartGame() {
+	var road = document.getElementById("road");
+		road.style.marginTop = "0px";
+	var url = window.location.href.split("#");
+	var path = url[0].split("?");
+	var rawpath = path[0] + "?r=" + Math.random();
+	if (window.location.hash.length > 0) {
+		rawpath = rawpath + window.location.hash;
+	}
+	window.location.href = rawpath;
+}
+</script>
+</head>
+<body>
+
+<div id="commands">
+	<form name="controls" onsubmit="return false;">
+		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
+		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
+		<p>Use the left & right arrow key<br /> to avoid the obstacles!</p>
+		<label><input type="radio" id="easy" value="easy" name="mode" onclick="easyMode(); window.location.hash = 'easy'; this.blur();" checked="checked"> Easy Mode</label><br />
+		<label><input type="radio" id="hard" value="hard" name="mode" onclick="hardMode(); window.location.hash = 'hard';this.blur();"> Hard Mode</label><br />
+		<label><input type="radio" id="impossible" value="impossible" name="mode" onclick="impossibleMode(); window.location.hash = 'impossible';this.blur();"> Impossible Mode</label>
+	</form>
+</div>
+
+<div id="touch-controls" class="">
+	<div id="touch-left" class="arrow-left"></div>
+	<div id="touch-right" class="arrow-right"></div>
+</div>
+
+
+<div id="road-container">
+	<div class="box" id="skydiver"></div>
+	<div class="clouds" id="cloud2"></div>
+	<div class="clouds" id="cloud1"></div>
+	<div id="track">
+		<div id="plane"></div>
+		<div id="road">
+		</div>
+		<div id="finish-line"></div>
+	</div>
+	
+</div>
+
+<script>(function() {
+	(function (i, s, o, g, r, a, m) {
+		i['GoogleAnalyticsObject'] = r;
+		i[r] = i[r] || function () {
+				(i[r].q = i[r].q || []).push(arguments)
+			}, i[r].l = 1 * new Date();
+		a = s.createElement(o),
+			m = s.getElementsByTagName(o)[0];
+		a.async = 1;
+		a.src = g;
+		m.parentNode.insertBefore(a, m)
+	})(window, document, 'script', 'https://google-analytics.com/analytics.js', 'ga');
+	
+	ga('create', 'UA-3392560-1', 'auto');
+			ga('send', 'pageview');
+	})();
+ </script> 
+</body>
+</html>
