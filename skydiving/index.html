@@ -1,14 +1,6 @@
 <html>
 <head>
 <title>Jump!</title>
-<script type="text/javascript">
-window.module = {};
-</script>
-<script type="text/javascript" src="confetti.js"></script>
-<script type="text/javascript">
-window.confetti = module.exports;
-</script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.0/ace.js"></script>
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
 
 
@@ -20,7 +12,7 @@ body {
 body, p, li, label {
 	color: #FFF;
 	font-family: Helvetica Neue, Sans-serif;
-	text-shadow: 3px 3px 6px #000;
+	text-shadow: 1px 1px 6px #000;
 }
 .box {
 	display: block;
@@ -38,6 +30,9 @@ body, p, li, label {
 	background-repeat: no-repeat;
 	background-size: contain;
 }
+#plane.start {
+	transition: all 3000ms linear;
+}
 #cloud1 {
 	z-index: 0;
 	display: block;
@@ -48,7 +43,7 @@ body, p, li, label {
 }
 #cloud1.start {
 	transition: all 40000ms linear;
-	transform: translateY(-8000px);
+	transform: translateY(-4000px);
 }
 #cloud2 {
 	z-index: 0;
@@ -60,7 +55,7 @@ body, p, li, label {
 }
 #cloud2.start {
 	transition: all 40000ms linear;
-	transform: translateY(-4000px);
+	transform: translateY(-2000px);
 }
 #road-container {
 	height: 100%;
@@ -69,7 +64,7 @@ body, p, li, label {
 	margin: 0 auto;
 	position: relative;
 }
-.start {
+#track.start {
 /*	margin-top: -16000px;
 */	transition: all 40000ms linear;
 	transform: translateY(-16000px);
@@ -108,6 +103,24 @@ body, p, li, label {
 	background: url(ground.gif) bottom left repeat-x;
 	z-index: 8;
 }
+.balloon {
+	position: absolute;
+	margin: 200px 400px 0;
+	width: 304px;
+	height: 400px;
+	background: url(balloon.png) 0 0 no-repeat;
+	background-size: contain;
+}
+.balloon-top {
+	width: 230px;
+	height: 204px;
+	margin: 25px 0 0 39px;
+}
+.balloon-bottom {
+	width: 75px;
+	height: 164px;
+	margin: 0 0 0 121px;
+}
 .bird {
 	width: 50px;
 	height: 35px;
@@ -120,7 +133,7 @@ body, p, li, label {
 	display: block;
 	width:50px;
 	height:50px;
-	background: url(flying-bird.gif) 0 0 no-repeat transparent;
+	background: url(bird-animated.gif) 0 0 no-repeat transparent;
 	background-size: contain;
 }
 #track {
@@ -167,27 +180,31 @@ body, p, li, label {
 	transform: rotate(25deg);
 }
 #touch-controls {
+	z-index: 99;
 	display: none;
 }
 #touch-controls.touch {
 	display: block;
+	z-index: 99;
 }
 #touch-left {
 	position: absolute;
 	bottom: 20px;
 	left: 10px;
+	z-index: 99;
 }
 #touch-right {
 	position: absolute;
 	bottom: 20px;
 	right: 10px;
+	z-index: 99;
 }
 .arrow-right {
 	width: 0; 
 	height: 0; 
 	border-top: 75px solid transparent;
 	border-bottom: 75px solid transparent;
-	border-left: 175px solid white;
+	border-left: 175px solid #225;
 }
 
 .arrow-left {
@@ -195,15 +212,24 @@ body, p, li, label {
 	height: 0; 
 	border-top: 75px solid transparent;
 	border-bottom: 75px solid transparent; 
-	border-right:175px solid white; 
+	border-right:175px solid #225; 
 }
 </style>
 <script type="text/javascript">
 var global_increment_by = 10;
 var global_box_size = 50;
 var global_window_size = window.innerWidth;
-var max_bird_x = global_window_size - global_box_size;
+var max_obstacle_x = global_window_size - global_box_size;
 var gameInterval = null;
+
+function preloadImage(url) {
+    var img=new Image();
+    img.src=url;
+}
+
+preloadImage("guy-falling.png");
+preloadImage("guy-chuted.png");
+preloadImage("guy-landed.png");
 
 function pkAnalytics(action, label) {
 	if (ga) {
@@ -234,6 +260,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		impossibleMode();
 	} else if (window.location.hash == "#god") {
 		godMode();
+	} else if (window.location.hash == "#balloon") {
+		balloonMode();
 	} else {
 		setTimeout('document.getElementById("easy").blur();', 50);
 		easyMode();
@@ -244,23 +272,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	}
 });
 
-
-
-// window.addEventListener("keydown", function(event) {
-// 	var key = event.keyCode;
-// 	var skydiver = document.getElementById("skydiver");
-
-// 	// RED BOX
-// 	if (key == 37) { // left
-// 		//moveBlockLeft(skydiver);
-// 	}
-// 	if (key == 39) { // right 
-// 		//moveBlockRight(skydiver);
-// 	}
-	
-
-// 	//setTimeout('doBlocksOverLap(skydiver, redBox)', 50);
-// });
 
 var downTimer;
 var lastKey;
@@ -279,12 +290,16 @@ $(document).ready(function() {
 	        // start timer
 	        downTimer = setInterval(function() {
 	            if (e.which == 37) {
-	            	skydiver.classList.add("left");
-					moveBlockLeft(skydiver);
+	            	if (skydiver.classList.contains("falling")) {
+		            	skydiver.classList.add("left");
+						moveBlockLeft(skydiver);
+					}
 	            }
 	            else if (e.which == 39) {
-	            	skydiver.classList.add("right");
-	            	moveBlockRight(skydiver);
+	            	if (skydiver.classList.contains("falling")) {
+		            	skydiver.classList.add("right");
+		            	moveBlockRight(skydiver);
+		            }
 	            } else {
 	            	skydiver.classList.remove("left");
 	            	skydiver.classList.remove("right");
@@ -310,7 +325,7 @@ $(document).ready(function() {
 
 
 $(document).ready(function() {
-	if ('ontouchstart' in document.documentElement) {
+	if ('ontouchstart' in document.documentElement || true) {
 		var leftTouch = document.querySelector("#touch-left");
 		var rightTouch = document.querySelector("#touch-right");
 
@@ -387,7 +402,9 @@ $(document).ready(function() {
 		function timerLeft() {
 			console.log("Timer tick!");
 			if (counter % 2 !== 0) {
-				moveBlockLeft(skydiver);
+				if (skydiver.classList.contains("falling")) {
+					moveBlockLeft(skydiver);
+				}
 			}
 
 			if (counter < pressHoldDuration) {
@@ -401,7 +418,9 @@ $(document).ready(function() {
 		function timerRight() {
 			console.log("Timer tick!");
 			if (counter % 2 !== 0) {
-				moveBlockRight(skydiver);
+				if (skydiver.classList.contains("falling")) {
+					moveBlockRight(skydiver);
+				}
 			}
 
 			if (counter < pressHoldDuration) {
@@ -467,14 +486,41 @@ function placebirds(num) {
 	for (var i = 0; i < birdNumber; i++) {
 		var bird = document.createElement("div");
 			bird.classList.add("bird");
+			bird.classList.add("obstacle");
 		road.appendChild(bird);
 		var marginTop = randomNumber(startingPos, endintPos);
 		// if (marginTop < startingPos) {
 		// 	marginTop = marginTop + startingPos;
 		// }
-		var marginLeft = randomNumber(0, max_bird_x);
+		var marginLeft = randomNumber(0, max_obstacle_x);
 		bird.style.marginTop = marginTop + "px";
 		bird.style.marginLeft = marginLeft + "px";
+	}
+}
+
+function placeBalloons(num) {
+	balloonNum = num;
+	var startingPos = 800;
+	var endintPos = 15500;
+	var road = document.getElementById("road");
+	for (var i = 0; i < balloonNum; i++) {
+		var balloon = document.createElement("div");
+			balloon.classList.add("balloon");
+			balloon.setAttribute("id", "balloon" + i);
+		road.appendChild(balloon);
+		var balloon = document.getElementById("balloon" + i);
+		var balloonTop = document.createElement("div");
+			balloonTop.classList.add("balloon-top");
+			balloonTop.classList.add("obstacle");
+		balloon.appendChild(balloonTop);
+		var balloonBottom = document.createElement("div");
+			balloonBottom.classList.add("balloon-bottom");
+			balloonBottom.classList.add("obstacle");
+		balloon.appendChild(balloonBottom);
+		var marginTop = randomNumber(startingPos, endintPos);
+		var marginLeft = randomNumber(0, max_obstacle_x);
+		balloon.style.marginTop = marginTop + "px";
+		balloon.style.marginLeft = marginLeft + "px";
 	}
 }
 
@@ -482,12 +528,12 @@ function randomNumber(min, max) {
     return Math.random() * (max - min) + min;
 } 
 
-function checkAllbirds() {
-	var birds = document.getElementsByClassName("bird");
+function checkAllObstacles() {
+	var obstacle = document.getElementsByClassName("obstacle");
 	var skydiverStyle = skydiver.currentStyle || window.getComputedStyle(skydiver);
-	for (i = 0; i < birds.length; i++) {
-		birdStyle = birds[i].currentStyle || window.getComputedStyle(birds[i]);
-		if (doBlocksOverLap(skydiver, birds[i])) {
+	for (i = 0; i < obstacle.length; i++) {
+		birdStyle = obstacle[i].currentStyle || window.getComputedStyle(obstacle[i]);
+		if (doBlocksOverLap(skydiver, obstacle[i])) {
 			loseGame();
 		}
 	}
@@ -498,6 +544,8 @@ function checkAllbirds() {
 }
 
 function startGame() {
+	document.getElementById("plane").classList.add("start");
+	document.getElementById("plane").style.marginLeft = 0;
 	document.getElementById("skydiver").classList.add("falling");
 	document.getElementById("cloud1").classList.add("start");
 	document.getElementById("cloud2").classList.add("start");
@@ -505,7 +553,7 @@ function startGame() {
 	document.getElementById("start-btn").style.display = "none";
 	document.getElementById("restart-btn").style.display = "block";
 	document.getElementById("commands").style.display = "none";
-	gameInterval = setInterval('checkAllbirds()', 200);
+	gameInterval = setInterval('checkAllObstacles()', 200);
 	pkAnalytics("skydiving:start", getMode());
 }
 
@@ -566,33 +614,34 @@ function loseGame() {
         lastKey = 0;
     }
     document.getElementById("commands").style.display = "block";
-	setTimeout('alert("You hit a bird!");',20);
+	setTimeout('alert("You hit an obstacle!");',20);
 	pkAnalytics("skydiving:lose", getMode());
 }
 
 function godMode() {
 	document.getElementById("road").innerHTML = "";
+	//placeBalloons(20);
+}
+function balloonMode() {
+	document.getElementById("road").innerHTML = "";
+	placeBalloons(40);
 }
 
 function easyMode() {
 	document.getElementById("road").innerHTML = "";
-	placebirds(200);
+	placebirds(100);
+	placeBalloons(10);
 }
 
 function hardMode() {
 	document.getElementById("road").innerHTML = "";
 	placebirds(200);
+	placeBalloons(20);
 }
 function impossibleMode() {
 	document.getElementById("road").innerHTML = "";
-	placebirds(200);
-}
-function runConfetti() {
-	confetti({
-		particleCount: 200,
-		spread: 70,
-		origin: { y: 0.6 }
-	});
+	placebirds(250);
+	placeBalloons(50);
 }
 
 function restartGame() {
@@ -633,8 +682,7 @@ function restartGame() {
 	<div class="clouds" id="cloud1"></div>
 	<div id="track">
 		<div id="plane"></div>
-		<div id="road">
-		</div>
+		<div id="road"></div>
 		<div id="finish-line"></div>
 	</div>
 	
