@@ -112,17 +112,33 @@ body, p, li, label {
 	background-size: contain;
 }
 .balloon-top {
-	width: 230px;
-	height: 204px;
-	margin: 25px 0 0 39px;
+	position: absolute;
+	width: 200px;
+	height: 189px;
+	margin: 25px 0 0 50px;
+}
+.balloon-middle {
+	position: absolute;
+	width: 255px;
+	height: 99px;
+	margin: 70px 0 0 26px;
 }
 .balloon-bottom {
-	width: 75px;
+	width: 65px;
 	height: 164px;
-	margin: 0 0 0 121px;
+	margin: 219px 0 0 126px;
+}
+#birds {
+	width: 200%;
+	height: 100%;
+	position: relative;
+}
+#birds.start {
+	transition: all 40000ms linear;
+	transform: translateX(50%);
 }
 .bird {
-	width: 50px;
+	width: 40px;
 	height: 35px;
 	position: absolute;
 	z-index: 3;
@@ -130,6 +146,7 @@ body, p, li, label {
 .bird:before {
 	content: "";
 	margin-top: -10px;
+	margin-left: -5px;
 	display: block;
 	width:50px;
 	height:50px;
@@ -480,19 +497,22 @@ function doBlocksOverLap(box1, box2) {
 
 function placebirds(num) {
 	birdNumber = num;
-	var startingPos = 400;
+	var startingPos = window.innerHeight;
 	var endintPos = 15500;
 	var road = document.getElementById("road");
+	var birds = document.createElement("div");
+		birds.setAttribute("id", "birds");
+		road.appendChild(birds);
 	for (var i = 0; i < birdNumber; i++) {
 		var bird = document.createElement("div");
 			bird.classList.add("bird");
 			bird.classList.add("obstacle");
-		road.appendChild(bird);
+		birds.appendChild(bird);
 		var marginTop = randomNumber(startingPos, endintPos);
 		// if (marginTop < startingPos) {
 		// 	marginTop = marginTop + startingPos;
 		// }
-		var marginLeft = randomNumber(0, max_obstacle_x);
+		var marginLeft = randomNumber(-Math.abs(max_obstacle_x), max_obstacle_x);
 		bird.style.marginTop = marginTop + "px";
 		bird.style.marginLeft = marginLeft + "px";
 	}
@@ -513,6 +533,10 @@ function placeBalloons(num) {
 			balloonTop.classList.add("balloon-top");
 			balloonTop.classList.add("obstacle");
 		balloon.appendChild(balloonTop);
+		var balloonMiddle = document.createElement("div");
+			balloonMiddle.classList.add("balloon-middle");
+			balloonMiddle.classList.add("obstacle");
+		balloon.appendChild(balloonMiddle);
 		var balloonBottom = document.createElement("div");
 			balloonBottom.classList.add("balloon-bottom");
 			balloonBottom.classList.add("obstacle");
@@ -532,9 +556,9 @@ function checkAllObstacles() {
 	var obstacle = document.getElementsByClassName("obstacle");
 	var skydiverStyle = skydiver.currentStyle || window.getComputedStyle(skydiver);
 	for (i = 0; i < obstacle.length; i++) {
-		birdStyle = obstacle[i].currentStyle || window.getComputedStyle(obstacle[i]);
 		if (doBlocksOverLap(skydiver, obstacle[i])) {
 			loseGame();
+			break;
 		}
 	}
 	var finishLine = document.getElementById("finish-line");
@@ -547,13 +571,16 @@ function startGame() {
 	document.getElementById("plane").classList.add("start");
 	document.getElementById("plane").style.marginLeft = 0;
 	document.getElementById("skydiver").classList.add("falling");
+	if (document.getElementById("birds")) {
+		document.getElementById("birds").classList.add("start");
+	}
 	document.getElementById("cloud1").classList.add("start");
 	document.getElementById("cloud2").classList.add("start");
 	document.getElementById("track").classList.add("start");
 	document.getElementById("start-btn").style.display = "none";
 	document.getElementById("restart-btn").style.display = "block";
 	document.getElementById("commands").style.display = "none";
-	gameInterval = setInterval('checkAllObstacles()', 200);
+	gameInterval = setInterval('checkAllObstacles()', 150);
 	pkAnalytics("skydiving:start", getMode());
 }
 
@@ -629,19 +656,19 @@ function balloonMode() {
 
 function easyMode() {
 	document.getElementById("road").innerHTML = "";
-	placebirds(100);
 	placeBalloons(10);
+	placebirds(150);
 }
 
 function hardMode() {
 	document.getElementById("road").innerHTML = "";
-	placebirds(200);
 	placeBalloons(20);
+	placebirds(250);
 }
 function impossibleMode() {
 	document.getElementById("road").innerHTML = "";
-	placebirds(250);
 	placeBalloons(50);
+	placebirds(450);
 }
 
 function restartGame() {
