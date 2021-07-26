@@ -2,6 +2,7 @@
 <head>
 <title>Jump!</title>
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
+<meta name="viewport" content="user-scalable=no">
 
 
 <style type="text/css">
@@ -216,6 +217,10 @@ body, p, li, label {
 	right: 10px;
 	z-index: 99;
 }
+#touch-left.pressing, #touch-right.pressing {
+	border-left-color: #55F;
+	border-right-color: #55F;
+}
 .arrow-right {
 	width: 0; 
 	height: 0; 
@@ -377,11 +382,12 @@ $(document).ready(function() {
 			// Start the timer
 			requestAnimationFrame(timerRight);
 			skydiver.classList.add("right");
+			rightTouch.classList.add("pressing");
 
 			e.preventDefault();
 			moveBlockRight(skydiver);
 
-			console.log("Pressing!");
+			//console.log("Pressing!");
 		}
 
 		function notPressingDownRight(e) {
@@ -389,19 +395,21 @@ $(document).ready(function() {
 			cancelAnimationFrame(timerID);
 			counter = 0;
 			skydiver.classList.remove("right");
+			rightTouch.classList.remove("pressing");
 
-			console.log("Not pressing!");
+			//console.log("Not pressing!");
 		}
 
 		function pressingDownLeft(e) {
 			// Start the timer
 			requestAnimationFrame(timerLeft);
 			skydiver.classList.add("left");
+			leftTouch.classList.add("pressing");
 
 			e.preventDefault();
 			moveBlockRight(skydiver);
 
-			console.log("Pressing!");
+			//console.log("Pressing!");
 		}
 
 		function notPressingDownLeft(e) {
@@ -409,8 +417,9 @@ $(document).ready(function() {
 			cancelAnimationFrame(timerID);
 			counter = 0;
 			skydiver.classList.remove("left");
+			leftTouch.classList.remove("pressing");
 
-			console.log("Not pressing!");
+			//console.log("Not pressing!");
 		}
 
 		//
