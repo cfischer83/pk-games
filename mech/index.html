@@ -1,0 +1,247 @@
+<html>
+<head>
+
+<style type="text/css">
+body {
+	background: #553;
+}
+#p1 {
+	width: 110px;
+	height: 110px;
+	background-position: center;
+	transition: all 135ms linear;
+	position: absolute;
+}
+#p1::before {
+	content: " ";
+	width: 100%;
+	height: 100%;
+	display: block;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+#p1.right::before {
+	background-image: url(standing.gif);
+	transform: rotate(-17deg);
+}
+#p1.right.walk::before {
+	background-image: url(2-warhawka.gif);
+	transform: rotate(-17deg);
+}
+
+#p1.left::before {
+	background-image: url(standing.gif);
+	transform: scaleX(-1) rotate(-17deg);
+}
+#p1.left.walk::before {
+	background-image: url(2-warhawka.gif);
+	transform: scaleX(-1) rotate(-17deg);
+}
+
+#p1.down::before {
+	background-image: url(standing-down.gif);
+}
+#p1.down.walk::before {
+	background-image: url(warhawk-down2.gif);
+}
+
+#p1.up::before {
+	background-image: url(standing-up.png);
+}
+#p1.up.walk::before {
+	background-image: url(warhawk-up-frames-no-shadow.gif);
+}
+
+.erppc {
+	display: block;
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background: url(erppc.gif) 0 0 no-repeat;
+	background-size: contain;
+}
+</style>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
+<script type="text/javascript">
+var p1;
+var global_increment_by = 10;
+var global_box_size = 120;
+var global_window_size = window.innerWidth;
+var direction = 'right';
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	p1 = document.getElementById("p1");
+});
+
+
+
+var downTimer;
+var lastKey;
+$(document).ready(function() {
+	$(document.body).keydown(function(e) {
+		if (e.keyCode == '32') {
+			fire();
+		}
+		if (!isMovingKey(e.keyCode)) {
+			return;
+		}
+
+	    // if not still the same key, stop the timer
+	    if (e.which !== lastKey) {
+	        if (downTimer) {
+	            clearInterval(downTimer);
+	            downTimer = null;
+	        }
+	    }
+	    // remember previous key
+	    lastKey = e.which;
+	    if (!downTimer) {
+	        // start timer
+	        downTimer = setInterval(function() {
+	            if (e.which == 37) {
+	            	if (!p1.classList.contains("walk")) {
+		            	p1.classList.add("walk");
+		            }
+	            	moveBlockLeft(p1);
+	            	changeDirection("left");
+	            } else if (e.which == 38) {
+	            	if (!p1.classList.contains("walk")) {
+		            	p1.classList.add("walk");
+		            }
+	            	moveBlockUp(p1);
+	            	changeDirection("up");
+	            } else if (e.which == 39) {
+	            	if (!p1.classList.contains("walk")) {
+		            	p1.classList.add("walk");
+		            }
+	            	moveBlockRight(p1);
+	            	changeDirection("right");
+	            } else if (e.which == 40) {
+	            	if (!p1.classList.contains("walk")) {
+		            	p1.classList.add("walk");
+		            }
+	            	moveBlockDown(p1);
+	            	changeDirection("down");
+	            } else {
+	            	//
+	            }
+	        }, 135);
+	    }
+	}).keyup(function(e) {
+		if (isMovingKey(e.keyCode)) {
+			p1.classList.remove("walk");
+		    // stop timer
+		    if (downTimer) {
+		        clearInterval(downTimer);
+		        downTimer = null;
+		        lastKey = 0;
+		        // skydiver.classList.remove("left");
+	        	// skydiver.classList.remove("right");
+		    }
+		}
+	});
+
+});
+
+function isMovingKey(k) {
+	if (k == "37" || k == "38" || k == "39" || k == "40") {
+		return true;
+	}
+	return false;
+}
+
+
+
+function moveBlockLeft(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft - global_increment_by;
+	if (newMarginLeft >= 0) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+function moveBlockRight(block) {
+	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
+	var newMarginLeft = marginLeft + global_increment_by;
+	if (newMarginLeft <= (global_window_size-global_box_size)) {
+		block.style.marginLeft = newMarginLeft + "px";
+	}
+}
+function moveBlockUp(block) {
+	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
+	var newMarginTop = marginTop - global_increment_by;
+	if (newMarginTop <= (global_window_size-global_box_size)) {
+		block.style.marginTop = newMarginTop + "px";
+	}
+}
+function moveBlockDown(block) {
+	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
+	var newMarginTop = marginTop + global_increment_by;
+	if (newMarginTop <= (global_window_size-global_box_size)) {
+		block.style.marginTop = newMarginTop + "px";
+	}
+}
+
+function doBlocksOverLap(box1, box2) {
+	var box1viewportOffset = box1.getBoundingClientRect();
+	var box1XStart	= box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0;
+	var box1XEnd 	= box1XStart + global_box_size;
+	var box1YStart	= box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0;
+	var box1YEnd	= box1YStart + global_box_size;
+
+	var box2viewportOffset = box2.getBoundingClientRect();
+	var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
+	var box2XEnd 	= box2XStart + box2.getBoundingClientRect().width;
+	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
+	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
+
+	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+function changeDirection(dir) {
+	$("#p1").removeClass("left up right down");
+	$("#p1").addClass(dir);
+	direction = dir;
+}
+
+function fire() {
+	var p1viewportOffset = p1.getBoundingClientRect();
+	var fireStartX	= p1viewportOffset.x ? parseInt(p1viewportOffset.x) + (global_box_size/2) : 0 + (global_box_size/2);
+	var fireStartY	= p1viewportOffset.y ? parseInt(p1viewportOffset.y) + (global_box_size/3) : 0 + (global_box_size/2);
+	if (direction == 'right') {
+		var erppc = document.createElement("div");
+		var rando = Math.random();
+		erppc.setAttribute("class", "erppc");
+		erppc.setAttribute("id", "erppc" + rando);
+		document.body.appendChild(erppc);
+		document.getElementById("erppc" + rando).style.marginLeft = fireStartX;
+		document.getElementById("erppc" + rando).style.marginTop = fireStartY;
+		fireCannon = setInterval(function() {
+			erppcID = "erppc" + rando;
+			erppc = document.getElementById(erppcID);
+			moveBlockRight(erppc);
+		},20);
+	}
+}
+</script>
+
+
+</head>
+<body>
+
+	<div id="p1" class="right"></div>
+
+</body></html>
+<!--
+	https://i.imgur.com/pyPuT7m.jpeg
+	http://imagizer.imageshack.com/a/img923/7643/cIujNX.jpg
+	https://images.saymedia-content.com/.image/t_share/MTc2Mjg0NTA3ODg3Mzc5NjQ2/simcity4.gif
+	-->
