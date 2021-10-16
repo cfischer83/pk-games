@@ -3,19 +3,29 @@
 
 <style type="text/css">
 body {
-	background: #553;
+	margin: 0;
+}
+#ground {
+	background: url(bg.jpg) 0 0 repeat #553;
+	width: 3840px;
+	height: 2160px;
+}
+#cam {
+	transition: all 67ms linear;
 }
 #p1 {
-	width: 110px;
-	height: 110px;
+	width: 50px;
+	height: 70px;
 	background-position: center;
-	transition: all 135ms linear;
+	transition: all 67ms linear;
 	position: absolute;
+	border: 0px solid blue;
 }
 #p1::before {
 	content: " ";
-	width: 100%;
-	height: 100%;
+	width: 120px;
+	height: 110px;
+	margin: -15px 0 0 -45px;
 	display: block;
 	background-size: contain;
 	background-position: center center;
@@ -67,9 +77,10 @@ body {
 <script type="text/javascript">
 var p1;
 var global_increment_by = 10;
-var global_box_size = 120;
+var global_box_size = 50;
 var global_window_size = window.innerWidth;
 var direction = 'right';
+var fireArray = new Array();
 
 document.addEventListener("DOMContentLoaded", function(event) { 
 	p1 = document.getElementById("p1");
@@ -80,9 +91,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 var downTimer;
 var lastKey;
 $(document).ready(function() {
+	var ground = document.getElementById("ground");
+
+
 	$(document.body).keydown(function(e) {
 		if (e.keyCode == '32') {
 			fire();
+			return false;
 		}
 		if (!isMovingKey(e.keyCode)) {
 			return;
@@ -104,31 +119,44 @@ $(document).ready(function() {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
 		            }
-	            	moveBlockLeft(p1);
+		            if (!playerObstacles(p1,"left")) {
+		            	moveCamLeft(p1);
+		            	moveBlockLeft(p1);
+		            }
 	            	changeDirection("left");
 	            } else if (e.which == 38) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
 		            }
-	            	moveBlockUp(p1);
+		            if (!playerObstacles(p1,"up")) {
+		            	moveCamUp(p1);
+		            	moveBlockUp(p1);
+		            }
 	            	changeDirection("up");
 	            } else if (e.which == 39) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
 		            }
-	            	moveBlockRight(p1);
+	            	if (!playerObstacles(p1,"right")) {
+	            		moveCamRight(p1);
+		            	moveBlockRight(p1);
+		            }
 	            	changeDirection("right");
 	            } else if (e.which == 40) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
 		            }
-	            	moveBlockDown(p1);
+		            if (!playerObstacles(p1,"down")) {
+		            	moveCamDown(p1);
+		            	moveBlockDown(p1);
+		            }
 	            	changeDirection("down");
 	            } else {
 	            	//
 	            }
-	        }, 135);
+	        }, 67);
 	    }
+	    return false;
 	}).keyup(function(e) {
 		if (isMovingKey(e.keyCode)) {
 			p1.classList.remove("walk");
@@ -152,43 +180,62 @@ function isMovingKey(k) {
 	return false;
 }
 
+function playerObstacles(player, direction) {
+	obstacles = document.getElementsByClassName("obstacle");
+	for (i = 0; i < obstacles.length; i++) {
+		if (willBlocksOverlap(player, obstacles[i], direction)) {
+			console.log("player x end: " + (parseInt(player.style.marginLeft) + 50 + global_increment_by));
+			console.log("obstacles[" + i + "].marginLeft: " + parseInt(obstacles[i].style.marginLeft));
+			// switch(direction) {
+			// 	case "left" : moveBlockRight(player); break;
+			// 	case "right" : moveBlockLeft(player); break;
+			// 	case "up" : moveBlockDown(player); break;
+			// 	case "down" : moveBlockUp(player); break;
+			// }
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 function moveBlockLeft(block) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft - global_increment_by;
-	if (newMarginLeft >= 0) {
+	//if (newMarginLeft >= 0) {
 		block.style.marginLeft = newMarginLeft + "px";
-	}
+	//}
 }
 function moveBlockRight(block) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft + global_increment_by;
-	if (newMarginLeft <= (global_window_size-global_box_size)) {
+	//if (newMarginLeft <= (global_window_size-global_box_size)) {
 		block.style.marginLeft = newMarginLeft + "px";
-	}
+	//}
 }
 function moveBlockUp(block) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop - global_increment_by;
-	if (newMarginTop <= (global_window_size-global_box_size)) {
+	//if (newMarginTop <= (global_window_size-global_box_size)) {
 		block.style.marginTop = newMarginTop + "px";
-	}
+	//}
 }
 function moveBlockDown(block) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop + global_increment_by;
-	if (newMarginTop <= (global_window_size-global_box_size)) {
+	//if (newMarginTop <= (global_window_size-global_box_size)) {
 		block.style.marginTop = newMarginTop + "px";
-	}
+	//}
 }
 
+// addMargin is to look in the future
 function doBlocksOverLap(box1, box2) {
 	var box1viewportOffset = box1.getBoundingClientRect();
 	var box1XStart	= box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0;
-	var box1XEnd 	= box1XStart + global_box_size;
+	var box1XEnd 	= box1XStart + box1viewportOffset.width;
 	var box1YStart	= box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0;
-	var box1YEnd	= box1YStart + global_box_size;
+	var box1YEnd	= box1YStart + box1viewportOffset.height;
 
 	var box2viewportOffset = box2.getBoundingClientRect();
 	var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
@@ -206,6 +253,46 @@ function doBlocksOverLap(box1, box2) {
 		return false;
 	}
 }
+function willBlocksOverlap(box1, box2, direction) {
+	paddingHorizontal	= 0;
+	paddingVertical		= 0;
+	if (direction == "left") {
+		paddingHorizontal = paddingHorizontal - global_increment_by;
+	}
+	if (direction == "right") {
+		paddingHorizontal = paddingHorizontal + global_increment_by;
+	}
+	if (direction == "up") {
+		paddingVertical = paddingVertical - global_increment_by;
+	}
+	if (direction == "down") {
+		paddingVertical = paddingVertical + global_increment_by;
+	}
+	console.log("box1XEnd = " + box1XEnd);
+	var box1viewportOffset = box1.getBoundingClientRect();
+	var box1XStart	= (box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0) + paddingHorizontal;
+	var box1XEnd 	= box1XStart + box1viewportOffset.width + paddingHorizontal;
+		console.log("box1XEnd = " + box1XEnd);
+	var box1YStart	= (box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0) + paddingVertical;
+	var box1YEnd	= box1YStart + box1viewportOffset.height + paddingVertical;
+
+	var box2viewportOffset = box2.getBoundingClientRect();
+	var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
+	var box2XEnd 	= box2XStart + box2.getBoundingClientRect().width;
+	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
+	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
+
+	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 function changeDirection(dir) {
 	$("#p1").removeClass("left up right down");
 	$("#p1").addClass(dir);
@@ -213,32 +300,123 @@ function changeDirection(dir) {
 }
 
 function fire() {
-	var p1viewportOffset = p1.getBoundingClientRect();
-	var fireStartX	= p1viewportOffset.x ? parseInt(p1viewportOffset.x) + (global_box_size/2) : 0 + (global_box_size/2);
-	var fireStartY	= p1viewportOffset.y ? parseInt(p1viewportOffset.y) + (global_box_size/3) : 0 + (global_box_size/2);
-	if (direction == 'right') {
-		var erppc = document.createElement("div");
+	var fireStartX	= p1.style.marginLeft ? parseInt(p1.style.marginLeft) : 0;
+		fireStartX	= fireStartX + 15;
+	var fireStartY	= p1.style.marginTop ? parseInt(p1.style.marginTop) : 0;
+		fireStartY	= fireStartY + 25;
+	var erppc = document.createElement("div");
 		var rando = Math.random();
 		erppc.setAttribute("class", "erppc");
 		erppc.setAttribute("id", "erppc" + rando);
-		document.body.appendChild(erppc);
+		ground.appendChild(erppc);
 		document.getElementById("erppc" + rando).style.marginLeft = fireStartX;
 		document.getElementById("erppc" + rando).style.marginTop = fireStartY;
-		fireCannon = setInterval(function() {
-			erppcID = "erppc" + rando;
-			erppc = document.getElementById(erppcID);
-			moveBlockRight(erppc);
-		},20);
-	}
+	fireArray.push("erppc" + rando);
+	fireTimer("erppc" + rando, direction);
+}
+
+function fireTimer(firedElement, dir) {
+	fireArray[firedElement] = setInterval(function() {
+		erppcID = firedElement;
+		erppc = document.getElementById(erppcID);
+		if (erppc) {
+			switch(dir) {
+				case "right" : moveBlockRight(erppc); break;
+				case "left" : moveBlockLeft(erppc); break;
+				case "up" : moveBlockUp(erppc); break;
+				case "down" : moveBlockDown(erppc); break;
+				default : "";break;
+			}
+			
+		}
+		setTimeout(function() {
+			clearInterval(fireArray[firedElement]);
+			if (document.getElementById(firedElement)) {
+				document.getElementById(firedElement).remove();
+			}
+		}, 3000);
+	},20);
+}
+
+
+
+function moveCamRight(Character){
+    var cam_center = window.innerWidth/2;
+    var CharactermarginLeft = parseInt(Character.style.marginLeft);
+    if (!CharactermarginLeft) {
+        CharactermarginLeft = 0;
+    }
+    var cam = document.getElementById("cam");
+    var cam_marginLeft = parseInt(cam.style.marginLeft);
+    if (!cam_marginLeft) {
+        cam_marginLeft = 0;
+    }
+    if (CharactermarginLeft>=cam_center){
+        var new_cam_marginLeft = cam_marginLeft - global_increment_by;
+        cam.style.marginLeft = new_cam_marginLeft + "px";
+    }
+}
+function moveCamLeft(Character){
+    var cam_center = window.innerWidth/2;
+    var CharactermarginLeft = parseInt(Character.style.marginLeft);
+    if (!CharactermarginLeft) {
+        CharactermarginLeft = 0;
+    }
+    var cam = document.getElementById("cam");
+    var cam_marginLeft = parseInt(cam.style.marginLeft);
+    if (!cam_marginLeft) {
+        cam_marginLeft = 0;
+    }
+    if (CharactermarginLeft>=cam_center){
+        var new_cam_marginLeft = cam_marginLeft + global_increment_by;
+        cam.style.marginLeft = new_cam_marginLeft + "px";
+    }
+}
+function moveCamUp(Character){
+    var cam_center = window.innerHeight/2;
+    var CharactermarginTop = parseInt(Character.style.marginTop);
+    if (!CharactermarginTop) {
+        CharactermarginTop = 0;
+    }
+    var cam = document.getElementById("cam");
+    var cam_marginTop = parseInt(cam.style.marginTop);
+    if (!cam_marginTop) {
+        cam_marginTop = 0;
+    }
+    if (CharactermarginTop>=cam_center){
+        var new_cam_marginTop = cam_marginTop + global_increment_by;
+        cam.style.marginTop = new_cam_marginTop + "px";
+    }
+}
+function moveCamDown(Character){
+    var cam_center = window.innerHeight/2;
+    var CharactermarginTop = parseInt(Character.style.marginTop);
+    if (!CharactermarginTop) {
+        CharactermarginTop = 0;
+    }
+    var cam = document.getElementById("cam");
+    var cam_marginTop = parseInt(cam.style.marginTop);
+    if (!cam_marginTop) {
+        cam_marginTop = 0;
+    }
+    if (CharactermarginTop>=cam_center){
+        var new_cam_marginTop = cam_marginTop - global_increment_by;
+        cam.style.marginTop = new_cam_marginTop + "px";
+    }
 }
 </script>
 
 
 </head>
 <body>
+<div id="cam">
+	<div id="ground">
+		<div id="p1" class="right"></div>
 
-	<div id="p1" class="right"></div>
-
+		<div style="position: absolute; margin-top: 150px; margin-left: 150px;background: red; border:1px solid white; width: 150px;height:150px;" class="obstacle"></div>
+		<div style="position: absolute; margin-top: 600px; margin-left: 100px;background: red; border:1px solid white; width: 150px;height:150px;" class="obstacle"></div>
+		</div>
+</div>
 </body></html>
 <!--
 	https://i.imgur.com/pyPuT7m.jpeg
