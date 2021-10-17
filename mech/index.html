@@ -5,6 +5,11 @@
 body {
 	margin: 0;
 }
+body.debug .obstacle {
+	background: red;
+	opacity: .5;
+	border: 1px solid white;
+}
 #ground {
 	background: url(bg.jpg) 0 0 repeat #553;
 	width: 3840px;
@@ -12,6 +17,7 @@ body {
 }
 #cam {
 	transition: all 67ms linear;
+	position: relative;
 }
 #p1 {
 	width: 50px;
@@ -71,19 +77,46 @@ body {
 	background: url(erppc.gif) 0 0 no-repeat;
 	background-size: contain;
 }
+.erppc.explosion {
+	background: none;
+}
+.erppc.explosion::before {
+	content: " ";
+	display: block;
+	width: 60px;
+	height: 120px;
+	margin: -60px 0 0 -15px;
+	background: url(explosion.gif) 0 0 no-repeat;
+	background-size: contain;
+}
 </style>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
 <script type="text/javascript">
-var p1;
+var p1, ground;
 var global_increment_by = 10;
 var global_box_size = 50;
+var global_player_height = 70;
 var global_window_size = window.innerWidth;
 var direction = 'right';
 var fireArray = new Array();
 
+function debug() {
+	if (location.search.includes("debug")) {
+		document.body.classList.add("debug");
+	}
+}
+
 document.addEventListener("DOMContentLoaded", function(event) { 
-	p1 = document.getElementById("p1");
+	p1		= document.getElementById("p1");
+	ground	= document.getElementById("ground");
+	cam		= document.getElementById("cam");
+
+	p1.style.marginLeft	= "30px";
+	p1.style.marginTop = "30px";
+	cam.style.width = window.innerWidth;
+	cam.style.height = window.innerHeight;
+	debug();
 });
 
 
@@ -91,9 +124,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 var downTimer;
 var lastKey;
 $(document).ready(function() {
-	var ground = document.getElementById("ground");
-
-
 	$(document.body).keydown(function(e) {
 		if (e.keyCode == '32') {
 			fire();
@@ -165,14 +195,13 @@ $(document).ready(function() {
 		        clearInterval(downTimer);
 		        downTimer = null;
 		        lastKey = 0;
-		        // skydiver.classList.remove("left");
-	        	// skydiver.classList.remove("right");
 		    }
 		}
 	});
 
 });
 
+/* Is this left, up, right, down key */
 function isMovingKey(k) {
 	if (k == "37" || k == "38" || k == "39" || k == "40") {
 		return true;
@@ -184,14 +213,8 @@ function playerObstacles(player, direction) {
 	obstacles = document.getElementsByClassName("obstacle");
 	for (i = 0; i < obstacles.length; i++) {
 		if (willBlocksOverlap(player, obstacles[i], direction)) {
-			console.log("player x end: " + (parseInt(player.style.marginLeft) + 50 + global_increment_by));
-			console.log("obstacles[" + i + "].marginLeft: " + parseInt(obstacles[i].style.marginLeft));
-			// switch(direction) {
-			// 	case "left" : moveBlockRight(player); break;
-			// 	case "right" : moveBlockLeft(player); break;
-			// 	case "up" : moveBlockDown(player); break;
-			// 	case "down" : moveBlockUp(player); break;
-			// }
+			//console.log("player x end: " + (parseInt(player.style.marginLeft) + 50 + global_increment_by));
+			//console.log("obstacles[" + i + "].marginLeft: " + parseInt(obstacles[i].style.marginLeft));
 			return true;
 		}
 	}
@@ -268,11 +291,11 @@ function willBlocksOverlap(box1, box2, direction) {
 	if (direction == "down") {
 		paddingVertical = paddingVertical + global_increment_by;
 	}
-	console.log("box1XEnd = " + box1XEnd);
+	//console.log("box1XEnd = " + box1XEnd);
 	var box1viewportOffset = box1.getBoundingClientRect();
 	var box1XStart	= (box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0) + paddingHorizontal;
 	var box1XEnd 	= box1XStart + box1viewportOffset.width + paddingHorizontal;
-		console.log("box1XEnd = " + box1XEnd);
+		//console.log("box1XEnd = " + box1XEnd);
 	var box1YStart	= (box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0) + paddingVertical;
 	var box1YEnd	= box1YStart + box1viewportOffset.height + paddingVertical;
 
@@ -320,6 +343,7 @@ function fireTimer(firedElement, dir) {
 		erppcID = firedElement;
 		erppc = document.getElementById(erppcID);
 		if (erppc) {
+			checkFireHittingObstacle(firedElement);
 			switch(dir) {
 				case "right" : moveBlockRight(erppc); break;
 				case "left" : moveBlockLeft(erppc); break;
@@ -329,77 +353,112 @@ function fireTimer(firedElement, dir) {
 			}
 			
 		}
-		setTimeout(function() {
-			clearInterval(fireArray[firedElement]);
-			if (document.getElementById(firedElement)) {
-				document.getElementById(firedElement).remove();
-			}
-		}, 3000);
 	},20);
+
+	setTimeout(function() {
+		clearInterval(fireArray[firedElement]);
+		if (document.getElementById(firedElement)) {
+			document.getElementById(firedElement).remove();
+		}
+	}, 3000);
+}
+
+function checkFireHittingObstacle(fire) {
+	erppc = document.getElementById(fire);
+	obstacles = document.getElementsByClassName("obstacle");
+	for (i = 0; i < obstacles.length; i++) {
+		//console.log("obstacles " + i + " " + new Date().getMilliseconds().toString());
+		if (doBlocksOverLap(erppc, obstacles[i])) {
+			console.log("hit");
+			clearInterval(fireArray[fire]);
+			convertToExplosion(erppc);
+		}
+	}
+}
+
+/* converts a fired ammo into a 'hit' */
+function convertToExplosion(fire) {
+	fire.classList.add("explosion");
 }
 
 
 
-function moveCamRight(Character){
-    var cam_center = window.innerWidth/2;
-    var CharactermarginLeft = parseInt(Character.style.marginLeft);
-    if (!CharactermarginLeft) {
-        CharactermarginLeft = 0;
+function moveCamRight(p1){
+    var cam_center = window.innerWidth/2 - global_box_size;
+    var groundDetails = ground.getBoundingClientRect();
+    var groundWidth	= groundDetails.width;
+    var maxLeft = groundWidth - window.innerWidth;
+    var p1marginLeft = parseInt(p1.style.marginLeft);
+    if (!p1marginLeft) {
+        p1marginLeft = 0;
     }
     var cam = document.getElementById("cam");
     var cam_marginLeft = parseInt(cam.style.marginLeft);
     if (!cam_marginLeft) {
         cam_marginLeft = 0;
     }
-    if (CharactermarginLeft>=cam_center){
+    //console.log("cam_marginLeft = " + cam_marginLeft + "; maxLeft = " + maxLeft);
+    if (p1marginLeft>=cam_center && Math.abs(cam_marginLeft) < maxLeft){
         var new_cam_marginLeft = cam_marginLeft - global_increment_by;
         cam.style.marginLeft = new_cam_marginLeft + "px";
     }
 }
-function moveCamLeft(Character){
-    var cam_center = window.innerWidth/2;
-    var CharactermarginLeft = parseInt(Character.style.marginLeft);
-    if (!CharactermarginLeft) {
-        CharactermarginLeft = 0;
+function moveCamLeft(p1){
+    var cam_center = window.innerWidth/2 - global_box_size;
+    var groundDetails = ground.getBoundingClientRect();
+    var groundWidth	= groundDetails.width;
+    var p1marginLeft = parseInt(p1.style.marginLeft);
+    if (!p1marginLeft) {
+        p1marginLeft = 0;
     }
+    var maxLeft = groundWidth - window.innerWidth + cam_center; // when player is at right-most and goes left
     var cam = document.getElementById("cam");
     var cam_marginLeft = parseInt(cam.style.marginLeft);
     if (!cam_marginLeft) {
         cam_marginLeft = 0;
     }
-    if (CharactermarginLeft>=cam_center){
+    //console.log("p1marginLeft = " + p1marginLeft + "; maxLeft = " + maxLeft);
+    if (p1marginLeft>=cam_center && Math.abs(p1marginLeft) < maxLeft){
         var new_cam_marginLeft = cam_marginLeft + global_increment_by;
+        if (new_cam_marginLeft > 0) {new_cam_marginLeft=0;}
         cam.style.marginLeft = new_cam_marginLeft + "px";
     }
 }
-function moveCamUp(Character){
-    var cam_center = window.innerHeight/2;
-    var CharactermarginTop = parseInt(Character.style.marginTop);
-    if (!CharactermarginTop) {
-        CharactermarginTop = 0;
+function moveCamUp(p1){
+    var cam_center = window.innerHeight/2 - global_box_size;
+    var groundDetails = ground.getBoundingClientRect();
+    var groundHeight	= groundDetails.height;
+    var maxHeight = Math.floor((groundHeight - window.innerHeight + cam_center) / 10) * 10;
+    var p1marginTop = parseInt(p1.style.marginTop);
+    if (!p1marginTop) {
+        p1marginTop = 0;
     }
     var cam = document.getElementById("cam");
     var cam_marginTop = parseInt(cam.style.marginTop);
     if (!cam_marginTop) {
         cam_marginTop = 0;
     }
-    if (CharactermarginTop>=cam_center){
+    if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
         var new_cam_marginTop = cam_marginTop + global_increment_by;
         cam.style.marginTop = new_cam_marginTop + "px";
     }
 }
-function moveCamDown(Character){
-    var cam_center = window.innerHeight/2;
-    var CharactermarginTop = parseInt(Character.style.marginTop);
-    if (!CharactermarginTop) {
-        CharactermarginTop = 0;
+function moveCamDown(p1){
+    var cam_center = window.innerHeight/2 - global_player_height;
+    var groundDetails = ground.getBoundingClientRect();
+    var groundHeight	= groundDetails.height;
+    var maxHeight = Math.floor((groundHeight - window.innerHeight) / 10) * 10;
+    var p1marginTop = parseInt(p1.style.marginTop);
+    if (!p1marginTop) {
+        p1marginTop = 0;
     }
     var cam = document.getElementById("cam");
     var cam_marginTop = parseInt(cam.style.marginTop);
     if (!cam_marginTop) {
         cam_marginTop = 0;
     }
-    if (CharactermarginTop>=cam_center){
+    //console.log("cam_marginTop = " + Math.abs(cam_marginTop) + "; maxHeight = " + maxHeight);
+    if (p1marginTop>=cam_center && Math.abs(cam_marginTop) < maxHeight){
         var new_cam_marginTop = cam_marginTop - global_increment_by;
         cam.style.marginTop = new_cam_marginTop + "px";
     }
@@ -413,13 +472,43 @@ function moveCamDown(Character){
 	<div id="ground">
 		<div id="p1" class="right"></div>
 
-		<div style="position: absolute; margin-top: 150px; margin-left: 150px;background: red; border:1px solid white; width: 150px;height:150px;" class="obstacle"></div>
-		<div style="position: absolute; margin-top: 600px; margin-left: 100px;background: red; border:1px solid white; width: 150px;height:150px;" class="obstacle"></div>
-		</div>
+		<div style="position: absolute;
+	margin-top: 0;
+	margin-left: 1530px;
+	width: 831px;
+	height: 286px;" class="obstacle"></div>
+
+		<div style="position: absolute;
+	margin-top: 0;
+	margin-left: 1300px;
+	width: 250px;
+	height: 150px;" class="obstacle"></div>
+	
+	<div style="position: absolute;
+	margin-top: 250px;
+	margin-left: 2100px;
+	width: 390px;
+	height: 350px;" class="obstacle"></div>
+	
+	<div style="position: absolute;
+	margin-top: 250px;
+	margin-left: 1923px;
+	width: 190px;
+	height: 230px;" class="obstacle"></div>
+	
+	<div style="position: absolute;
+	margin-top: 1000px;
+	margin-left: 0;
+	width: 364px;
+	height: 230px;" class="obstacle"></div>
+	
+	<div style="position: absolute;
+	margin-top: 1159px;
+	margin-left: 318px;
+	width: 173px;
+	height: 144px;" class="obstacle"></div>
+
+	</div>
 </div>
-</body></html>
-<!--
-	https://i.imgur.com/pyPuT7m.jpeg
-	http://imagizer.imageshack.com/a/img923/7643/cIujNX.jpg
-	https://images.saymedia-content.com/.image/t_share/MTc2Mjg0NTA3ODg3Mzc5NjQ2/simcity4.gif
-	-->
+</body>
+</html>
