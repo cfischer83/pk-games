@@ -94,23 +94,23 @@ body.debug .obstacle {
     animation-duration: 1000ms;
 }
 
-@keyframes explosionDissipation{
-  0%{
-    opacity: 1;
-  }
-  50%{
-    opacity: 0.5;
-  }
-  100%{
-    display: none;
-    opacity: 0;
-  }
+@keyframes explosionDissipation {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		display: none;
+		opacity: 0;
+	}
 }
 </style>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
 <script type="text/javascript">
-var p1, ground;
+var p1, ground, global_ground_width, global_ground_height;
 var global_increment_by = 10;
 var global_box_size = 50;
 var global_player_height = 70;
@@ -124,6 +124,34 @@ function debug() {
 	}
 }
 
+function getWindowWidth() {
+	return global_window_size;
+}
+
+function getWindowHeight() {
+	return window.innerHeight;
+}
+
+function getGroundWidth() {
+	if (!global_ground_width) {
+		var ground = document.getElementById("ground");
+		var groundOffset = ground.getBoundingClientRect();
+		var groundWidth = groundOffset.width ? parseInt(groundOffset.width) : 0;
+		global_ground_width = groundWidth;
+	}
+	return global_ground_width;
+}
+
+function getGroundHeight() {
+	if (!global_ground_height) {
+		var ground = document.getElementById("ground");
+		var groundOffset = ground.getBoundingClientRect();
+		var groundHeight = groundOffset.height ? parseInt(groundOffset.height) : 0;
+		global_ground_height = groundHeight;
+	}
+	return global_ground_height;
+}
+
 document.addEventListener("DOMContentLoaded", function(event) { 
 	p1		= document.getElementById("p1");
 	ground	= document.getElementById("ground");
@@ -131,8 +159,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	p1.style.marginLeft	= "30px";
 	p1.style.marginTop = "30px";
-	cam.style.width = window.innerWidth;
-	cam.style.height = window.innerHeight;
+	cam.style.width = getWindowWidth();
+	cam.style.height = getWindowHeight();
 	debug();
 });
 
@@ -168,7 +196,7 @@ $(document).ready(function() {
 		            }
 		            if (!playerObstacles(p1,"left")) {
 		            	moveCamLeft(p1);
-		            	moveBlockLeft(p1);
+		            	moveBlockLeft(p1, true);
 		            }
 	            	changeDirection("left");
 	            } else if (e.which == 38) {
@@ -177,7 +205,7 @@ $(document).ready(function() {
 		            }
 		            if (!playerObstacles(p1,"up")) {
 		            	moveCamUp(p1);
-		            	moveBlockUp(p1);
+		            	moveBlockUp(p1, true);
 		            }
 	            	changeDirection("up");
 	            } else if (e.which == 39) {
@@ -186,7 +214,7 @@ $(document).ready(function() {
 		            }
 	            	if (!playerObstacles(p1,"right")) {
 	            		moveCamRight(p1);
-		            	moveBlockRight(p1);
+		            	moveBlockRight(p1, true);
 		            }
 	            	changeDirection("right");
 	            } else if (e.which == 40) {
@@ -195,7 +223,7 @@ $(document).ready(function() {
 		            }
 		            if (!playerObstacles(p1,"down")) {
 		            	moveCamDown(p1);
-		            	moveBlockDown(p1);
+		            	moveBlockDown(p1, true);
 		            }
 	            	changeDirection("down");
 	            } else {
@@ -240,33 +268,33 @@ function playerObstacles(player, direction) {
 
 
 
-function moveBlockLeft(block) {
+function moveBlockLeft(block, windowBoundary = false) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft - global_increment_by;
-	//if (newMarginLeft >= 0) {
+	if (newMarginLeft >= 0 || !windowBoundary) {
 		block.style.marginLeft = newMarginLeft + "px";
-	//}
+	}
 }
-function moveBlockRight(block) {
+function moveBlockRight(block, windowBoundary = false) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft + global_increment_by;
-	//if (newMarginLeft <= (global_window_size-global_box_size)) {
+	if (newMarginLeft <= (getGroundWidth() - global_box_size) || !windowBoundary) {
 		block.style.marginLeft = newMarginLeft + "px";
-	//}
+	}
 }
-function moveBlockUp(block) {
+function moveBlockUp(block, windowBoundary = false) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop - global_increment_by;
-	//if (newMarginTop <= (global_window_size-global_box_size)) {
+	if (newMarginTop >= 0 || !windowBoundary) {
 		block.style.marginTop = newMarginTop + "px";
-	//}
+	}
 }
-function moveBlockDown(block) {
+function moveBlockDown(block, windowBoundary = false) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop + global_increment_by;
-	//if (newMarginTop <= (global_window_size-global_box_size)) {
+	if (newMarginTop <= (getGroundHeight() - global_box_size) || !windowBoundary) {
 		block.style.marginTop = newMarginTop + "px";
-	//}
+	}
 }
 
 // addMargin is to look in the future
@@ -413,10 +441,10 @@ function convertToExplosion(fire) {
 
 
 function moveCamRight(p1){
-    var cam_center = window.innerWidth/2 - global_box_size;
+    var cam_center = getWindowWidth() / 2 - global_box_size;
     var groundDetails = ground.getBoundingClientRect();
     var groundWidth	= groundDetails.width;
-    var maxLeft = groundWidth - window.innerWidth;
+    var maxLeft = groundWidth - getWindowWidth();
     var p1marginLeft = parseInt(p1.style.marginLeft);
     if (!p1marginLeft) {
         p1marginLeft = 0;
@@ -433,14 +461,14 @@ function moveCamRight(p1){
     }
 }
 function moveCamLeft(p1){
-    var cam_center = window.innerWidth/2 - global_box_size;
+    var cam_center = getWindowWidth() / 2 - global_box_size;
     var groundDetails = ground.getBoundingClientRect();
     var groundWidth	= groundDetails.width;
     var p1marginLeft = parseInt(p1.style.marginLeft);
     if (!p1marginLeft) {
         p1marginLeft = 0;
     }
-    var maxLeft = groundWidth - window.innerWidth + cam_center; // when player is at right-most and goes left
+    var maxLeft = groundWidth - getWindowWidth() + cam_center; // when player is at right-most and goes left
     var cam = document.getElementById("cam");
     var cam_marginLeft = parseInt(cam.style.marginLeft);
     if (!cam_marginLeft) {
@@ -454,10 +482,10 @@ function moveCamLeft(p1){
     }
 }
 function moveCamUp(p1){
-    var cam_center = window.innerHeight/2 - global_box_size;
+    var cam_center = getWindowHeight() / 2 - global_box_size;
     var groundDetails = ground.getBoundingClientRect();
     var groundHeight	= groundDetails.height;
-    var maxHeight = Math.floor((groundHeight - window.innerHeight + cam_center) / 10) * 10;
+    var maxHeight = Math.floor((groundHeight - getWindowHeight() + cam_center) / 10) * 10;
     var p1marginTop = parseInt(p1.style.marginTop);
     if (!p1marginTop) {
         p1marginTop = 0;
@@ -473,10 +501,10 @@ function moveCamUp(p1){
     }
 }
 function moveCamDown(p1){
-    var cam_center = window.innerHeight/2 - global_player_height;
+    var cam_center = getWindowHeight() / 2 - global_player_height;
     var groundDetails = ground.getBoundingClientRect();
     var groundHeight	= groundDetails.height;
-    var maxHeight = Math.floor((groundHeight - window.innerHeight) / 10) * 10;
+    var maxHeight = Math.floor((groundHeight - getWindowHeight()) / 10) * 10;
     var p1marginTop = parseInt(p1.style.marginTop);
     if (!p1marginTop) {
         p1marginTop = 0;
