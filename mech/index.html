@@ -69,6 +69,30 @@ body.debug .obstacle {
 	background-image: url(warhawk-up-frames-no-shadow.gif);
 }
 
+
+.turret {
+	position: absolute;
+	background: url(turret-up-left.png) center center no-repeat;
+	background-size: contain;
+	width: 99px;
+	height: 87px;
+	margin: 150px;
+}
+.turret.top.left {
+	background-image: url(turret-up-left.png);
+}
+.turret.top.right {
+	background-image: url(turret-up-right.png);
+}
+.turret.bottom.left {
+	background-image: url(turret-down-left.png);
+}
+.turret.bottom.right {
+	background-image: url(turret-down-right.png);
+}
+
+
+
 .erppc {
 	display: block;
 	position: absolute;
@@ -161,6 +185,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	p1.style.marginTop = "30px";
 	cam.style.width = getWindowWidth();
 	cam.style.height = getWindowHeight();
+	setInterval("rotateTurrets()", 1000);
 	debug();
 });
 
@@ -198,7 +223,7 @@ $(document).ready(function() {
 		            	moveCamLeft(p1);
 		            	moveBlockLeft(p1, true);
 		            }
-	            	changeDirection("left");
+	            	changeDirection(p1, "left");
 	            } else if (e.which == 38) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
@@ -207,7 +232,7 @@ $(document).ready(function() {
 		            	moveCamUp(p1);
 		            	moveBlockUp(p1, true);
 		            }
-	            	changeDirection("up");
+	            	changeDirection(p1, "up");
 	            } else if (e.which == 39) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
@@ -216,7 +241,7 @@ $(document).ready(function() {
 	            		moveCamRight(p1);
 		            	moveBlockRight(p1, true);
 		            }
-	            	changeDirection("right");
+	            	changeDirection(p1, "right");
 	            } else if (e.which == 40) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
@@ -225,7 +250,7 @@ $(document).ready(function() {
 		            	moveCamDown(p1);
 		            	moveBlockDown(p1, true);
 		            }
-	            	changeDirection("down");
+	            	changeDirection(p1, "down");
 	            } else {
 	            	//
 	            }
@@ -256,10 +281,12 @@ function isMovingKey(k) {
 
 function playerObstacles(player, direction) {
 	obstacles = document.getElementsByClassName("obstacle");
-	for (i = 0; i < obstacles.length; i++) {
-		if (willBlocksOverlap(player, obstacles[i], direction)) {
+	enemies = document.getElementsByClassName("enemy");
+	var allObstacles = [...obstacles, ...enemies];
+	for (i = 0; i < allObstacles.length; i++) {
+		if (willBlocksOverlap(player, allObstacles[i], direction)) {
 			//console.log("player x end: " + (parseInt(player.style.marginLeft) + 50 + global_increment_by));
-			//console.log("obstacles[" + i + "].marginLeft: " + parseInt(obstacles[i].style.marginLeft));
+			//console.log("allObstacles[" + i + "].marginLeft: " + parseInt(allObstacles[i].style.marginLeft));
 			return true;
 		}
 	}
@@ -355,17 +382,56 @@ function willBlocksOverlap(box1, box2, direction) {
 	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
 	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
 	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+		console.log("true");
 		return true;
 	} else {
+		console.log("false");
 		return false;
 	}
 }
 
-function changeDirection(dir) {
-	$("#p1").removeClass("left up right down");
-	$("#p1").addClass(dir);
-	direction = dir;
+function changeDirection(obj, dir) {
+	obj.classList.remove("left", "up", "right", "down");
+	obj.classList.add(dir);
+	if (obj.id == "p1") {
+		direction = dir;
+	}
 }
+
+
+function turretDirection(turret) {
+	var p1Details = p1.getBoundingClientRect();
+    var p1x	= p1Details.x;
+    var p1y	= p1Details.y;
+
+    var turretDetails = turret.getBoundingClientRect();
+    var tx = turretDetails.x;
+    var ty = turretDetails.y;
+
+    if (p1x < tx) {
+    	turret.classList.remove("right");
+    	turret.classList.add("left");
+    } else {
+    	turret.classList.remove("left");
+    	turret.classList.add("right");
+    }
+    if (p1y < ty) {
+    	turret.classList.remove("bottom");
+    	turret.classList.add("top");
+    } else {
+    	turret.classList.remove("top");
+    	turret.classList.add("bottom");
+    }
+}
+
+
+function rotateTurrets() {
+	var turrets = document.getElementsByClassName("turret");
+	for (i = 0; i < turrets.length; i++) {
+		turretDirection(turrets[i]);
+	}
+}
+
 
 function fire() {
 	var fireStartX	= p1.style.marginLeft ? parseInt(p1.style.marginLeft) : 0;
@@ -383,12 +449,13 @@ function fire() {
 	fireTimer("erppc" + rando, direction);
 }
 
-function fireTimer(firedElement, dir) {
-	fireArray[firedElement] = setInterval(function() {
-		erppcID = firedElement;
+function fireTimer(firedArrayElm, dir) {
+	fireArray[firedArrayElm] = setInterval(function() {
+		erppcID = firedArrayElm;
 		erppc = document.getElementById(erppcID);
 		if (erppc) {
-			checkFireHittingObstacle(firedElement);
+			checkProjectileHittingObject(firedArrayElm, "enemy");
+			checkProjectileHittingObject(firedArrayElm, "obstacle");
 			switch(dir) {
 				case "right" : moveBlockRight(erppc); break;
 				case "left" : moveBlockLeft(erppc); break;
@@ -402,8 +469,8 @@ function fireTimer(firedElement, dir) {
 
 	// begin fade out animation
 	setTimeout(function() {
-		clearInterval(fireArray[firedElement]);
-		elm = document.getElementById(firedElement);
+		clearInterval(fireArray[firedArrayElm]);
+		elm = document.getElementById(firedArrayElm);
 		if (elm && elm.classList.contains("explosion")) {
 			elm.classList.add("fade");;
 		}
@@ -412,26 +479,33 @@ function fireTimer(firedElement, dir) {
 		} else {
 			// clear item after explosion animation
 			setTimeout(function() {
-				if (document.getElementById(firedElement)) {
-					document.getElementById(firedElement).remove();
+				if (document.getElementById(firedArrayElm)) {
+					document.getElementById(firedArrayElm).remove();
 				}
 			}, 1000);
 		}
 	}, 3000);
 }
 
-function checkFireHittingObstacle(fire) {
-	erppc = document.getElementById(fire);
-	obstacles = document.getElementsByClassName("obstacle");
+/*
+projectileArrayElm = array key of fired element
+hitType = obstacle such as building, or enemy
+*/
+function checkProjectileHittingObject(projectileArrayElm, hitType) {
+	projectile = document.getElementById(projectileArrayElm);
+	obstacles = document.getElementsByClassName(hitType);
 	for (i = 0; i < obstacles.length; i++) {
-		//console.log("obstacles " + i + " " + new Date().getMilliseconds().toString());
-		if (doBlocksOverLap(erppc, obstacles[i])) {
+		if (doBlocksOverLap(projectile, obstacles[i])) {
 			console.log("hit");
-			clearInterval(fireArray[fire]);
-			convertToExplosion(erppc);
+			clearInterval(fireArray[projectileArrayElm]);
+			convertToExplosion(projectile);
+			return true;
 		}
 	}
+	return false;
 }
+
+
 
 /* converts a fired ammo into a 'hit' */
 function convertToExplosion(fire) {
@@ -528,6 +602,8 @@ function moveCamDown(p1){
 <div id="cam">
 	<div id="ground">
 		<div id="p1" class="right"></div>
+
+		<div class="turret enemy"></div>
 
 		<div style="position: absolute;
 	margin-top: 0;
