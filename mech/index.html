@@ -76,7 +76,6 @@ body.debug .obstacle {
 	background-size: contain;
 	width: 99px;
 	height: 87px;
-	margin: 150px;
 }
 .turret.top.left {
 	background-image: url(turret-up-left.png);
@@ -118,6 +117,31 @@ body.debug .obstacle {
     animation-duration: 1000ms;
 }
 
+.missile {
+	position: absolute;
+	width: 15px;
+	height: 75px;
+	background: url(missile.gif) 0 0 no-repeat;
+	background-size: contain;
+}
+.missile.explosion {
+	background: none;
+}
+.missile.explosion::before {
+	content: " ";
+	display: block;
+	width: 60px;
+	height: 120px;
+	margin: 0 0 0 -15px;
+	background: url(explosion.gif) 0 0 no-repeat;
+	background-size: contain;
+}
+.missile.explosion.fade::before {
+	animation-name: explosionDissipation;
+    animation-duration: 1000ms;
+}
+
+
 @keyframes explosionDissipation {
 	0% {
 		opacity: 1;
@@ -141,6 +165,22 @@ var global_player_height = 70;
 var global_window_size = window.innerWidth;
 var direction = 'right';
 var fireArray = new Array();
+
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	p1		= document.getElementById("p1");
+	ground	= document.getElementById("ground");
+	cam		= document.getElementById("cam");
+
+	p1.style.marginLeft	= "30px";
+	p1.style.marginTop = "30px";
+	cam.style.width = getWindowWidth();
+	cam.style.height = getWindowHeight();
+	setInterval("rotateTurrets()", 1000);
+	setInterval("promptEnemiesToFire()", 1000);
+	debug();
+});
+
 
 function debug() {
 	if (location.search.includes("debug")) {
@@ -176,19 +216,6 @@ function getGroundHeight() {
 	return global_ground_height;
 }
 
-document.addEventListener("DOMContentLoaded", function(event) { 
-	p1		= document.getElementById("p1");
-	ground	= document.getElementById("ground");
-	cam		= document.getElementById("cam");
-
-	p1.style.marginLeft	= "30px";
-	p1.style.marginTop = "30px";
-	cam.style.width = getWindowWidth();
-	cam.style.height = getWindowHeight();
-	setInterval("rotateTurrets()", 1000);
-	debug();
-});
-
 
 
 var downTimer;
@@ -196,7 +223,7 @@ var lastKey;
 $(document).ready(function() {
 	$(document.body).keydown(function(e) {
 		if (e.keyCode == '32') {
-			fire();
+			fire(p1, "good", "erppc");
 			return false;
 		}
 		if (!isMovingKey(e.keyCode)) {
@@ -382,10 +409,10 @@ function willBlocksOverlap(box1, box2, direction) {
 	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
 	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
 	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
-		console.log("true");
+		//console.log("true");
 		return true;
 	} else {
-		console.log("false");
+		//console.log("false");
 		return false;
 	}
 }
@@ -394,6 +421,7 @@ function changeDirection(obj, dir) {
 	obj.classList.remove("left", "up", "right", "down");
 	obj.classList.add(dir);
 	if (obj.id == "p1") {
+		obj.dataset.direction = dir;
 		direction = dir;
 	}
 }
@@ -411,16 +439,20 @@ function turretDirection(turret) {
     if (p1x < tx) {
     	turret.classList.remove("right");
     	turret.classList.add("left");
+    	turret.dataset.direction = "left";
     } else {
     	turret.classList.remove("left");
     	turret.classList.add("right");
+    	turret.dataset.direction = "right";
     }
     if (p1y < ty) {
     	turret.classList.remove("bottom");
     	turret.classList.add("top");
+    	turret.dataset.direction = "up";
     } else {
     	turret.classList.remove("top");
     	turret.classList.add("bottom");
+    	turret.dataset.direction = "down";
     }
 }
 
@@ -433,34 +465,36 @@ function rotateTurrets() {
 }
 
 
-function fire() {
-	var fireStartX	= p1.style.marginLeft ? parseInt(p1.style.marginLeft) : 0;
+function fire(gunner, allegiance, projectileType) {
+	var fireStartX	= gunner.style.marginLeft ? parseInt(gunner.style.marginLeft) : 0;
 		fireStartX	= fireStartX + 15;
-	var fireStartY	= p1.style.marginTop ? parseInt(p1.style.marginTop) : 0;
+	var fireStartY	= gunner.style.marginTop ? parseInt(gunner.style.marginTop) : 0;
 		fireStartY	= fireStartY + 25;
-	var erppc = document.createElement("div");
+	var projectile = document.createElement("div");
 		var rando = Math.random();
-		erppc.setAttribute("class", "erppc");
-		erppc.setAttribute("id", "erppc" + rando);
-		ground.appendChild(erppc);
-		document.getElementById("erppc" + rando).style.marginLeft = fireStartX;
-		document.getElementById("erppc" + rando).style.marginTop = fireStartY;
-	fireArray.push("erppc" + rando);
-	fireTimer("erppc" + rando, direction);
+		projectile.setAttribute("class", projectileType);
+		projectile.setAttribute("id", "projectile" + rando);
+		projectile.setAttribute("data-allegiance", allegiance);
+		ground.appendChild(projectile);
+		document.getElementById("projectile" + rando).style.marginLeft = fireStartX;
+		document.getElementById("projectile" + rando).style.marginTop = fireStartY;
+	var dir = gunner.dataset.direction;
+	fireArray.push("projectile" + rando);
+	fireTimer("projectile" + rando, dir);
 }
 
 function fireTimer(firedArrayElm, dir) {
 	fireArray[firedArrayElm] = setInterval(function() {
-		erppcID = firedArrayElm;
-		erppc = document.getElementById(erppcID);
-		if (erppc) {
-			checkProjectileHittingObject(firedArrayElm, "enemy");
+		projectile = document.getElementById(firedArrayElm);
+		if (projectile) {
+			hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
+			checkProjectileHittingObject(firedArrayElm, hitAllegiance);
 			checkProjectileHittingObject(firedArrayElm, "obstacle");
 			switch(dir) {
-				case "right" : moveBlockRight(erppc); break;
-				case "left" : moveBlockLeft(erppc); break;
-				case "up" : moveBlockUp(erppc); break;
-				case "down" : moveBlockDown(erppc); break;
+				case "right" : moveBlockRight(projectile); break;
+				case "left" : moveBlockLeft(projectile); break;
+				case "up" : moveBlockUp(projectile); break;
+				case "down" : moveBlockDown(projectile); break;
 				default : "";break;
 			}
 			
@@ -472,7 +506,7 @@ function fireTimer(firedArrayElm, dir) {
 		clearInterval(fireArray[firedArrayElm]);
 		elm = document.getElementById(firedArrayElm);
 		if (elm && elm.classList.contains("explosion")) {
-			elm.classList.add("fade");;
+			elm.classList.add("fade");
 		}
 		if (elm && !elm.classList.contains("explosion")) {
 			elm.remove();
@@ -493,16 +527,63 @@ hitType = obstacle such as building, or enemy
 */
 function checkProjectileHittingObject(projectileArrayElm, hitType) {
 	projectile = document.getElementById(projectileArrayElm);
-	obstacles = document.getElementsByClassName(hitType);
+	if (hitType == 'obstacle') {
+		obstacles = document.getElementsByClassName("obstacle");
+	} else {
+		obstacles = document.querySelectorAll("[data-allegiance='" + hitType + "']");
+	}
 	for (i = 0; i < obstacles.length; i++) {
-		if (doBlocksOverLap(projectile, obstacles[i])) {
-			console.log("hit");
+		var friendlyFire = false;
+		if (obstacles[i].dataset?.allegiance == projectile.dataset?.allegiance) {
+			friendlyFire = true;
+		}
+		//console.log("obstacles[i].dataset?.allegiance = " + obstacles[i].dataset?.allegiance)
+		//console.log("projectile.dataset?.allegiance = " + projectile.dataset?.allegiance)
+		if (doBlocksOverLap(projectile, obstacles[i]) && !friendlyFire) {
+			//console.log("hit");
 			clearInterval(fireArray[projectileArrayElm]);
 			convertToExplosion(projectile);
 			return true;
 		}
 	}
 	return false;
+}
+
+function promptEnemiesToFire() {
+	var enemies = document.getElementsByClassName("enemy");
+	for (var i = 0; i < enemies.length; i++) {
+		if (enemyWithinRange(enemies[i])) {
+			makeEnemyFire(enemies[i]);
+		}
+	}
+}
+
+function enemyWithinRange(enemy) {
+	var inRange = 1000;
+	var enemeyDetails = enemy.getBoundingClientRect();
+	var enemyX = enemeyDetails.x + (enemeyDetails.width / 2);
+	var enemyY = enemeyDetails.y + (enemeyDetails.height / 2);
+
+	var p1Details = p1.getBoundingClientRect();
+	var p1X = p1Details.x + (p1Details.width / 2);
+	var p1Y = p1Details.y + (p1Details.height / 2);
+
+	var withinX = (p1X - enemyX < inRange && p1X - enemyX > -Math.abs(inRange));
+	var withinY = (p1Y - enemyY < inRange && p1Y - enemyY > -Math.abs(inRange));
+	
+	if (withinX && withinY) {
+		return true;
+	}
+	return false;
+}
+
+function makeEnemyFire(enemy) {
+	var rando = Math.random() * 3000;
+	// every 1/3
+	if (rando <= 1000) {
+		//console.log("FIRE! " + enemy)
+		fire(enemy, "enemy", "missile");
+	}
 }
 
 
@@ -601,45 +682,46 @@ function moveCamDown(p1){
 <body>
 <div id="cam">
 	<div id="ground">
-		<div id="p1" class="right"></div>
+		<div id="p1" class="right" data-allegiance="good" data-direction="right"></div>
 
-		<div class="turret enemy"></div>
-
-		<div style="position: absolute;
-	margin-top: 0;
-	margin-left: 1530px;
-	width: 831px;
-	height: 286px;" class="obstacle"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 150px 0 0 150px"></div>
+		<!-- <div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 350px 0 0 350px"></div> -->
 
 		<div style="position: absolute;
-	margin-top: 0;
-	margin-left: 1300px;
-	width: 250px;
-	height: 150px;" class="obstacle"></div>
-	
-	<div style="position: absolute;
-	margin-top: 250px;
-	margin-left: 2100px;
-	width: 390px;
-	height: 350px;" class="obstacle"></div>
-	
-	<div style="position: absolute;
-	margin-top: 250px;
-	margin-left: 1923px;
-	width: 190px;
-	height: 230px;" class="obstacle"></div>
-	
-	<div style="position: absolute;
-	margin-top: 1000px;
-	margin-left: 0;
-	width: 364px;
-	height: 230px;" class="obstacle"></div>
-	
-	<div style="position: absolute;
-	margin-top: 1159px;
-	margin-left: 318px;
-	width: 173px;
-	height: 144px;" class="obstacle"></div>
+		margin-top: 0;
+		margin-left: 1530px;
+		width: 831px;
+		height: 286px;" class="obstacle" data-allegiance="obstacle"></div>
+
+			<div style="position: absolute;
+		margin-top: 0;
+		margin-left: 1300px;
+		width: 250px;
+		height: 150px;" class="obstacle" data-allegiance="obstacle"></div>
+		
+		<div style="position: absolute;
+		margin-top: 250px;
+		margin-left: 2100px;
+		width: 390px;
+		height: 350px;" class="obstacle" data-allegiance="obstacle"></div>
+		
+		<div style="position: absolute;
+		margin-top: 250px;
+		margin-left: 1923px;
+		width: 190px;
+		height: 230px;" class="obstacle" data-allegiance="obstacle"></div>
+		
+		<div style="position: absolute;
+		margin-top: 1000px;
+		margin-left: 0;
+		width: 364px;
+		height: 230px;" class="obstacle" data-allegiance="obstacle"></div>
+		
+		<div style="position: absolute;
+		margin-top: 1159px;
+		margin-left: 318px;
+		width: 173px;
+		height: 144px;" class="obstacle" data-allegiance="obstacle"></div>
 
 	</div>
 </div>
