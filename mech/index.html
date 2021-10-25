@@ -118,7 +118,7 @@ body.debug .obstacle {
 }
 
 .missile {
-	transition: all 300ms linear;
+	transition: all 30ms linear;
 	position: absolute;
 	width: 15px;
 	height: 75px;
@@ -537,23 +537,32 @@ function fireMissile(firedArrayElm, dir) {
 		yDir = directionDetails[3];
 		diff = directionDetails[4];
 	pointProjectile(projectile, directionDetails);
+	
+	var moveBy = 10;
+	var helperMoveBy = parseInt(Math.abs(moveBy/diff));
+	if (helperMoveBy > moveBy) {
+		tmHelperMoveBy = helperMoveBy;
+		helperMoveBy = moveBy;
+		moveBy = parseInt(moveBy / tmHelperMoveBy * moveBy);
+	}
+	//console.log("diff = " + diff+ "; helperMoveBy = " + helperMoveBy)
 	fireArray[firedArrayElm] = setInterval(function() {
 		if (projectile) {
 			hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
 			checkProjectileHittingObject(firedArrayElm, hitAllegiance);
 			checkProjectileHittingObject(firedArrayElm, "obstacle");
 			if (xDir == "left") {
-				moveBlockLeft(projectile, false, 50);
+				moveBlockLeft(projectile, false, moveBy);
 			} else if (xDir == "right") {
-				moveBlockRight(projectile, false, 50);
+				moveBlockRight(projectile, false, moveBy);
 			}
 			if (yDir == "up") {
-				moveBlockUp(projectile, false, Math.abs(50/diff));
+				moveBlockUp(projectile, false, helperMoveBy);
 			} else if (yDir == "down") {
-				moveBlockDown(projectile, false, Math.abs(50/diff));
+				moveBlockDown(projectile, false, helperMoveBy);
 			}
 		}
-	},300);
+	},30);
 
 	// begin fade out animation
 	setTimeout(function() {
@@ -588,22 +597,26 @@ function homingDirection(projectile, nearestFoe) {
 	var xDir = (projectileDetails.x > nearestFoeDetails.x) ? "left" : "right";
 	var yDir = (projectileDetails.y > nearestFoeDetails.y) ? "up" : "down";
 	var diff = x / y;
-	console.log("x = " + x + " y = " + y + " xDir = " + xDir + " yDir = " + yDir + " diff = " + diff);
+	//console.log("x = " + x + " y = " + y + " xDir = " + xDir + " yDir = " + yDir + " diff = " + diff);
 	return [x, y, xDir, yDir, diff];
 }
 
 /*
 Intended to get rotate projectile correctly
 */
-function pointProjectile(projectile, projectileDetails) {
-	x = projectileDetails[0];
-	y = projectileDetails[1];
-	xDir = projectileDetails[2];
-	yDir = projectileDetails[3];
-	diff = projectileDetails[4];
+function pointProjectile(projectile, projectileHomingDetails) {
+	var projectileDetails = projectile.getBoundingClientRect();
+	x = Math.abs(projectileHomingDetails[0] - projectileDetails.x);
+	y = Math.abs(projectileHomingDetails[1] - projectileDetails.y);
+	xDir = projectileHomingDetails[2];
+	yDir = projectileHomingDetails[3];
+	diff = projectileHomingDetails[4];
 	rotateAngle = 0;
+	// hypotenuse = (x > y) ? x : y;
+	// wall = (hypotenuse == x) ? y : x;
+	// opposite = (Math.sqrt((hypotenuse * hypotenuse) - (wall * wall)) )
 	if (xDir == "right" && yDir == "up") {
-		rotateAngle = diff * 180/Math.PI;
+		rotateAngle = Math.abs(diff) * 45;
 	}
 	console.log("transform: rotate(" + rotateAngle + "deg)")
 	//projectile.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
