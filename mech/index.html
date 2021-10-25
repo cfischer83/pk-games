@@ -118,6 +118,7 @@ body.debug .obstacle {
 }
 
 .missile {
+	transition: all 300ms linear;
 	position: absolute;
 	width: 15px;
 	height: 75px;
@@ -322,30 +323,30 @@ function playerObstacles(player, direction) {
 
 
 
-function moveBlockLeft(block, windowBoundary = false) {
+function moveBlockLeft(block, windowBoundary = false, increment = global_increment_by) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
-	var newMarginLeft = marginLeft - global_increment_by;
+	var newMarginLeft = marginLeft - increment;
 	if (newMarginLeft >= 0 || !windowBoundary) {
 		block.style.marginLeft = newMarginLeft + "px";
 	}
 }
-function moveBlockRight(block, windowBoundary = false) {
+function moveBlockRight(block, windowBoundary = false, increment = global_increment_by) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
-	var newMarginLeft = marginLeft + global_increment_by;
+	var newMarginLeft = marginLeft + increment;
 	if (newMarginLeft <= (getGroundWidth() - global_box_size) || !windowBoundary) {
 		block.style.marginLeft = newMarginLeft + "px";
 	}
 }
-function moveBlockUp(block, windowBoundary = false) {
+function moveBlockUp(block, windowBoundary = false, increment = global_increment_by) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
-	var newMarginTop = marginTop - global_increment_by;
+	var newMarginTop = marginTop - increment;
 	if (newMarginTop >= 0 || !windowBoundary) {
 		block.style.marginTop = newMarginTop + "px";
 	}
 }
-function moveBlockDown(block, windowBoundary = false) {
+function moveBlockDown(block, windowBoundary = false, increment = global_increment_by) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
-	var newMarginTop = marginTop + global_increment_by;
+	var newMarginTop = marginTop + increment;
 	if (newMarginTop <= (getGroundHeight() - global_box_size) || !windowBoundary) {
 		block.style.marginTop = newMarginTop + "px";
 	}
@@ -480,10 +481,14 @@ function fire(gunner, allegiance, projectileType) {
 		document.getElementById("projectile" + rando).style.marginTop = fireStartY;
 	var dir = gunner.dataset.direction;
 	fireArray.push("projectile" + rando);
-	fireTimer("projectile" + rando, dir);
+	if (projectileType == "erppc") {
+		fireERPPC("projectile" + rando, dir);
+	} else {
+		fireMissile("projectile" + rando, dir);
+	}
 }
 
-function fireTimer(firedArrayElm, dir) {
+function fireERPPC(firedArrayElm, dir) {
 	fireArray[firedArrayElm] = setInterval(function() {
 		projectile = document.getElementById(firedArrayElm);
 		if (projectile) {
@@ -520,6 +525,90 @@ function fireTimer(firedArrayElm, dir) {
 		}
 	}, 3000);
 }
+
+function fireMissile(firedArrayElm, dir) {
+	projectile = document.getElementById(firedArrayElm);
+	hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
+	var nearestFoe = getNearestAllegiance(projectile, hitAllegiance);
+	var directionDetails = homingDirection(projectile, nearestFoe);
+		x = directionDetails[0];
+		y = directionDetails[1];
+		xDir = directionDetails[2];
+		yDir = directionDetails[3];
+		diff = directionDetails[4];
+	pointProjectile(projectile, directionDetails);
+	fireArray[firedArrayElm] = setInterval(function() {
+		if (projectile) {
+			hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
+			checkProjectileHittingObject(firedArrayElm, hitAllegiance);
+			checkProjectileHittingObject(firedArrayElm, "obstacle");
+			if (xDir == "left") {
+				moveBlockLeft(projectile, false, 50);
+			} else if (xDir == "right") {
+				moveBlockRight(projectile, false, 50);
+			}
+			if (yDir == "up") {
+				moveBlockUp(projectile, false, Math.abs(50/diff));
+			} else if (yDir == "down") {
+				moveBlockDown(projectile, false, Math.abs(50/diff));
+			}
+		}
+	},300);
+
+	// begin fade out animation
+	setTimeout(function() {
+		clearInterval(fireArray[firedArrayElm]);
+		elm = document.getElementById(firedArrayElm);
+		if (elm && elm.classList.contains("explosion")) {
+			elm.classList.add("fade");
+		}
+		if (elm && !elm.classList.contains("explosion")) {
+			elm.remove();
+		} else {
+			// clear item after explosion animation
+			setTimeout(function() {
+				if (document.getElementById(firedArrayElm)) {
+					document.getElementById(firedArrayElm).remove();
+				}
+			}, 1000);
+		}
+	}, 3000);
+}
+
+function getNearestAllegiance(projectile, hitAllegiance) {
+	// TODO: math to find nearest foe (enemy or good guy)
+	return p1;
+}
+
+function homingDirection(projectile, nearestFoe) {
+	var projectileDetails = projectile.getBoundingClientRect();
+	var nearestFoeDetails = nearestFoe.getBoundingClientRect();
+	var x = projectileDetails.x - nearestFoeDetails.x;
+	var y = projectileDetails.y - nearestFoeDetails.y;
+	var xDir = (projectileDetails.x > nearestFoeDetails.x) ? "left" : "right";
+	var yDir = (projectileDetails.y > nearestFoeDetails.y) ? "up" : "down";
+	var diff = x / y;
+	console.log("x = " + x + " y = " + y + " xDir = " + xDir + " yDir = " + yDir + " diff = " + diff);
+	return [x, y, xDir, yDir, diff];
+}
+
+/*
+Intended to get rotate projectile correctly
+*/
+function pointProjectile(projectile, projectileDetails) {
+	x = projectileDetails[0];
+	y = projectileDetails[1];
+	xDir = projectileDetails[2];
+	yDir = projectileDetails[3];
+	diff = projectileDetails[4];
+	rotateAngle = 0;
+	if (xDir == "right" && yDir == "up") {
+		rotateAngle = diff * 180/Math.PI;
+	}
+	console.log("transform: rotate(" + rotateAngle + "deg)")
+	//projectile.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
+}
+
 
 /*
 projectileArrayElm = array key of fired element
