@@ -10,6 +10,8 @@ body.debug .obstacle {
 	opacity: .5;
 	border: 1px solid white;
 }
+body.debug .missile {border: 1px solid #FFF;}
+body.debug .missile span {border: 1px solid #0FF;}
 #ground {
 	background: url(bg.jpg) 0 0 repeat #553;
 	width: 3840px;
@@ -127,10 +129,11 @@ body.debug .obstacle {
 	content: " ";
 	transition: all 30ms linear;
 	position: absolute;
-	width: 15px;
+	width: 75px;
 	height: 75px;
-	background: url(missile.gif) 0 0 no-repeat;
+	background: url(missile.gif) center center no-repeat;
 	background-size: contain;
+	margin: -32.5px;
 }
 .missile.explosion {
 	background: none;
@@ -476,8 +479,8 @@ function rotateTurrets() {
 
 function fire(gunner, allegiance, projectileType) {
 	var gunnerDetails = gunner.getBoundingClientRect();
-	var fireStartX	= gunnerDetails.x + (gunnerDetails.width / 2);
-	var fireStartY	= gunnerDetails.y + (gunnerDetails.height / 2);
+	var fireStartX	= parseInt(gunner.style.marginLeft) + (gunnerDetails.width / 2);
+	var fireStartY	= parseInt(gunner.style.marginTop) + (gunnerDetails.height / 2);
 	var projectile = document.createElement("div");
 		var rando = Math.random();
 		projectile.setAttribute("class", projectileType);
@@ -599,13 +602,29 @@ function pointProjectile2(projectile, moveBy, helperMoveBy, projectileHomingDeta
 	var span = projectile.children[0];
 	xDir = projectileHomingDetails[2];
 	yDir = projectileHomingDetails[3];
-	if (moveBy > helperMoveBy) {
-		var rotateAngle = (moveBy - helperMoveBy) / moveBy  * 90;
-		console.log((moveBy - helperMoveBy) + " / " + moveBy + " * 90 == " + rotateAngle);
-	} else {
-		var rotateAngle = moveBy / helperMoveBy * 90;
-		console.log("ELSE " + moveBy + " / " + helperMoveBy + " * 90 == " + rotateAngle);
+	var rotateAngle = 0;
+	//console.log(xDir + " " + yDir);
+
+	if (xDir == "right" && yDir == "up") {
+		if (moveBy > helperMoveBy) {
+			rotateAngle += 45 + ((moveBy - helperMoveBy) / moveBy * 45);
+			//console.log("45 + (" + (moveBy - helperMoveBy) + " / " + moveBy + " * 45) == " + rotateAngle);
+		} else {
+			var rotateAngle = moveBy / helperMoveBy * 45;
+			//console.log("ELSE " + moveBy + " / " + helperMoveBy + " * 45 == " + rotateAngle);
+		}
 	}
+	if (xDir == "right" && yDir == "down") {
+		//console.log("moveBy = " + moveBy + "; helperMoveBy = " + helperMoveBy)
+		if (moveBy > helperMoveBy) {
+			rotateAngle = (helperMoveBy / moveBy * 45) + 90;
+			//console.log("45 + (" + (moveBy - helperMoveBy) + " / " + moveBy + " * 45) == " + rotateAngle);
+		} else {
+			var rotateAngle = (90 / (helperMoveBy / Math.abs(moveBy - helperMoveBy))) + 135;
+			console.log("ELSE (90 / (" + helperMoveBy + " / " + Math.abs(moveBy - helperMoveBy) + ")) + 135 == " + rotateAngle);
+		}
+	}
+	//console.log(rotateAngle);
 	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
 }
 
@@ -618,7 +637,7 @@ function homingDirection(projectile, nearestFoe) {
 	var projectileDetails = projectile.getBoundingClientRect();
 	var nearestFoeDetails = nearestFoe.getBoundingClientRect();
 	var x = projectileDetails.x - (nearestFoeDetails.x + (nearestFoeDetails.width / 2));
-	var y = projectileDetails.y - (nearestFoeDetails.y + (nearestFoeDetails.height / 2));
+	var y = parseInt(projectile.style.marginTop) - (parseInt(nearestFoe.style.marginTop) + (nearestFoeDetails.height / 2));
 	var xDir = (projectileDetails.x > nearestFoeDetails.x) ? "left" : "right";
 	var yDir = (projectileDetails.y > nearestFoeDetails.y) ? "up" : "down";
 	var diff = x / y;
@@ -712,8 +731,9 @@ function makeEnemyFire(enemy) {
 	// every 1/3
 	if (rando <= 1000) {
 		//console.log("FIRE! " + enemy)
-		fire(enemy, "enemy", "missile");
+		//fire(enemy, "enemy", "missile");
 	}
+	fire(enemy, "enemy", "missile");
 }
 
 
@@ -813,8 +833,9 @@ function moveCamDown(p1){
 <div id="cam">
 	<div id="ground">
 		<div id="p1" class="right" data-allegiance="good" data-direction="right"></div>
+		<div class="missile" id="projectile0.37164696743384895" data-allegiance="enemy" style="margin-left: 259px; margin-top: 289px; border: 1px solid #FFF;"><span style=""></span></div>
 
-		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 150px 0 0 150px"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 350px 0 0 150px"></div>
 		<!-- <div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 350px 0 0 350px"></div> -->
 
 		<div style="position: absolute;
