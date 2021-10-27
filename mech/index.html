@@ -548,22 +548,19 @@ function fireMissile(firedArrayElm, dir) {
 		xDir = directionDetails[2];
 		yDir = directionDetails[3];
 		diff = directionDetails[4];
-	//pointProjectile(projectile, directionDetails);
 	
-	var moveBy = 10;
-	var helperMoveBy = parseInt(Math.abs(moveBy/diff));
-	if (helperMoveBy > moveBy) {
-		tmHelperMoveBy = helperMoveBy;
-		helperMoveBy = moveBy;
-		moveBy = parseInt(moveBy / tmHelperMoveBy * moveBy);
-	}
-	pointProjectile2(projectile, moveBy, helperMoveBy, directionDetails);
+	var moveByDetails = calculateMoveBy(diff);
+	var moveBy = moveByDetails[0];
+	var helperMoveBy = moveByDetails[1];
+	pointProjectile(projectile, moveBy, helperMoveBy, directionDetails);
+
 	//console.log("diff = " + diff+ "; helperMoveBy = " + helperMoveBy)
 	fireArray[firedArrayElm] = setInterval(function() {
 		if (projectile) {
 			hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
 			checkProjectileHittingObject(firedArrayElm, hitAllegiance);
 			checkProjectileHittingObject(firedArrayElm, "obstacle");
+
 			if (xDir == "left") {
 				moveBlockLeft(projectile, false, moveBy);
 			} else if (xDir == "right") {
@@ -597,8 +594,21 @@ function fireMissile(firedArrayElm, dir) {
 	}, 3000);
 }
 
-function pointProjectile2(projectile, moveBy, helperMoveBy, projectileHomingDetails) {
-	var projectileDetails = projectile.getBoundingClientRect();
+function calculateMoveBy(diff) {
+	var moveBy = 10;
+	var helperMoveBy = parseFloat(Math.abs(moveBy/diff));
+	if (helperMoveBy > moveBy) {
+		tmHelperMoveBy = helperMoveBy;
+		helperMoveBy = moveBy;
+		moveBy = parseFloat(moveBy / tmHelperMoveBy * moveBy);
+	}
+	return [moveBy, helperMoveBy];
+}
+
+/*
+Intended to get rotate projectile correctly
+*/
+function pointProjectile(projectile, moveBy, helperMoveBy, projectileHomingDetails) {
 	var span = projectile.children[0];
 	xDir = projectileHomingDetails[2];
 	yDir = projectileHomingDetails[3];
@@ -607,7 +617,7 @@ function pointProjectile2(projectile, moveBy, helperMoveBy, projectileHomingDeta
 
 	if (xDir == "right" && yDir == "up") {
 		if (moveBy > helperMoveBy) {
-			rotateAngle += 45 + ((moveBy - helperMoveBy) / moveBy * 45);
+			rotateAngle = ((moveBy - helperMoveBy) / moveBy * 45) + 45;
 			//console.log("45 + (" + (moveBy - helperMoveBy) + " / " + moveBy + " * 45) == " + rotateAngle);
 		} else {
 			var rotateAngle = moveBy / helperMoveBy * 45;
@@ -615,16 +625,30 @@ function pointProjectile2(projectile, moveBy, helperMoveBy, projectileHomingDeta
 		}
 	}
 	if (xDir == "right" && yDir == "down") {
-		//console.log("moveBy = " + moveBy + "; helperMoveBy = " + helperMoveBy)
 		if (moveBy > helperMoveBy) {
 			rotateAngle = (helperMoveBy / moveBy * 45) + 90;
-			//console.log("45 + (" + (moveBy - helperMoveBy) + " / " + moveBy + " * 45) == " + rotateAngle);
 		} else {
-			var rotateAngle = (90 / (helperMoveBy / Math.abs(moveBy - helperMoveBy))) + 135;
-			console.log("ELSE (90 / (" + helperMoveBy + " / " + Math.abs(moveBy - helperMoveBy) + ")) + 135 == " + rotateAngle);
+			var rotateAngle = Math.abs((helperMoveBy - moveBy) / helperMoveBy * 45) + 135;
+			//console.log("Math.abs(("+helperMoveBy+" - "+moveBy+") / "+helperMoveBy+" * 45) + 135 == " + rotateAngle);
 		}
 	}
-	//console.log(rotateAngle);
+	if (xDir == "left" && yDir == "down") {
+		if (moveBy > helperMoveBy) {
+			rotateAngle = ((moveBy - helperMoveBy) / moveBy * 45) + 225; // ((10-1)/10*45)+225
+			//console.log("moveBy = " + moveBy + "; helperMoveBy = " + helperMoveBy + "; rotateAngle = " + rotateAngle);
+		} else {
+			var rotateAngle = (moveBy / helperMoveBy * 45) + 180; // (1/10*45)+180
+			//console.log("ELSE moveBy = " + moveBy + "; helperMoveBy = " + helperMoveBy + "; rotateAngle = " + rotateAngle)
+		}
+	}
+	if (xDir == "left" && yDir == "up") {
+		if (moveBy > helperMoveBy) {
+			rotateAngle = (helperMoveBy / moveBy * 45) + 270;
+		} else {
+			var rotateAngle = Math.abs((helperMoveBy - moveBy) / helperMoveBy * 45) + 315;
+			//console.log("Math.abs(("+helperMoveBy+" - "+moveBy+") / "+helperMoveBy+" * 45) + 135 == " + rotateAngle);
+		}
+	}
 	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
 }
 
@@ -637,7 +661,7 @@ function homingDirection(projectile, nearestFoe) {
 	var projectileDetails = projectile.getBoundingClientRect();
 	var nearestFoeDetails = nearestFoe.getBoundingClientRect();
 	var x = projectileDetails.x - (nearestFoeDetails.x + (nearestFoeDetails.width / 2));
-	var y = parseInt(projectile.style.marginTop) - (parseInt(nearestFoe.style.marginTop) + (nearestFoeDetails.height / 2));
+	var y = projectileDetails.y - (nearestFoeDetails.y + (nearestFoeDetails.height / 2));
 	var xDir = (projectileDetails.x > nearestFoeDetails.x) ? "left" : "right";
 	var yDir = (projectileDetails.y > nearestFoeDetails.y) ? "up" : "down";
 	var diff = x / y;
@@ -645,29 +669,7 @@ function homingDirection(projectile, nearestFoe) {
 	return [x, y, xDir, yDir, diff];
 }
 
-/*
-Intended to get rotate projectile correctly
-*/
-function pointProjectile(projectile, projectileHomingDetails) {
-	var projectileDetails = projectile.getBoundingClientRect();
-	x = Math.abs(projectileHomingDetails[0] - projectileDetails.x);
-	y = Math.abs(projectileHomingDetails[1] - projectileDetails.y);
-	xDir = projectileHomingDetails[2];
-	yDir = projectileHomingDetails[3];
-	diff = projectileHomingDetails[4];
-	rotateAngle = 0;
-	hypotenuse = (x > y) ? x : y;
-	wall = (hypotenuse == x) ? y : x;
-	opposite = (Math.sqrt((hypotenuse * hypotenuse) - (wall * wall)) );
-	var sinOfAngleX = opposite / hypotenuse; 
-	if (xDir == "right" && yDir == "up") {
-		//rotateAngle = Math.abs(diff) * 45;
-		rotateAngle = Math.asin(sinOfAngleX) * 180/Math.PI;
-	}
-	console.log("hypotenuse = " + hypotenuse + " wall = " + wall + " opposite = " + opposite + " sinOfAngleX = " + sinOfAngleX + " transform: rotate(" + rotateAngle + "deg)");
-	var span = projectile.children[0];
-	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
-}
+
 
 
 /*
@@ -730,10 +732,8 @@ function makeEnemyFire(enemy) {
 	var rando = Math.random() * 3000;
 	// every 1/3
 	if (rando <= 1000) {
-		//console.log("FIRE! " + enemy)
-		//fire(enemy, "enemy", "missile");
+		fire(enemy, "enemy", "missile");
 	}
-	fire(enemy, "enemy", "missile");
 }
 
 
@@ -833,9 +833,9 @@ function moveCamDown(p1){
 <div id="cam">
 	<div id="ground">
 		<div id="p1" class="right" data-allegiance="good" data-direction="right"></div>
-		<div class="missile" id="projectile0.37164696743384895" data-allegiance="enemy" style="margin-left: 259px; margin-top: 289px; border: 1px solid #FFF;"><span style=""></span></div>
 
-		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 350px 0 0 150px"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 850px 0 0 1550px"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 1150px 0 0 1550px"></div>
 		<!-- <div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 350px 0 0 350px"></div> -->
 
 		<div style="position: absolute;
