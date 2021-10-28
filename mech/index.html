@@ -40,35 +40,49 @@ body.debug .missile span {border: 1px solid #0FF;}
 	background-repeat: no-repeat;
 }
 #p1.right::before {
-	background-image: url(standing.gif);
+	background-image: url(warhawk-standing.gif);
 	transform: rotate(-17deg);
 }
 #p1.right.walk::before {
-	background-image: url(2-warhawka.gif);
+	background-image: url(warhawk-walking-h.gif);
 	transform: rotate(-17deg);
 }
 
 #p1.left::before {
-	background-image: url(standing.gif);
+	background-image: url(warhawk-standing.gif);
 	transform: scaleX(-1) rotate(-17deg);
 }
 #p1.left.walk::before {
-	background-image: url(2-warhawka.gif);
+	background-image: url(warhawk-walking-h.gif);
 	transform: scaleX(-1) rotate(-17deg);
 }
 
 #p1.down::before {
-	background-image: url(standing-down.gif);
+	background-image: url(warhawk-standing-down.gif);
 }
 #p1.down.walk::before {
-	background-image: url(warhawk-down2.gif);
+	background-image: url(warhawk-walking-down.gif);
 }
 
 #p1.up::before {
-	background-image: url(standing-up.png);
+	background-image: url(warhawk-standing-up.png);
 }
 #p1.up.walk::before {
-	background-image: url(warhawk-up-frames-no-shadow.gif);
+	background-image: url(warhawk-walking-up.gif);
+}
+#p1.destroyed {
+	z-index: 3;
+}
+#p1.destroyed::before {
+	width: 200px;
+	height: 200px;
+	margin: -100px 0 0 -100px;
+	background-image: url(destroyed-explosion.gif);
+	animation-name: explosionDissipation2;
+    animation-duration: 4000ms;
+}
+#p1.dead::before {
+	display: none;
 }
 
 
@@ -91,6 +105,17 @@ body.debug .missile span {border: 1px solid #0FF;}
 .turret.bottom.right {
 	background-image: url(turret-down-right.png);
 }
+.turret.destroyed {
+	position: absolute;
+	background-image: url(destroyed-explosion.gif) !important;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: -100px 0 0 -100px;
+	width: 200px;
+	height: 200px;
+}
+
 
 
 
@@ -135,20 +160,17 @@ body.debug .missile span {border: 1px solid #0FF;}
 	background-size: contain;
 	margin: -32.5px;
 }
-.missile.explosion {
-	background: none;
-}
 .missile.explosion span {
 	content: " ";
 	display: block;
 	width: 60px;
 	height: 120px;
-	margin: 0 0 0 -15px;
+	margin: -60px 0 0 -15px;
 	background: url(explosion.gif) 0 0 no-repeat;
 	background-size: contain;
 	transform: rotate(0deg) !important;
 }
-.missile.explosion.fade::before {
+.missile.explosion.fade span {
 	animation-name: explosionDissipation;
     animation-duration: 1000ms;
 }
@@ -166,10 +188,26 @@ body.debug .missile span {border: 1px solid #0FF;}
 		opacity: 0;
 	}
 }
+
+@keyframes explosionDissipation2 {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 1;
+	}
+	75% {
+		opacity: 1;
+	}
+	100% {
+		display: none;
+		opacity: 0;
+	}
+}
 </style>
 
-<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.js"></script>
 <script type="text/javascript">
+var gamePlay = true; // whether game is currently being played. Set to false on game lose and win.
 var p1, ground, global_ground_width, global_ground_height;
 var global_increment_by = 10;
 var global_box_size = 50;
@@ -177,6 +215,28 @@ var global_player_height = 70;
 var global_window_size = window.innerWidth;
 var direction = 'right';
 var fireArray = new Array();
+var downTimer;
+var lastKey;
+
+
+function preloadImage(url) {
+    var img=new Image();
+    img.src=url;
+}
+
+preloadImage("warhawk-standing-down.gif");
+preloadImage("warhawk-standing-up.png");
+preloadImage("warhawk-standing.gif");
+preloadImage("warhawk-walking-down.gif");
+preloadImage("warhawk-walking-h.gif");
+preloadImage("warhawk-walking-up.gif");
+preloadImage("turret-down-left.png");
+preloadImage("turret-down-right.png");
+preloadImage("turret-up-left.png");
+preloadImage("turret-up-right.png");
+preloadImage("erppc.gif");
+preloadImage("missile.gif");
+preloadImage("explosion.gif");
 
 
 document.addEventListener("DOMContentLoaded", function(event) { 
@@ -191,56 +251,22 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	setInterval("rotateTurrets()", 1000);
 	setInterval("promptEnemiesToFire()", 1000);
 	debug();
-});
-
-
-function debug() {
-	if (location.search.includes("debug")) {
-		document.body.classList.add("debug");
-	}
-}
-
-function getWindowWidth() {
-	return global_window_size;
-}
-
-function getWindowHeight() {
-	return window.innerHeight;
-}
-
-function getGroundWidth() {
-	if (!global_ground_width) {
-		var ground = document.getElementById("ground");
-		var groundOffset = ground.getBoundingClientRect();
-		var groundWidth = groundOffset.width ? parseInt(groundOffset.width) : 0;
-		global_ground_width = groundWidth;
-	}
-	return global_ground_width;
-}
-
-function getGroundHeight() {
-	if (!global_ground_height) {
-		var ground = document.getElementById("ground");
-		var groundOffset = ground.getBoundingClientRect();
-		var groundHeight = groundOffset.height ? parseInt(groundOffset.height) : 0;
-		global_ground_height = groundHeight;
-	}
-	return global_ground_height;
-}
 
 
 
-var downTimer;
-var lastKey;
-$(document).ready(function() {
-	$(document.body).keydown(function(e) {
+	document.addEventListener("keydown", function(e) {
+		if (!gamePlay) {
+			return;
+		}
 		if (e.keyCode == '32') {
 			fire(p1, "good", "erppc");
+			e.preventDefault();
 			return false;
 		}
 		if (!isMovingKey(e.keyCode)) {
 			return;
 		}
+		e.preventDefault();
 
 	    // if not still the same key, stop the timer
 	    if (e.which !== lastKey) {
@@ -254,6 +280,9 @@ $(document).ready(function() {
 	    if (!downTimer) {
 	        // start timer
 	        downTimer = setInterval(function() {
+	        	if (!gamePlay) {
+					return;
+				}
 	            if (e.which == 37) {
 	            	if (!p1.classList.contains("walk")) {
 		            	p1.classList.add("walk");
@@ -296,7 +325,8 @@ $(document).ready(function() {
 	        }, 67);
 	    }
 	    return false;
-	}).keyup(function(e) {
+	})
+	document.addEventListener("keyup", function(e) {
 		if (isMovingKey(e.keyCode)) {
 			p1.classList.remove("walk");
 		    // stop timer
@@ -307,8 +337,44 @@ $(document).ready(function() {
 		    }
 		}
 	});
-
 });
+
+
+function debug() {
+	if (location.search.includes("debug")) {
+		document.body.classList.add("debug");
+	}
+}
+
+function getWindowWidth() {
+	return global_window_size;
+}
+
+function getWindowHeight() {
+	return window.innerHeight;
+}
+
+function getGroundWidth() {
+	if (!global_ground_width) {
+		var ground = document.getElementById("ground");
+		var groundOffset = ground.getBoundingClientRect();
+		var groundWidth = groundOffset.width ? parseInt(groundOffset.width) : 0;
+		global_ground_width = groundWidth;
+	}
+	return global_ground_width;
+}
+
+function getGroundHeight() {
+	if (!global_ground_height) {
+		var ground = document.getElementById("ground");
+		var groundOffset = ground.getBoundingClientRect();
+		var groundHeight = groundOffset.height ? parseInt(groundOffset.height) : 0;
+		global_ground_height = groundHeight;
+	}
+	return global_ground_height;
+}
+
+
 
 /* Is this left, up, right, down key */
 function isMovingKey(k) {
@@ -377,15 +443,18 @@ function doBlocksOverLap(box1, box2) {
 	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
 	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
 
-	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
-	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
-	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
-	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
-	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
-		return true;
-	} else {
-		return false;
-	}
+	// var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	// var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	// var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	// var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	// if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+	// 	return true;
+	// } else {
+	// 	return false;
+	// }
+	var xOverlap 	= (box1XEnd >= box2XStart && box1XStart <= box2XEnd);
+	var yOverlap 	= (box1YEnd >= box2YStart && box1YStart <= box2YEnd);
+	return (xOverlap && yOverlap);
 }
 function willBlocksOverlap(box1, box2, direction) {
 	paddingHorizontal	= 0;
@@ -416,17 +485,20 @@ function willBlocksOverlap(box1, box2, direction) {
 	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
 	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
 
-	var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
-	var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
-	var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
-	var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
-	if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
-		//console.log("true");
-		return true;
-	} else {
-		//console.log("false");
-		return false;
-	}
+	// var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
+	// var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
+	// var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
+	// var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
+	// if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
+	// 	//console.log("true");
+	// 	return true;
+	// } else {
+	// 	//console.log("false");
+	// 	return false;
+	// }
+	var xOverlap 	= (box1XEnd >= box2XStart && box1XStart <= box2XEnd);
+	var yOverlap 	= (box1YEnd >= box2YStart && box1YStart <= box2YEnd);
+	return (xOverlap && yOverlap);
 }
 
 function changeDirection(obj, dir) {
@@ -478,6 +550,9 @@ function rotateTurrets() {
 
 
 function fire(gunner, allegiance, projectileType) {
+	if (!gamePlay) {
+		return;
+	}
 	var gunnerDetails = gunner.getBoundingClientRect();
 	var fireStartX	= parseInt(gunner.style.marginLeft) + (gunnerDetails.width / 2);
 	var fireStartY	= parseInt(gunner.style.marginTop) + (gunnerDetails.height / 2);
@@ -679,7 +754,7 @@ function checkProjectileHittingObject(projectileArrayElm, hitType) {
 	if (hitType == 'obstacle') {
 		obstacles = document.getElementsByClassName("obstacle");
 	} else {
-		obstacles = document.querySelectorAll("[data-allegiance='" + hitType + "']");
+		obstacles = document.querySelectorAll("[data-allegiance='" + hitType + "'][data-hittable='true']");
 	}
 	for (i = 0; i < obstacles.length; i++) {
 		var friendlyFire = false;
@@ -692,13 +767,42 @@ function checkProjectileHittingObject(projectileArrayElm, hitType) {
 			//console.log("hit");
 			clearInterval(fireArray[projectileArrayElm]);
 			convertToExplosion(projectile);
+			removeLife(obstacles[i]);
 			return true;
 		}
 	}
 	return false;
 }
 
+
+function removeLife(obstacle) {
+	if (obstacle.dataset?.life) {
+		var life = parseInt(obstacle.dataset.life);
+		if (life > 0) {
+			life = life - 5;
+		} else {
+			destroyCharacter(obstacle);
+		}
+		obstacle.setAttribute('data-life', life);
+	}
+}
+
+function destroyCharacter(character) {
+	character.classList.add("destroyed");
+	if (character.id == p1.id) {
+		loseGame();
+	}
+}
+
+function loseGame() {
+	setTimeout("p1.classList.add('dead');", 4000);
+	gamePlay = false;
+}
+
 function promptEnemiesToFire() {
+	if (!gamePlay) {
+		return;
+	}
 	var enemies = document.getElementsByClassName("enemy");
 	for (var i = 0; i < enemies.length; i++) {
 		if (enemyWithinRange(enemies[i])) {
@@ -727,6 +831,9 @@ function enemyWithinRange(enemy) {
 }
 
 function makeEnemyFire(enemy) {
+	if (enemy.classList.contains("destroyed")) {
+		return;
+	}
 	var rando = Math.random() * 3000;
 	// every 1/3
 	if (rando <= 1000) {
@@ -830,11 +937,11 @@ function moveCamDown(p1){
 <body>
 <div id="cam">
 	<div id="ground">
-		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true"></div>
+		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true" data-life="100"></div>
 
-		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 850px 0 0 1550px" data-hittable="true"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 850px 0 0 1550px" data-hittable="true" data-life="0"></div>
 
-		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 1150px 0 0 1550px" data-hittable="true"></div>
+		<div class="turret enemy" data-allegiance="enemy" data-direction="left" style="margin: 1150px 0 0 1550px" data-hittable="true" data-life="0"></div>
 
 		<div style="position: absolute;
 		margin-top: 0;
