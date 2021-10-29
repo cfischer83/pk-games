@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta charset="UTF-8">
 
 <style type="text/css">
 body {
@@ -74,15 +75,24 @@ body.debug .missile span {border: 1px solid #0FF;}
 #p1.destroyed {
 	z-index: 3;
 }
-#p1.destroyed::before {
-	width: 200px;
+#p1.destroyed::before, #p1.dead::before {
+	background-image: url(warhawk-destroyed.png);
+}
+#p1.destroyed::after {
+	content: " ";
+	display: block;
+	width: 165px;
 	height: 200px;
-	margin: -100px 0 0 -100px;
+	margin: -146px 0 0 -63px;
 	background-image: url(destroyed-explosion.gif);
+	background-repeat: no-repeat;
+	background-size: contain;
+	z-index: 2;
+	position: relative;
 	animation-name: explosionDissipation2;
     animation-duration: 4000ms;
 }
-#p1.dead::before {
+#p1.dead::after {
 	display: none;
 }
 
@@ -384,7 +394,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	// disable scrolling
 	// left: 37, up: 38, right: 39, down: 40,
 	// spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
-	var keys = {33: 1, 34: 1, 35: 1, 36: 1};
+	var keys = {39: 1, 40: 1, 33: 1, 34: 1, 35: 1, 36: 1};
 
 	function preventDefault(e) {
 		e.preventDefault();
@@ -1015,7 +1025,7 @@ function moveCamDown(p1){
 </div>
 <div id="cam">
 	<div id="ground">
-		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true" data-life="100"></div>
+		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true" data-life="10"></div>
 	</div>
 </div>
 </body>
