@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacle4 = addObstacle(190, 230, 1923, 230);
 	var obstacle5 = addObstacle(364, 230, 0, 1000);
 	var obstacle6 = addObstacle(173, 144, 318, 1159);
+	var obstacle7 = addObstacle(416, 286, 3367, 509);
+	var obstacle8 = addObstacle(561, 286, 3148, 675);
 });
 
 function addEnemy(enemyType, life, left, top, direction = "left") {

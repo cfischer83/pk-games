@@ -4,6 +4,7 @@
 <style type="text/css">
 body {
 	margin: 0;
+	font-family: sans-serif;
 }
 body.debug .obstacle {
 	background: red;
@@ -111,14 +112,21 @@ body.debug .missile span {border: 1px solid #0FF;}
 	background-image: url(turret-down-right.png);
 }
 .turret.destroyed {
+	background-image: url(turret-destroyed.png) !important;
+}
+.turret.destroyed::before {
+	content: " ";
+	background-image: url(destroyed-explosion.gif);
 	position: absolute;
-	background-image: url(destroyed-explosion.gif) !important;
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: contain;
-	margin: -100px 0 0 -100px;
+	margin: -52px;
 	width: 200px;
 	height: 200px;
+}
+.turret.destroyed.dead::before {
+	background-image: none;
 }
 
 
@@ -209,6 +217,33 @@ body.debug .missile span {border: 1px solid #0FF;}
 		opacity: 0;
 	}
 }
+
+#stats {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: rgba(255, 255, 255, 0.2);
+	color: #FFF;
+	z-index: 2;
+}
+#life {
+	float: right;
+	margin: 10px;
+}
+#life span#barometer {
+	display: block;
+	width: 100px;
+	height: 6px;
+	background: #666;
+	border-radius: 3px;
+}
+#life span#life-tracking {
+	display: block;
+	width: 100%;
+	height: 6px;
+	background: #f00;
+	border-radius: 3px;
+}
 </style>
 
 <script type="text/javascript" src="js/l1.js"></script>
@@ -247,6 +282,7 @@ preloadImage("explosion.gif");
 
 document.addEventListener("DOMContentLoaded", function(event) { 
 	p1		= document.getElementById("p1");
+	lifeStat= document.getElementById("p1").dataset.life;
 	ground	= document.getElementById("ground");
 	cam		= document.getElementById("cam");
 
@@ -343,6 +379,52 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		    }
 		}
 	});
+
+
+	// disable scrolling
+	// left: 37, up: 38, right: 39, down: 40,
+	// spacebar: 32, pageup: 33, pagedown: 34, end: 35, home: 36
+	var keys = {33: 1, 34: 1, 35: 1, 36: 1};
+
+	function preventDefault(e) {
+		e.preventDefault();
+	}
+
+	function preventDefaultForScrollKeys(e) {
+		if (keys[e.keyCode]) {
+			preventDefault(e);
+			return false;
+		}
+	}
+
+	// modern Chrome requires { passive: false } when adding event
+	var supportsPassive = false;
+	try {
+		window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
+			get: function () { supportsPassive = true; } 
+		}));
+	} catch(e) {}
+
+	var wheelOpt = supportsPassive ? { passive: false } : false;
+	var wheelEvent = 'onwheel' in document.createElement('div') ? 'wheel' : 'mousewheel';
+
+	// call this to Disable
+	function disableScroll() {
+		window.addEventListener('DOMMouseScroll', preventDefault, false); // older FF
+		window.addEventListener(wheelEvent, preventDefault, wheelOpt); // modern desktop
+		window.addEventListener('touchmove', preventDefault, wheelOpt); // mobile
+		window.addEventListener('keydown', preventDefaultForScrollKeys, false);
+	}
+
+	// call this to Enable
+	function enableScroll() {
+		window.removeEventListener('DOMMouseScroll', preventDefault, false);
+		window.removeEventListener(wheelEvent, preventDefault, wheelOpt); 
+		window.removeEventListener('touchmove', preventDefault, wheelOpt);
+		window.removeEventListener('keydown', preventDefaultForScrollKeys, false);
+	}
+
+	disableScroll();
 });
 
 
@@ -396,8 +478,6 @@ function playerObstacles(player, direction) {
 	var allObstacles = [...obstacles, ...enemies];
 	for (i = 0; i < allObstacles.length; i++) {
 		if (willBlocksOverlap(player, allObstacles[i], direction)) {
-			//console.log("player x end: " + (parseInt(player.style.marginLeft) + 50 + global_increment_by));
-			//console.log("allObstacles[" + i + "].marginLeft: " + parseInt(allObstacles[i].style.marginLeft));
 			return true;
 		}
 	}
@@ -449,15 +529,6 @@ function doBlocksOverLap(box1, box2) {
 	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
 	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
 
-	// var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
-	// var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
-	// var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
-	// var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
-	// if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
-	// 	return true;
-	// } else {
-	// 	return false;
-	// }
 	var xOverlap 	= (box1XEnd >= box2XStart && box1XStart <= box2XEnd);
 	var yOverlap 	= (box1YEnd >= box2YStart && box1YStart <= box2YEnd);
 	return (xOverlap && yOverlap);
@@ -491,17 +562,6 @@ function willBlocksOverlap(box1, box2, direction) {
 	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
 	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
 
-	// var xOverLapStart = (box1XStart >= box2XStart && box1XStart <= box2XEnd);
-	// var xOverLapEnd = (box1XEnd >= box2XStart && box1XEnd <= box2XEnd);
-	// var yOverLapStart = (box1YStart >= box2YStart && box1YStart <= box2YEnd);
-	// var yOverLapEnd = (box1YEnd >= box2YStart && box1YEnd <= box2YEnd);
-	// if ((yOverLapStart || yOverLapEnd) && (xOverLapStart || xOverLapEnd)) {
-	// 	//console.log("true");
-	// 	return true;
-	// } else {
-	// 	//console.log("false");
-	// 	return false;
-	// }
 	var xOverlap 	= (box1XEnd >= box2XStart && box1XStart <= box2XEnd);
 	var yOverlap 	= (box1YEnd >= box2YStart && box1YStart <= box2YEnd);
 	return (xOverlap && yOverlap);
@@ -790,12 +850,21 @@ function removeLife(obstacle) {
 			destroyCharacter(obstacle);
 		}
 		obstacle.setAttribute('data-life', life);
+		if (obstacle.id == p1.id) {
+			removeLifeStats();
+		}
 	}
+}
+
+function removeLifeStats() {
+	var newLifeStat = p1.dataset.life;
+	var statPercent = newLifeStat / lifeStat * 100;
+	document.getElementById("life-tracking").style.width = statPercent + "%";
 }
 
 function destroyCharacter(character) {
 	character.classList.add("destroyed");
-	setTimeout("document.getElementById('" + character.id + "').classList.add('dead');", 4000);
+	setTimeout("document.getElementById('" + character.id + "').classList.add('dead');", 2500);
 	if (character.id == p1.id) {
 		loseGame();
 	}
@@ -941,9 +1010,12 @@ function moveCamDown(p1){
 
 </head>
 <body>
+<div id="stats">
+	<div id="life">Life: <span id="barometer"><span id="life-tracking"></span></div>
+</div>
 <div id="cam">
 	<div id="ground">
-		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true" data-life="1"></div>
+		<div id="p1" class="right" data-allegiance="good" data-direction="right" data-hittable="true" data-life="100"></div>
 	</div>
 </div>
 </body>
