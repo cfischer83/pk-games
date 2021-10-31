@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var enemy5 = addEnemy("turret", 50, 1400, 3100);
 	var enemy6 = addEnemy("turret", 50, 1700, 3000);
 	var enemy7 = addEnemy("turret", 50, 1400, 3400);
-	var enemy8 = addEnemy("turret", 50, 1700, 3250);
+	var enemy8 = addEnemy("turret", 50, 1700, 3271);
 	var enemy9 = addEnemy("turret", 50, 3282, 742);
 	var enemy10 = addEnemy("turret", 50, 3682, 503);
 	var enemy11 = addEnemy("turret", 50, 3583, 207);
@@ -25,6 +25,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacleWater4 = addObstacle(1000, 700, 950, 2099, false);
 	var obstacleWater5 = addObstacle(400, 750, 899, 2775, false);
 	var obstacleWater6 = addObstacle(70, 100, 1300, 2775, false);
+	var obstacleWater7 = addObstacle(1260, 125, 1949, 3186, false);
+	var obstacleWater8 = addObstacle(1259, 123, 1949, 3458, false);
 });
 
 function addEnemy(enemyType, life, left, top, direction = "left") {
