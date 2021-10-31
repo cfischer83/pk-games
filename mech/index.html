@@ -1,11 +1,14 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<title>Mech - Level 1</title>
 
 <style type="text/css">
 body {
 	margin: 0;
 	font-family: sans-serif;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 body.debug .obstacle {
 	background: red;
@@ -15,14 +18,21 @@ body.debug .obstacle {
 }
 body.debug .missile {border: 1px solid #FFF;}
 body.debug .missile span {border: 1px solid #0FF;}
+body::-webkit-scrollbar, #ground::-webkit-scrollbar, #cam::-webkit-scrollbar {
+	display: none;
+}
 #ground {
 	background: url(bg.jpg) 0 0 repeat #553;
 	width: 3840px;
 	height: 3500px;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 #cam {
 	transition: all 67ms linear;
 	position: relative;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 #p1 {
 	width: 50px;
@@ -270,6 +280,7 @@ var fireArray = new Array();
 var downTimer;
 var lastKey;
 var lastProjectileFired = 0; // will be timestamp to avoid too many firings
+var debug = false;
 
 
 function preloadImage(url) {
@@ -283,6 +294,7 @@ preloadImage("warhawk-standing.gif");
 preloadImage("warhawk-walking-down.gif");
 preloadImage("warhawk-walking-h.gif");
 preloadImage("warhawk-walking-up.gif");
+preloadImage("warhawk-destroyed.png");
 preloadImage("turret-down-left.png");
 preloadImage("turret-down-right.png");
 preloadImage("turret-up-left.png");
@@ -304,7 +316,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	cam.style.height = getWindowHeight();
 	setInterval("rotateTurrets()", 1000);
 	setInterval("promptEnemiesToFire()", 1000);
-	debug();
+	setDebug();
 
 
 
@@ -334,6 +346,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	            downTimer = null;
 	        }
 	    }
+
 	    // remember previous key
 	    lastKey = e.which;
 	    if (!downTimer) {
@@ -389,7 +402,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		if (isMovingKey(e.keyCode)) {
 			p1.classList.remove("walk");
 		    // stop timer
-		    if (downTimer) {
+		    if (downTimer && lastKey == e.keyCode) {
 		        clearInterval(downTimer);
 		        downTimer = null;
 		        lastKey = 0;
@@ -444,6 +457,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	disableScroll();
 });
 
+
+document.addEventListener("click", function(event) { 
+	if (debug) {
+		console.log("x = " + event.clientX + "; y = " + event.clientY);
+	}
+});
+
+
 function getTimeDifference(time1, time2, diff = 0.5) {
 	var diff2 = time2 - time1;
 		diff2 = diff2 / 1000;
@@ -453,8 +474,9 @@ function getTimeDifference(time1, time2, diff = 0.5) {
 	return false;
 }
 
-function debug() {
+function setDebug() {
 	if (location.search.includes("debug")) {
+		debug = true;
 		document.body.classList.add("debug");
 	}
 }
