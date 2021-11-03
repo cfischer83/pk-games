@@ -1,0 +1,254 @@
+body {
+	margin: 0;
+	font-family: sans-serif;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+body.debug .obstacle {
+	background: red;
+	opacity: .5;
+	border: 1px solid white;
+	box-sizing: border-box;
+}
+body.debug .missile {border: 1px solid #FFF;}
+body.debug .missile span {border: 1px solid #0FF;}
+body::-webkit-scrollbar, #ground::-webkit-scrollbar, #cam::-webkit-scrollbar {
+	display: none;
+}
+#cam {
+	transition: all 67ms linear;
+	position: relative;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+#p1 {
+	width: 50px;
+	height: 70px;
+	background-position: center;
+	transition: all 67ms linear;
+	position: absolute;
+	border: 0px solid blue;
+}
+#p1::before {
+	content: " ";
+	width: 120px;
+	height: 110px;
+	margin: -15px 0 0 -45px;
+	display: block;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+#p1.right::before {
+	background-image: url(warhawk-standing.gif);
+	transform: rotate(-17deg);
+}
+#p1.right.walk::before {
+	background-image: url(warhawk-walking-h.gif);
+	transform: rotate(-17deg);
+}
+
+#p1.left::before {
+	background-image: url(warhawk-standing.gif);
+	transform: scaleX(-1) rotate(-17deg);
+}
+#p1.left.walk::before {
+	background-image: url(warhawk-walking-h.gif);
+	transform: scaleX(-1) rotate(-17deg);
+}
+
+#p1.down::before {
+	background-image: url(warhawk-standing-down.gif);
+}
+#p1.down.walk::before {
+	background-image: url(warhawk-walking-down.gif);
+}
+
+#p1.up::before {
+	background-image: url(warhawk-standing-up.png);
+}
+#p1.up.walk::before {
+	background-image: url(warhawk-walking-up.gif);
+}
+#p1.destroyed {
+	z-index: 3;
+}
+#p1.destroyed::before, #p1.dead::before {
+	background-image: url(warhawk-destroyed.png);
+}
+#p1.destroyed::after {
+	content: " ";
+	display: block;
+	width: 165px;
+	height: 200px;
+	margin: -146px 0 0 -63px;
+	background-image: url(destroyed-explosion.gif);
+	background-repeat: no-repeat;
+	background-size: contain;
+	z-index: 2;
+	position: relative;
+	animation-name: explosionDissipation2;
+    animation-duration: 4000ms;
+}
+#p1.dead::after {
+	display: none;
+}
+
+
+.obstacle {
+	position: absolute;
+}
+
+
+.turret {
+	position: absolute;
+	background: url(turret-up-left.png) center center no-repeat;
+	background-size: contain;
+	width: 99px;
+	height: 87px;
+}
+.turret.top.left {
+	background-image: url(turret-up-left.png);
+}
+.turret.top.right {
+	background-image: url(turret-up-right.png);
+}
+.turret.bottom.left {
+	background-image: url(turret-down-left.png);
+}
+.turret.bottom.right {
+	background-image: url(turret-down-right.png);
+}
+.turret.destroyed {
+	background-image: url(turret-destroyed.png) !important;
+}
+.turret.destroyed::before {
+	content: " ";
+	background-image: url(destroyed-explosion.gif);
+	position: absolute;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: -52px;
+	width: 200px;
+	height: 200px;
+}
+.turret.destroyed.dead::before {
+	background-image: none;
+}
+
+
+
+
+.erppc {
+	display: block;
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background: url(erppc.gif) 0 0 no-repeat;
+	background-size: contain;
+}
+.erppc.explosion {
+	background: none;
+}
+.erppc.explosion::before {
+	content: " ";
+	display: block;
+	width: 60px;
+	height: 120px;
+	margin: -60px 0 0 -15px;
+	background: url(explosion.gif) 0 0 no-repeat;
+	background-size: contain;
+}
+.erppc.explosion.fade::before {
+	animation-name: explosionDissipation;
+    animation-duration: 1000ms;
+}
+
+.missile {
+	transition: all 30ms linear;
+	position: absolute;
+	width: 15px;
+	height: 15px;
+}
+.missile span {
+	content: " ";
+	transition: all 30ms linear;
+	position: absolute;
+	width: 75px;
+	height: 75px;
+	background: url(missile.gif) center center no-repeat;
+	background-size: contain;
+	margin: -32.5px;
+}
+.missile.explosion span {
+	content: " ";
+	display: block;
+	width: 60px;
+	height: 120px;
+	margin: -60px 0 0 -15px;
+	background: url(explosion.gif) 0 0 no-repeat;
+	background-size: contain;
+	transform: rotate(0deg) !important;
+}
+.missile.explosion.fade span {
+	animation-name: explosionDissipation;
+    animation-duration: 1000ms;
+}
+
+
+@keyframes explosionDissipation {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		display: none;
+		opacity: 0;
+	}
+}
+
+@keyframes explosionDissipation2 {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 1;
+	}
+	75% {
+		opacity: 1;
+	}
+	100% {
+		display: none;
+		opacity: 0;
+	}
+}
+
+#stats {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: rgba(255, 255, 255, 0.2);
+	color: #FFF;
+	z-index: 2;
+}
+#life {
+	float: right;
+	margin: 10px;
+}
+#life span#barometer {
+	display: block;
+	width: 100px;
+	height: 6px;
+	background: #666;
+	border-radius: 3px;
+}
+#life span#life-tracking {
+	display: block;
+	width: 100%;
+	height: 6px;
+	background: #f00;
+	border-radius: 3px;
+}

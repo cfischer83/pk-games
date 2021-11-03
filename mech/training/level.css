@@ -1,0 +1,135 @@
+#ground {
+	background: url(bg.jpg) 0 0 repeat #553;
+	width: 100%;
+	height: 100%;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+#stats, #life {
+	z-index: 4;
+}
+
+#overlay {
+	background: rgba(0, 0, 0, 0.8);
+	display: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	z-index: 2;
+}
+#overlay.active {
+	display: block;
+	animation-name: trainingFadeIn;
+	animation-duration: 2000ms;
+}
+#overlay.inactive {
+	display: block;
+	animation-name: trainingFadeOut;
+	animation-duration: 2000ms;
+	opacity: 0;
+}
+
+img#trainingArrow {
+	width: 100px;
+	position: absolute;
+	right: 125px;
+	top: 44px;
+	z-index: 3;
+	opacity: 0;
+}
+img#trainingArrow.active {
+	animation-name: trainingFadeIn;
+	animation-duration: 1000ms;
+	opacity: 1;
+}
+img#trainingArrow.inactive {
+	animation-name: trainingFadeOut;
+	animation-duration: 1000ms;
+	opacity: 0;
+}
+
+
+#trainingTips {
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	margin: 0 0 25px -40%;
+	padding: 15px;
+	border-radius: 50px;
+	background: rgba(0, 0, 0, 0.7);
+	color: #FFF;
+	text-align: center;
+	font-size: 2em;
+	width: 80%;
+	line-height: 45px;
+	z-index: 3;
+}
+.fadeInOut {
+	animation-name: trainingFadeOutIn;
+	animation-duration: 2000ms;
+}
+.fadein {
+	animation-name: trainingFadeIn;
+    animation-duration: 1000ms;
+}
+
+.fadeout {
+	animation-name: trainingFadeOut;
+    animation-duration: 1000ms;
+}
+
+.complete {
+	color: #F66;
+}
+button, a.button {
+	background: none;
+	color: #FFF;
+	font-size: .8em;
+	border: 2px solid #FFF;
+	padding: 2px 15px;
+	margin: 0 15px;
+	border-radius: 7px;
+	text-decoration: none;
+}
+button:hover, a.button:hover {
+	background: #55F;
+	cursor: pointer;
+}
+
+
+@keyframes trainingFadeOutIn {
+	0% {
+		opacity: 1;
+	}
+	45% {
+		opacity: 0;
+	}
+	55% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes trainingFadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes trainingFadeOut {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+
+
+
