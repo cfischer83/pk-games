@@ -1,7 +1,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mechs On Planet Kodiak</title>
+<title>Operation Debrief</title>
 
 <style type="text/css">
 body {
@@ -9,12 +9,8 @@ body {
 	font-family: 'Black Ops One', sans-serif;
 	font-weight: 200;
 }
-#logo {
-	display: inline-block;
-	transform: scaleX(-1);
-}
 header {
-	display: table;
+	display: block;
 	text-align: center;
 }
 header h1 {
@@ -25,10 +21,8 @@ header h1 {
 	text-align: center;
 	font-weight: 400;
 	font-style: normal;
-	display: table-cell;
+	display: block;
 	width: 100%;
-	text-indent: -92px;
-	vertical-align: middle;
 }
 .game-container {
 	max-width: 1200px;
@@ -57,6 +51,7 @@ header h1 {
 	padding: 0 20px;
 	color: #000;
 	font-size: 2em;
+	font-family: sans-serif;
 }
 .game a {
 	text-decoration: none;
@@ -64,6 +59,23 @@ header h1 {
 }
 .game-container img {
 	max-width: 100%;
+}
+button, a.button {
+	background: none;
+	color: #FFF;
+	font-size: .8em;
+	border: 2px solid #FFF;
+	padding: 10px 15px;
+	margin: 0 15px;
+	border-radius: 7px;
+	text-decoration: none;
+	text-transform: uppercase;
+	display: inline-block;
+	font-family: 'Black Ops One', sans-serif;
+}
+button:hover, a.button:hover {
+	background: #55F;
+	cursor: pointer;
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,22 +85,20 @@ header h1 {
 </head>
 <body>
 <header id="header">
-	<img src="logo.png" id="logo" alt="" />
-	<h1>Mechs On Planet Kodiak</h1>
+	<h1>Liberate KO Peninsula</h1>
 </header>
 
 <div class="game-container">
 	<div id="training" class="game">
-		<a href="training.html">
-			<img src="training/poster.jpg" />
-			<p>Take training before you start your mission.</p>
+		<a href="../l1.html">
+			<p>The KO Peninsula has been taken over and mostly destroyed. This is an essential stronghold for the enemy's plan for dominating the region.</p>
+			<p>Our reconnaissance has found a series of turrets which are preventing air strikes. Your mission is to destroy all enemy targets.</p>
+			<p><a class="button" href="../l1.html">Launch Mission</a></p>
 		</a>
 	</div>
-	<div class="game">
-		<a href="l1/debrief.html">
-			<img src="l1/poster.jpg" />
-			<p>Operation 1.<br />Read Mission Debrief.</p>
-		</a>
+	<div id="training" class="game">
+		<img src="poster.jpg" />
+		<p>Satellite Image</p>
 	</div>
 </div>
 

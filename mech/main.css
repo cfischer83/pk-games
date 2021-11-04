@@ -15,6 +15,72 @@ body.debug .missile span {border: 1px solid #0FF;}
 body::-webkit-scrollbar, #ground::-webkit-scrollbar, #cam::-webkit-scrollbar {
 	display: none;
 }
+
+#overlay {
+	background: rgba(0, 0, 0, 0.8);
+	display: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	z-index: 2;
+}
+#overlay.active {
+	display: block;
+	animation-name: trainingFadeIn;
+	animation-duration: 2000ms;
+}
+@keyframes trainingFadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+#overlaytext {
+	position: absolute;
+	width: 50%;
+	margin-top: 50px;
+	color: #000;
+	background: #EEE;
+	padding: 20px;
+	border-radius: 10px;
+	z-index: 5;
+	animation-name: trainingFadeIn;
+	animation-duration: 2000ms;
+	text-align: center;
+}
+button, a.button {
+	background: none;
+	color: #FFF;
+	font-size: .8em;
+	border: 2px solid #FFF;
+	padding: 10px 15px;
+	margin: 0 15px;
+	border-radius: 7px;
+	text-decoration: none;
+	text-transform: uppercase;
+	display: inline-block;
+	font-family: 'Black Ops One', sans-serif;
+}
+button:hover, a.button:hover {
+	background: #55F;
+	cursor: pointer;
+}
+#overlaytext h2 {
+	font-family: 'Black Ops One', sans-serif;
+	font-size: 30px;
+	text-transform: uppercase;
+}
+#overlaytext .button {
+	color: #000;
+	border-color: #000;
+	font-size: 25px;
+}
+
+
+
+
 #cam {
 	transition: all 67ms linear;
 	position: relative;

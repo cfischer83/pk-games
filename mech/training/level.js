@@ -6,6 +6,7 @@ var trainingKeyLeft = false;
 var step1 = false;
 var step2 = false;
 var step3 = false;
+var step3b= false
 var step4 = false;
 
 document.addEventListener("DOMContentLoaded", function(event) { 
@@ -110,10 +111,13 @@ function stepThree() {
 }
 
 function stepThreeB() {
-	transitionStep("Now you're ready to fight! <button id='completeStep2b' onclick='completeStep3b()'>Ready</button>");
+	if (!step3b) {
+		transitionStep("Now you're ready to fight! <button id='completeStep2b' onclick='completeStep3b()'>Ready</button>");
+	}
 }
 
 function completeStep3b() {
+	step3b = true;
 	transitionStep("3...");
 	setTimeout('document.getElementById("trainingText").innerHTML = "2...";', 2000)
 	setTimeout('document.getElementById("trainingText").innerHTML = "1...";', 3000)
@@ -139,7 +143,14 @@ function stepFour() {
 
 
 
-
+// Winning this level is done when all enemies are defeated.
+document.addEventListener("enemyKill", function(event) { 
+	var enemiesLeft = document.querySelectorAll("[data-kill-required='true']:not(.destroyed)");
+	console.log("enemiesLeft.length = " + enemiesLeft.length);
+	if (enemiesLeft.length == 0) {
+		winGame();
+	}
+});
 
 
 

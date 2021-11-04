@@ -637,15 +637,16 @@ function removeLifeStats() {
 }
 
 function destroyCharacter(character) {
-	character.classList.add("destroyed");
-	setTimeout("document.getElementById('" + character.id + "').classList.add('dead');", 2500);
-	if (character.id == p1.id) {
-		loseGame();
-	} else {
-		enemyType = character.classList.contains("turret") ? "turret" : "unknown";
-		var event = new CustomEvent("enemyKill", { "detail": enemyType });
-		console.log(event);
-		document.dispatchEvent(event);
+	if (!character.classList.contains("destroyed")) {
+		character.classList.add("destroyed");
+		setTimeout("document.getElementById('" + character.id + "').classList.add('dead');", 2500);
+		if (character.id == p1.id) {
+			loseGame();
+		} else {
+			enemyType = character.classList.contains("turret") ? "turret" : "unknown";
+			var event = new CustomEvent("enemyKill", { "detail": enemyType });
+			document.dispatchEvent(event);
+		}
 	}
 }
 
@@ -653,6 +654,11 @@ function loseGame() {
 	gamePlay = false;
 	var event = new CustomEvent("lose", { "detail": "level 1" });
 	document.dispatchEvent(event);
+}
+
+function winGame() {
+	gamePlay = false;
+	console.log("win!");
 }
 
 function promptEnemiesToFire() {
@@ -795,6 +801,7 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 		enemy.setAttribute("class", enemyType + " enemy");
 		enemy.setAttribute("id", "enemy" + rando);
 		enemy.setAttribute("data-allegiance", "enemy");
+		enemy.setAttribute("data-kill-required", "true");
 		enemy.setAttribute("data-hittable", "true");
 		enemy.setAttribute("data-life", life);
 		enemy.setAttribute("data-direction", direction);
