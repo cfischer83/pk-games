@@ -1,102 +1,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+
 <title>Operation Debrief</title>
 
-<style type="text/css">
-body {
-	background: #222;
-	font-family: 'Black Ops One', sans-serif;
-	font-weight: 200;
-}
-header {
-	display: block;
-	text-align: center;
-}
-header h1 {
-	font-family: 'Black Ops One', sans-serif;
-	color: #FFF;
-	text-transform: uppercase;
-	font-size: 4em;
-	text-align: center;
-	font-weight: 400;
-	font-style: normal;
-	display: block;
-	width: 100%;
-}
-.game-container {
-	max-width: 1200px;
-	margin: 0 auto;
-	display: flex;
-}
-.game {
-	width: 50%;
-	margin: 20px;
-	background: #BCD;
-	border-radius: 10px;
-}
-.game:hover {
-	background: #88A;
-}
-.game:hover p {
-	color: #FFF;
-}
-.game img {
-	border-top-left-radius: 10px;
-	border-top-right-radius: 10px;
-}
-.game p {
-	font-size: 25px;
-	display: block;
-	padding: 0 20px;
-	color: #000;
-	font-size: 2em;
-	font-family: sans-serif;
-}
-.game a {
-	text-decoration: none;
-	display: block;
-}
-.game-container img {
-	max-width: 100%;
-}
-button, a.button {
-	background: none;
-	color: #FFF;
-	font-size: .8em;
-	border: 2px solid #FFF;
-	padding: 10px 15px;
-	margin: 0 15px;
-	border-radius: 7px;
-	text-decoration: none;
-	text-transform: uppercase;
-	display: inline-block;
-	font-family: 'Black Ops One', sans-serif;
-}
-button:hover, a.button:hover {
-	background: #55F;
-	cursor: pointer;
-}
-</style>
+<link rel="stylesheet" href="../main.css"></link>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
 
 </head>
-<body>
+<body id="gamemenu">
 <header id="header">
+	<img src="../logo.png" id="logo" alt="" />
 	<h1>Liberate KO Peninsula</h1>
 </header>
 
 <div class="game-container">
-	<div id="training" class="game">
-		<a href="../l1.html">
+	<div class="game textonly">
+		<a href="../L1.html">
 			<p>The KO Peninsula has been taken over and mostly destroyed. This is an essential stronghold for the enemy's plan for dominating the region.</p>
 			<p>Our reconnaissance has found a series of turrets which are preventing air strikes. Your mission is to destroy all enemy targets.</p>
-			<p><a class="button" href="../l1.html">Launch Mission</a></p>
+			<p><a class="button" href="../L1.html">Launch Mission</a></p>
 		</a>
 	</div>
-	<div id="training" class="game">
+	<div class="game">
 		<img src="poster.jpg" />
 		<p>Satellite Image</p>
 	</div>

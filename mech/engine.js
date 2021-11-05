@@ -653,6 +653,7 @@ function destroyCharacter(character) {
 function loseGame() {
 	gamePlay = false;
 	var event = new CustomEvent("lose", { "detail": "level 1" });
+	console.log(event);
 	document.dispatchEvent(event);
 }
 

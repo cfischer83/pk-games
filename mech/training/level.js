@@ -59,13 +59,13 @@ document.addEventListener("keydown", function(e) {
 });
 
 function swapText(text) {
-	document.getElementById("trainingText").innerHTML = text;
+	document.getElementById("lowerMessageText").innerHTML = text;
 }
 
 function transitionStep(text) {
-	document.getElementById("trainingText").classList.add("fadeInOut");
+	document.getElementById("lowerMessageText").classList.add("fadeInOut");
 	setTimeout("swapText(\"" + text + "\");", 1000);
-	setTimeout('document.getElementById("trainingText").classList.remove("fadeInOut")', 2000);
+	setTimeout('document.getElementById("lowerMessageText").classList.remove("fadeInOut")', 2000);
 }
 
 
@@ -119,9 +119,9 @@ function stepThreeB() {
 function completeStep3b() {
 	step3b = true;
 	transitionStep("3...");
-	setTimeout('document.getElementById("trainingText").innerHTML = "2...";', 2000)
-	setTimeout('document.getElementById("trainingText").innerHTML = "1...";', 3000)
-	setTimeout('document.getElementById("trainingText").innerHTML = "Fight!";stepFour();', 4000)
+	setTimeout('document.getElementById("lowerMessageText").innerHTML = "2...";', 2000)
+	setTimeout('document.getElementById("lowerMessageText").innerHTML = "1...";', 3000)
+	setTimeout('document.getElementById("lowerMessageText").innerHTML = "Fight!";stepFour();', 4000)
 }
 
 function stepFour() {

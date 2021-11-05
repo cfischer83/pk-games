@@ -40,21 +40,41 @@ document.addEventListener("enemyKill", function(event) {
 	var enemiesLeft = document.querySelectorAll("[data-kill-required='true']:not(.destroyed)");
 	if (enemiesLeft.length == 0) {
 		winGame();
-		var overlay = document.createElement("div");
-			overlay.setAttribute("id", "overlay");
-			overlay.setAttribute("class", "active");
-		document.body.insertBefore(overlay, cam);
-			overlay.style.width = global_ground_width;
-			overlay.style.height = global_ground_height;
-
-		var text = document.createElement("div");
-			text.setAttribute("id", "overlaytext");
-			text.setAttribute("class", "overlaytext");
-		document.body.insertBefore(text, overlay);
-			text.style.marginLeft = Math.abs(parseInt(p1.style.marginLeft)) - global_window_size;
-			text.style.marginTop = Math.abs(parseInt(p1.style.marginTop)) - window.innerHeight / 4;
-		document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is disabled and their stronghold is broken. We can now move inland to push the enemy back.</p><br /><a class='button' href='index.html'>Return To Missions</a>";
-
+		winLevel1();
 	}
 });
+
+
+// Winning this level is done when all enemies are defeated.
+document.addEventListener("lose", function(event) {
+	loseLevel1();
+});
+
+function loseLevel1() {
+	var lowerMessage = document.createElement("div");
+		lowerMessage.setAttribute("id", "lowerMessage");
+		document.body.insertBefore(lowerMessage, cam);
+	var lowerMessageText = document.createElement("div");
+		lowerMessageText.setAttribute("id", "lowerMessageText");
+		lowerMessage.appendChild(lowerMessageText);
+		lowerMessageText.innerHTML = "<p>You have lost your battle and brought shame to your family's name.</p><a href='L1.html' class='button'>Try Again</a> <a href='index.html' class='button'>Return To Missions</a>";
+}
+
+function winLevel1() {
+	var overlay = document.createElement("div");
+		overlay.setAttribute("id", "overlay");
+		overlay.setAttribute("class", "active");
+	document.body.insertBefore(overlay, cam);
+		overlay.style.width = global_ground_width;
+		overlay.style.height = global_ground_height;
+
+	var text = document.createElement("div");
+		text.setAttribute("id", "overlaytext");
+		text.setAttribute("class", "overlaytext");
+	document.body.insertBefore(text, overlay);
+		//text.style.marginLeft = Math.abs(parseInt(cam.style.marginLeft));// - global_window_size;
+		text.style.marginTop = Math.abs(parseInt(cam.style.marginTop)) + 25;
+	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is disabled and their stronghold is broken. We can now move inland to push the enemy back.</p><br /><a class='button' href='index.html'>Return To Missions</a>";
+
+}
 
