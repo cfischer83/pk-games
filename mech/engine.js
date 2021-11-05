@@ -83,41 +83,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					return;
 				}
 	            if (e.which == 37) {
-	            	if (!p1.classList.contains("walk")) {
-		            	p1.classList.add("walk");
-		            }
-		            if (!playerObstacles(p1,"left")) {
-		            	moveCamLeft(p1);
-		            	moveBlockLeft(p1, true);
-		            }
-	            	changeDirection(p1, "left");
+	            	moveCharacterLeft(p1);
 	            } else if (e.which == 38) {
-	            	if (!p1.classList.contains("walk")) {
-		            	p1.classList.add("walk");
-		            }
-		            if (!playerObstacles(p1,"up")) {
-		            	moveCamUp(p1);
-		            	moveBlockUp(p1, true);
-		            }
-	            	changeDirection(p1, "up");
+	            	moveCharacterUp(p1);
 	            } else if (e.which == 39) {
-	            	if (!p1.classList.contains("walk")) {
-		            	p1.classList.add("walk");
-		            }
-	            	if (!playerObstacles(p1,"right")) {
-	            		moveCamRight(p1);
-		            	moveBlockRight(p1, true);
-		            }
-	            	changeDirection(p1, "right");
+	            	moveCharacterRight(p1);
 	            } else if (e.which == 40) {
-	            	if (!p1.classList.contains("walk")) {
-		            	p1.classList.add("walk");
-		            }
-		            if (!playerObstacles(p1,"down")) {
-		            	moveCamDown(p1);
-		            	moveBlockDown(p1, true);
-		            }
-	            	changeDirection(p1, "down");
+	            	moveCharacterDown(p1);
 	            } else {
 	            	//
 	            }
@@ -183,6 +155,51 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	disableScroll();
 });
+
+function moveCharacterLeft(character) {
+	if (!character.classList.contains("walk")) {
+		character.classList.add("walk");
+	}
+	if (!playerObstacles(character,"left")) {
+		moveCamLeft(character);
+		moveBlockLeft(character, true);
+	}
+	changeDirection(character, "left");
+}
+function moveCharacterRight(character) {
+	if (!character.classList.contains("walk")) {
+		character.classList.add("walk");
+	}
+	if (!playerObstacles(character,"right")) {
+		moveCamRight(character);
+		moveBlockRight(character, true);
+	}
+	changeDirection(character, "right");	
+}
+function moveCharacterUp(character) {
+	if (!character.classList.contains("walk")) {
+    	character.classList.add("walk");
+    }
+    if (!playerObstacles(character,"up")) {
+    	moveCamUp(character);
+    	moveBlockUp(character, true);
+    }
+	changeDirection(character, "up");
+}
+function moveCharacterDown(character) {
+	if (!character.classList.contains("walk")) {
+		character.classList.add("walk");
+	}
+	if (!playerObstacles(character,"down")) {
+		moveCamDown(character);
+		moveBlockDown(character, true);
+	}
+	changeDirection(character, "down");
+}
+
+
+
+
 
 
 document.addEventListener("click", function(event) { 
@@ -829,3 +846,157 @@ function addObstacle(width, height, left, top, hittable = true) {
 }
 
 
+
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	if ('ontouchstart' in document.documentElement || true) {
+		touchControls();
+	}
+});
+
+
+function touchControls() {
+	var mainTouchContainer = document.querySelector("#touch-controls");
+	var leftTouch = document.querySelector("#touch-left");
+	var rightTouch = document.querySelector("#touch-right");
+	var upTouch = document.querySelector("#touch-up");
+	var downTouch = document.querySelector("#touch-down");
+
+	var timerID;
+	var counter = 0;
+
+	var pressHoldEventLeft = new CustomEvent("pressHoldLeft");
+	var pressHoldEventRight = new CustomEvent("pressHoldRight");
+	var pressHoldEventUp = new CustomEvent("pressHoldUp");
+	var pressHoldEventDown = new CustomEvent("pressHoldDown");
+
+	// Increase or decreae value to adjust how long
+	// one should keep pressing down before the pressHold
+	// event fires
+	var pressHoldDuration = 200;
+
+    mainTouchContainer.addEventListener("mousedown", function(e){e.preventDefault();}, false);
+    mainTouchContainer.addEventListener("mouseup", function(e){e.preventDefault();}, false);
+    mainTouchContainer.addEventListener("mouseleave", function(e){e.preventDefault();}, false);
+	mainTouchContainer.addEventListener("touchstart", function(e){e.preventDefault();}, false);
+	mainTouchContainer.addEventListener("touchend", function(e){e.preventDefault();}, false);
+
+    leftTouch.addEventListener("mousedown", pressingDownLeft, false);
+    leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
+    leftTouch.addEventListener("mouseleave", notPressingDownLeft, false);
+	leftTouch.addEventListener("touchstart", pressingDownLeft, false);
+	leftTouch.addEventListener("touchend", notPressingDownLeft, false);
+
+    rightTouch.addEventListener("mousedown", pressingDownRight, false);
+    rightTouch.addEventListener("mouseup", notPressingDownRight, false);
+    rightTouch.addEventListener("mouseleave", notPressingDownRight, false);
+	rightTouch.addEventListener("touchstart", pressingDownRight, false);
+	rightTouch.addEventListener("touchend", notPressingDownRight, false);
+
+    upTouch.addEventListener("mousedown", pressingDownUp, false);
+    upTouch.addEventListener("mouseup", notPressingDownUp, false);
+    upTouch.addEventListener("mouseleave", notPressingDownUp, false);
+	upTouch.addEventListener("touchstart", pressingDownUp, false);
+	upTouch.addEventListener("touchend", notPressingDownUp, false);
+
+    downTouch.addEventListener("mousedown", pressingDownDown, false);
+    downTouch.addEventListener("mouseup", notPressingDownDown, false);
+    downTouch.addEventListener("mouseleave", notPressingDownDown, false);
+	downTouch.addEventListener("touchstart", pressingDownDown, false);
+	downTouch.addEventListener("touchend", notPressingDownDown, false);
+
+	// Listening for our custom pressHold event
+	//rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
+	//rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
+
+	function pressingDownRight(e) {
+		// Start the timer
+		requestAnimationFrame(timerRight);
+		e.preventDefault();
+		moveCharacterRight(p1);
+	}
+
+	function notPressingDownRight(e) {
+		// Stop the timer
+		cancelAnimationFrame(timerID);
+		counter = 0;
+		p1.classList.remove("walk");
+	}
+
+	function pressingDownLeft(e) {
+		// Start the timer
+		requestAnimationFrame(timerLeft);
+		e.preventDefault();
+		moveCharacterLeft(p1);
+	}
+
+	function notPressingDownLeft(e) {
+		// Stop the timer
+		cancelAnimationFrame(timerID);
+		counter = 0;
+		p1.classList.remove("walk");
+	}
+
+	function pressingDownUp(e) {
+		// Start the timer
+		requestAnimationFrame(timerUp);
+		e.preventDefault();
+		moveCharacterUp(p1);
+	}
+
+	function notPressingDownUp(e) {
+		// Stop the timer
+		cancelAnimationFrame(timerID);
+		counter = 0;
+		p1.classList.remove("walk");
+	}
+
+	function pressingDownDown(e) {
+		// Start the timer
+		requestAnimationFrame(timerDown);
+		e.preventDefault();
+		moveCharacterDown(p1);
+	}
+
+	function notPressingDownDown(e) {
+		// Stop the timer
+		cancelAnimationFrame(timerID);
+		counter = 0;
+		p1.classList.remove("walk");
+	}
+
+	//
+	// Runs at 60fps when you are pressing down
+	//
+	function timerLeft() {
+		if (counter % 4 === 0) {
+			moveCharacterLeft(p1)
+		}
+		timerID = requestAnimationFrame(timerLeft);
+		counter++;
+	}
+
+	function timerRight() {
+		if (counter % 4 === 0) {
+			moveCharacterRight(p1)
+		}
+		timerID = requestAnimationFrame(timerRight);
+		counter++;
+	}
+
+	function timerUp() {
+		if (counter % 4 === 0) {
+			moveCharacterUp(p1)
+		}
+		timerID = requestAnimationFrame(timerUp);
+		counter++;
+	}
+
+	function timerDown() {
+		if (counter % 4 === 0) {
+			moveCharacterDown(p1)
+		}
+		timerID = requestAnimationFrame(timerDown);
+		counter++;
+	}
+}
