@@ -13,8 +13,8 @@ var debug = false;
 
 
 function preloadImage(url) {
-    var img=new Image();
-    img.src=url;
+	var img=new Image();
+	img.src=url;
 }
 
 preloadImage("warhawk-standing-down.gif");
@@ -66,46 +66,46 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		}
 		e.preventDefault();
 
-	    // if not still the same key, stop the timer
-	    if (e.which !== lastKey) {
-	        if (downTimer) {
-	            clearInterval(downTimer);
-	            downTimer = null;
-	        }
-	    }
+		// if not still the same key, stop the timer
+		if (e.which !== lastKey) {
+			if (downTimer) {
+				clearInterval(downTimer);
+				downTimer = null;
+			}
+		}
 
-	    // remember previous key
-	    lastKey = e.which;
-	    if (!downTimer) {
-	        // start timer
-	        downTimer = setInterval(function() {
-	        	if (!gamePlay) {
+		// remember previous key
+		lastKey = e.which;
+		if (!downTimer) {
+			// start timer
+			downTimer = setInterval(function() {
+				if (!gamePlay) {
 					return;
 				}
-	            if (e.which == 37) {
-	            	moveCharacterLeft(p1);
-	            } else if (e.which == 38) {
-	            	moveCharacterUp(p1);
-	            } else if (e.which == 39) {
-	            	moveCharacterRight(p1);
-	            } else if (e.which == 40) {
-	            	moveCharacterDown(p1);
-	            } else {
-	            	//
-	            }
-	        }, 67);
-	    }
-	    return false;
+				if (e.which == 37) {
+					moveCharacterLeft(p1);
+				} else if (e.which == 38) {
+					moveCharacterUp(p1);
+				} else if (e.which == 39) {
+					moveCharacterRight(p1);
+				} else if (e.which == 40) {
+					moveCharacterDown(p1);
+				} else {
+					//
+				}
+			}, 67);
+		}
+		return false;
 	})
 	document.addEventListener("keyup", function(e) {
 		if (isMovingKey(e.keyCode)) {
 			p1.classList.remove("walk");
-		    // stop timer
-		    if (downTimer && lastKey == e.keyCode) {
-		        clearInterval(downTimer);
-		        downTimer = null;
-		        lastKey = 0;
-		    }
+			// stop timer
+			if (downTimer && lastKey == e.keyCode) {
+				clearInterval(downTimer);
+				downTimer = null;
+				lastKey = 0;
+			}
 		}
 	});
 
@@ -178,12 +178,12 @@ function moveCharacterRight(character) {
 }
 function moveCharacterUp(character) {
 	if (!character.classList.contains("walk")) {
-    	character.classList.add("walk");
-    }
-    if (!playerObstacles(character,"up")) {
-    	moveCamUp(character);
-    	moveBlockUp(character, true);
-    }
+		character.classList.add("walk");
+	}
+	if (!playerObstacles(character,"up")) {
+		moveCamUp(character);
+		moveBlockUp(character, true);
+	}
 	changeDirection(character, "up");
 }
 function moveCharacterDown(character) {
@@ -369,31 +369,31 @@ function changeDirection(obj, dir) {
 
 function turretDirection(turret) {
 	var p1Details = p1.getBoundingClientRect();
-    var p1x	= p1Details.x;
-    var p1y	= p1Details.y;
+	var p1x	= p1Details.x;
+	var p1y	= p1Details.y;
 
-    var turretDetails = turret.getBoundingClientRect();
-    var tx = turretDetails.x;
-    var ty = turretDetails.y;
+	var turretDetails = turret.getBoundingClientRect();
+	var tx = turretDetails.x;
+	var ty = turretDetails.y;
 
-    if (p1x < tx) {
-    	turret.classList.remove("right");
-    	turret.classList.add("left");
-    	turret.dataset.direction = "left";
-    } else {
-    	turret.classList.remove("left");
-    	turret.classList.add("right");
-    	turret.dataset.direction = "right";
-    }
-    if (p1y < ty) {
-    	turret.classList.remove("bottom");
-    	turret.classList.add("top");
-    	turret.dataset.direction = "up";
-    } else {
-    	turret.classList.remove("top");
-    	turret.classList.add("bottom");
-    	turret.dataset.direction = "down";
-    }
+	if (p1x < tx) {
+		turret.classList.remove("right");
+		turret.classList.add("left");
+		turret.dataset.direction = "left";
+	} else {
+		turret.classList.remove("left");
+		turret.classList.add("right");
+		turret.dataset.direction = "right";
+	}
+	if (p1y < ty) {
+		turret.classList.remove("bottom");
+		turret.classList.add("top");
+		turret.dataset.direction = "up";
+	} else {
+		turret.classList.remove("top");
+		turret.classList.add("bottom");
+		turret.dataset.direction = "down";
+	}
 }
 
 
@@ -731,84 +731,84 @@ function convertToExplosion(fire) {
 
 
 function moveCamRight(p1){
-    var cam_center = getWindowWidth() / 2 - global_box_size;
-    var groundDetails = ground.getBoundingClientRect();
-    var groundWidth	= groundDetails.width;
-    var maxLeft = groundWidth - getWindowWidth();
-    var p1marginLeft = parseInt(p1.style.marginLeft);
-    if (!p1marginLeft) {
-        p1marginLeft = 0;
-    }
-    var cam = document.getElementById("cam");
-    var cam_marginLeft = parseInt(cam.style.marginLeft);
-    if (!cam_marginLeft) {
-        cam_marginLeft = 0;
-    }
-    //console.log("cam_marginLeft = " + cam_marginLeft + "; maxLeft = " + maxLeft);
-    if (p1marginLeft>=cam_center && Math.abs(cam_marginLeft) < maxLeft){
-        var new_cam_marginLeft = cam_marginLeft - global_increment_by;
-        cam.style.marginLeft = new_cam_marginLeft + "px";
-    }
+	var cam_center = getWindowWidth() / 2 - global_box_size;
+	var groundDetails = ground.getBoundingClientRect();
+	var groundWidth	= groundDetails.width;
+	var maxLeft = groundWidth - getWindowWidth();
+	var p1marginLeft = parseInt(p1.style.marginLeft);
+	if (!p1marginLeft) {
+		p1marginLeft = 0;
+	}
+	var cam = document.getElementById("cam");
+	var cam_marginLeft = parseInt(cam.style.marginLeft);
+	if (!cam_marginLeft) {
+		cam_marginLeft = 0;
+	}
+	//console.log("cam_marginLeft = " + cam_marginLeft + "; maxLeft = " + maxLeft);
+	if (p1marginLeft>=cam_center && Math.abs(cam_marginLeft) < maxLeft){
+		var new_cam_marginLeft = cam_marginLeft - global_increment_by;
+		cam.style.marginLeft = new_cam_marginLeft + "px";
+	}
 }
 function moveCamLeft(p1){
-    var cam_center = getWindowWidth() / 2 - global_box_size;
-    var groundDetails = ground.getBoundingClientRect();
-    var groundWidth	= groundDetails.width;
-    var p1marginLeft = parseInt(p1.style.marginLeft);
-    if (!p1marginLeft) {
-        p1marginLeft = 0;
-    }
-    var maxLeft = groundWidth - getWindowWidth() + cam_center; // when player is at right-most and goes left
-    var cam = document.getElementById("cam");
-    var cam_marginLeft = parseInt(cam.style.marginLeft);
-    if (!cam_marginLeft) {
-        cam_marginLeft = 0;
-    }
-    //console.log("p1marginLeft = " + p1marginLeft + "; maxLeft = " + maxLeft);
-    if (p1marginLeft>=cam_center && Math.abs(p1marginLeft) < maxLeft){
-        var new_cam_marginLeft = cam_marginLeft + global_increment_by;
-        if (new_cam_marginLeft > 0) {new_cam_marginLeft=0;}
-        cam.style.marginLeft = new_cam_marginLeft + "px";
-    }
+	var cam_center = getWindowWidth() / 2 - global_box_size;
+	var groundDetails = ground.getBoundingClientRect();
+	var groundWidth	= groundDetails.width;
+	var p1marginLeft = parseInt(p1.style.marginLeft);
+	if (!p1marginLeft) {
+		p1marginLeft = 0;
+	}
+	var maxLeft = groundWidth - getWindowWidth() + cam_center; // when player is at right-most and goes left
+	var cam = document.getElementById("cam");
+	var cam_marginLeft = parseInt(cam.style.marginLeft);
+	if (!cam_marginLeft) {
+		cam_marginLeft = 0;
+	}
+	//console.log("p1marginLeft = " + p1marginLeft + "; maxLeft = " + maxLeft);
+	if (p1marginLeft>=cam_center && Math.abs(p1marginLeft) < maxLeft){
+		var new_cam_marginLeft = cam_marginLeft + global_increment_by;
+		if (new_cam_marginLeft > 0) {new_cam_marginLeft=0;}
+		cam.style.marginLeft = new_cam_marginLeft + "px";
+	}
 }
 function moveCamUp(p1){
-    var cam_center = getWindowHeight() / 2 - global_box_size;
-    var groundDetails = ground.getBoundingClientRect();
-    var groundHeight	= groundDetails.height;
-    var maxHeight = Math.floor((groundHeight - getWindowHeight() + cam_center) / 10) * 10;
-    var p1marginTop = parseInt(p1.style.marginTop);
-    if (!p1marginTop) {
-        p1marginTop = 0;
-    }
-    var cam = document.getElementById("cam");
-    var cam_marginTop = parseInt(cam.style.marginTop);
-    if (!cam_marginTop) {
-        cam_marginTop = 0;
-    }
-    if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
-        var new_cam_marginTop = cam_marginTop + global_increment_by;
-        cam.style.marginTop = new_cam_marginTop + "px";
-    }
+	var cam_center = getWindowHeight() / 2 - global_box_size;
+	var groundDetails = ground.getBoundingClientRect();
+	var groundHeight	= groundDetails.height;
+	var maxHeight = Math.floor((groundHeight - getWindowHeight() + cam_center) / 10) * 10;
+	var p1marginTop = parseInt(p1.style.marginTop);
+	if (!p1marginTop) {
+		p1marginTop = 0;
+	}
+	var cam = document.getElementById("cam");
+	var cam_marginTop = parseInt(cam.style.marginTop);
+	if (!cam_marginTop) {
+		cam_marginTop = 0;
+	}
+	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
+		var new_cam_marginTop = cam_marginTop + global_increment_by;
+		cam.style.marginTop = new_cam_marginTop + "px";
+	}
 }
 function moveCamDown(p1){
-    var cam_center = getWindowHeight() / 2 - global_player_height;
-    var groundDetails = ground.getBoundingClientRect();
-    var groundHeight	= groundDetails.height;
-    var maxHeight = Math.floor((groundHeight - getWindowHeight()) / 10) * 10;
-    var p1marginTop = parseInt(p1.style.marginTop);
-    if (!p1marginTop) {
-        p1marginTop = 0;
-    }
-    var cam = document.getElementById("cam");
-    var cam_marginTop = parseInt(cam.style.marginTop);
-    if (!cam_marginTop) {
-        cam_marginTop = 0;
-    }
-    //console.log("cam_marginTop = " + Math.abs(cam_marginTop) + "; maxHeight = " + maxHeight);
-    if (p1marginTop>=cam_center && Math.abs(cam_marginTop) < maxHeight){
-        var new_cam_marginTop = cam_marginTop - global_increment_by;
-        cam.style.marginTop = new_cam_marginTop + "px";
-    }
+	var cam_center = getWindowHeight() / 2 - global_player_height;
+	var groundDetails = ground.getBoundingClientRect();
+	var groundHeight	= groundDetails.height;
+	var maxHeight = Math.floor((groundHeight - getWindowHeight()) / 10) * 10;
+	var p1marginTop = parseInt(p1.style.marginTop);
+	if (!p1marginTop) {
+		p1marginTop = 0;
+	}
+	var cam = document.getElementById("cam");
+	var cam_marginTop = parseInt(cam.style.marginTop);
+	if (!cam_marginTop) {
+		cam_marginTop = 0;
+	}
+	//console.log("cam_marginTop = " + Math.abs(cam_marginTop) + "; maxHeight = " + maxHeight);
+	if (p1marginTop>=cam_center && Math.abs(cam_marginTop) < maxHeight){
+		var new_cam_marginTop = cam_marginTop - global_increment_by;
+		cam.style.marginTop = new_cam_marginTop + "px";
+	}
 }
 
 
@@ -847,29 +847,11 @@ function addObstacle(width, height, left, top, hittable = true) {
 
 
 
-var touchPresses = 0; // count of touches. Handle for cases of multitouch
-var touchObjects = new Array();
-var touchCounter = 0;
 document.addEventListener("DOMContentLoaded", function(event) { 
-	if ('ontouchstart' in document.documentElement || true) {
+	if ('ontouchstart' in document.documentElement) {
 		touchControls();
-		touchControls2();
-		//setupTouchInterval();
 	}
 });
-
-// function setupTouchInterval() {
-// 	setInterval(checkTouches(), 67);
-// }
-
-// function checkTouches() {
-// 	if (touchPresses > 0) {
-// 		//touchCounter++;
-// 		if (touchCounter % 4 === 0) {
-
-// 		}
-// 	}
-// }
 
 function getBounds(el) {
 	var pos = el.getBoundingClientRect();
@@ -894,7 +876,6 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 	var rUX = rUT > fingerX && touchUp.x < fingerX; // x-axis
 	var rUB = touchUp.y + touchUp.h; // rectangle Up Bottom
 	var rUY = rUB > fingerY && touchUp.y < fingerY; // y-axis
-	//console.log("touchUp.x = " + touchUp.x + "; rUT = " + rUT + "; touchUp.y = " + touchUp.y + "; rUB = " + rUB);
 	if (rUX && rUY) {
 		return "up";
 	}
@@ -904,7 +885,6 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 	var rUX = rRT > fingerX && touchRight.x < fingerX; // x-axis
 	var rRB = touchRight.y + touchRight.h; // rectangle Right Bottom
 	var rRY = rRB > fingerY && touchRight.y < fingerY; // y-axis
-	//console.log("touchRight.x = " + touchRight.x + "; rRT = " + rRT + "; touchRight.y = " + touchRight.y + "; rRB = " + rRB);
 	if (rUX && rRY) {
 		return "right";
 	}
@@ -914,7 +894,6 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 	var rDX = rDT > fingerX && touchDown.x < fingerX; // x-axis
 	var rDB = touchDown.y + touchDown.h; // rectangle Down Bottom
 	var rDY = rDB > fingerY && touchDown.y < fingerY; // y-axis
-	//console.log("touchDown.x = " + touchDown.x + "; rDT = " + rDT + "; touchDown.y = " + touchDown.y + "; rDB = " + rDB);
 	if (rDX && rDY) {
 		return "down";
 	}
@@ -924,39 +903,8 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 	var rLX = rLT > fingerX && touchLeft.x < fingerX; // x-axis
 	var rLB = touchLeft.y + touchLeft.h; // rectangle Left Bottom
 	var rLY = rLB > fingerY && touchLeft.y < fingerY; // y-axis
-	//console.log("touchLeft.x = " + touchLeft.x + "; rLT = " + rLT + "; touchLeft.y = " + touchLeft.y + "; rLB = " + rLB);
 	if (rLX && rLY) {
 		return "left";
-	}
-}
-
-
-
-function touchStart(e) {
-	e.preventDefault();
-	touchPresses = e.targetTouches.length; // global 
-	for (var i = 0; i < e.targetTouches.length; i++) {
-		var key = isTouchControlBeingTouched(e.targetTouches[i].clientX, e.targetTouches[i].clientY);
-		if (key == "left" || key == "right" || key == "up" || key == "down") {
-			touchMoveCharacter(key);
-			console.log("touchPresses = " + key);
-		}
-		console.log("touchPresses = " + touchPresses);
-	}
-}
-
-function touchEnd(e) {
-	touchPresses = e.targetTouches.length; // global
-	p1.classList.remove("walk");
-	console.log("touchPresses = " + touchPresses);
-}
-
-function touchMoveCharacter(dir) {
-	switch(dir) {
-		case "left" : moveCharacterLeft(p1); break;
-		case "right" : moveCharacterRight(p1); break;
-		case "up" : moveCharacterUp(p1); break;
-		case "down" : moveCharacterDown(p1); break;
 	}
 }
 
@@ -979,42 +927,40 @@ function changeKeyDirection(key) {
 }
 
 function touchMove(e) {
-	e.preventDefault();
-	//if (touchCounter % 4 === 0) {
-		for (var i = 0; i < e.touches.length; i++) {
-			var touch = e.touches[i];
-			var positionX = touch.pageX;
-			var positionY = touch.pageY;
-			var key = isTouchControlBeingTouched(positionX, positionY);
-			if (key == "left" || key == "right" || key == "up" || key == "down") {
-				if (key != keyDirection) {
-					cancelKeyDirection(keyDirection);
-					keyDirection = key;
-					changeKeyDirection(key);
-				}
-				console.log("touchPresses = " + key);
+	for (var i = 0; i < e.touches.length; i++) {
+		var touch = e.touches[i];
+		var positionX = touch.pageX;
+		var positionY = touch.pageY;
+		var key = isTouchControlBeingTouched(positionX, positionY);
+		if (key == "left" || key == "right" || key == "up" || key == "down") {
+			if (key != keyDirection) {
+				cancelKeyDirection(keyDirection);
+				keyDirection = key;
+				changeKeyDirection(key);
 			}
 		}
-	//}
-	touchCounter++;
-}
-
-function touchControls2() {
-	//document.body.addEventListener('touchstart', touchStart, false);
-	document.body.addEventListener('touchmove', touchMove, false);
-	//document.body.addEventListener('touchend', touchEnd, false);
+	}
 }
 
 
 var timerID;
+var timerIDfire;
 var counter = 0;
 var keyDirection = null;
 function touchControls() {
+	// catch dragging so we can change direction w/o touchEnd event
+	touchElms = document.getElementsByClassName("touch");
+	for (var i = 0; i < touchElms.length; i++) {
+		touchElms[i].style.display = "block";
+	}
+	document.body.addEventListener('touchmove', touchMove, false); 
+
 	var mainTouchContainer = document.querySelector("#touch-controls");
 	var leftTouch = document.querySelector("#touch-left");
 	var rightTouch = document.querySelector("#touch-right");
 	var upTouch = document.querySelector("#touch-up");
 	var downTouch = document.querySelector("#touch-down");
+	var fireTouch = document.querySelector("#touch-fire");
 
 	var pressHoldEventLeft = new CustomEvent("pressHoldLeft");
 	var pressHoldEventRight = new CustomEvent("pressHoldRight");
@@ -1026,40 +972,61 @@ function touchControls() {
 	// event fires
 	var pressHoldDuration = 200;
 
-    mainTouchContainer.addEventListener("mousedown", function(e){e.preventDefault();}, false);
-    mainTouchContainer.addEventListener("mouseup", function(e){e.preventDefault();}, false);
-    mainTouchContainer.addEventListener("mouseleave", function(e){e.preventDefault();}, false);
+	mainTouchContainer.addEventListener("mousedown", function(e){e.preventDefault();}, false);
+	mainTouchContainer.addEventListener("mouseup", function(e){e.preventDefault();}, false);
+	mainTouchContainer.addEventListener("mouseleave", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("touchstart", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("touchend", function(e){e.preventDefault();}, false);
 
-    leftTouch.addEventListener("mousedown", pressingDownLeft, false);
-    leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
-    leftTouch.addEventListener("mouseleave", notPressingDownLeft, false);
+	leftTouch.addEventListener("mousedown", pressingDownLeft, false);
+	leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
+	leftTouch.addEventListener("mouseleave", notPressingDownLeft, false);
 	leftTouch.addEventListener("touchstart", pressingDownLeft, false);
 	leftTouch.addEventListener("touchend", notPressingDownLeft, false);
 
-    rightTouch.addEventListener("mousedown", pressingDownRight, false);
-    rightTouch.addEventListener("mouseup", notPressingDownRight, false);
-    rightTouch.addEventListener("mouseleave", notPressingDownRight, false);
+	rightTouch.addEventListener("mousedown", pressingDownRight, false);
+	rightTouch.addEventListener("mouseup", notPressingDownRight, false);
+	rightTouch.addEventListener("mouseleave", notPressingDownRight, false);
 	rightTouch.addEventListener("touchstart", pressingDownRight, false);
 	rightTouch.addEventListener("touchend", notPressingDownRight, false);
 
-    upTouch.addEventListener("mousedown", pressingDownUp, false);
-    upTouch.addEventListener("mouseup", notPressingDownUp, false);
-    upTouch.addEventListener("mouseleave", notPressingDownUp, false);
+	upTouch.addEventListener("mousedown", pressingDownUp, false);
+	upTouch.addEventListener("mouseup", notPressingDownUp, false);
+	upTouch.addEventListener("mouseleave", notPressingDownUp, false);
 	upTouch.addEventListener("touchstart", pressingDownUp, false);
 	upTouch.addEventListener("touchend", notPressingDownUp, false);
 
-    downTouch.addEventListener("mousedown", pressingDownDown, false);
-    downTouch.addEventListener("mouseup", notPressingDownDown, false);
-    downTouch.addEventListener("mouseleave", notPressingDownDown, false);
+	downTouch.addEventListener("mousedown", pressingDownDown, false);
+	downTouch.addEventListener("mouseup", notPressingDownDown, false);
+	downTouch.addEventListener("mouseleave", notPressingDownDown, false);
 	downTouch.addEventListener("touchstart", pressingDownDown, false);
 	downTouch.addEventListener("touchend", notPressingDownDown, false);
 
-	// Listening for our custom pressHold event
-	//rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
-	//rightTouch.addEventListener("pressHold", moveBlockRight(skydiver), false);
+	// fireTouch.addEventListener("mousedown", pressingDownFire, false);
+	// fireTouch.addEventListener("mouseup", notPressingDownFire, false);
+	// fireTouch.addEventListener("mouseleave", notPressingDownFire, false);
+	// fireTouch.addEventListener("touchstart", pressingDownFire, false);
+	// fireTouch.addEventListener("touchend", notPressingDownFire, false);
+	fireTouch.addEventListener("touchstart", p1Fire, false);
 }
+
+// function pressingDownFire(e) {
+// 	// Start the timer
+// 	requestAnimationFrame(timerFire);
+// 	if (e) {
+// 		e.preventDefault();
+// 	}
+// 	p1Fire();
+// 	keyDirection = "right";
+// }
+
+// function notPressingDownFire(e) {
+// 	// Stop the timer
+// 	cancelAnimationFrame(timerFire);
+// 	cancelAnimationFrame(timerIDfire);
+// 	p1.classList.remove("walk");
+// 	keyDirection = null;
+// }
 
 function pressingDownRight(e) {
 	// Start the timer
@@ -1167,3 +1134,25 @@ function timerDown() {
 	timerID = requestAnimationFrame(timerDown);
 	counter++;
 }
+
+function p1Fire(e) {
+	if (e) {
+		e.preventDefault();
+	}
+	newFireDate = new Date();
+	newFireTime = newFireDate.getTime();
+	if (getTimeDifference(lastProjectileFired, newFireTime)) {
+		lastProjectileFired = newFireTime;
+		fire(p1, "good", "erppc");
+		var event = new CustomEvent("fired", { "detail": p1 });
+		document.dispatchEvent(event);
+	}
+}
+
+// function timerFire() {
+// 	p1Fire();
+// 	timerIDfire = requestAnimationFrame(timerFire);
+// }
+
+
+
