@@ -58,6 +58,52 @@ document.addEventListener("keydown", function(e) {
 	}
 });
 
+// same but for touch
+document.addEventListener("touchstart", function(e) {
+	if (!touchEnabled) {
+		return false;
+	}
+
+	console.log(e.target.id);
+
+	if (e.target.id == 'touch-left') {
+		if (document.getElementById("leftarrow")) {
+			document.getElementById("leftarrow").classList.add("complete");
+			if (step1) {
+				trainingKeyLeft = true;
+				stepOneCompleteCheck();
+			}
+		}
+	}
+	if (e.target.id == 'touch-right') {
+		if (document.getElementById("rightarrow")) {
+			document.getElementById("rightarrow").classList.add("complete");
+			if (step1) {
+				trainingKeyRight = true;
+				stepOneCompleteCheck();
+			}
+		}
+	}
+	if (e.target.id == 'touch-up') {
+		if (document.getElementById("uparrow")) {
+			document.getElementById("uparrow").classList.add("complete");
+			if (step1) {
+				trainingKeyUp = true;
+				stepOneCompleteCheck();
+			}
+		}
+	}
+	if (e.target.id == 'touch-down') {
+		if (document.getElementById("downarrow")) {
+			document.getElementById("downarrow").classList.add("complete");
+			if (step1) {
+				trainingKeyDown = true;
+				stepOneCompleteCheck();
+			}
+		}
+	}
+});
+
 function swapText(text) {
 	document.getElementById("lowerMessageText").innerHTML = text;
 }

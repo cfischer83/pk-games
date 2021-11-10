@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacle2 = addObstacle(250, 150, 1300, 0);
 	var obstacle3 = addObstacle(390, 350, 2099, 249);
 	var obstacle4 = addObstacle(190, 230, 1923, 230);
-	var obstacle5 = addObstacle(364, 228, 0, 10001);
+	var obstacle5 = addObstacle(364, 228, 0, 1001);
 	var obstacle6 = addObstacle(173, 144, 318, 1159);
 	var obstacle7 = addObstacle(535, 286, 2921, 909);
 	var obstacle8 = addObstacle(561, 486, 2698, 1192);
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacleWater4 = addObstacle(1000, 700, 950, 2099, false);
 	var obstacleWater5 = addObstacle(400, 750, 899, 2775, false);
 	var obstacleWater6 = addObstacle(70, 100, 1300, 2775, false);
-	var obstacleWater7 = addObstacle(1260, 125, 1949, 3186, false);
+	var obstacleWater7 = addObstacle(1260, 125, 1949, 3184, false);
 	var obstacleWater8 = addObstacle(1259, 123, 1949, 3458, false);
 
 	preloadImage("turret-down-left.png");
@@ -53,7 +53,7 @@ document.addEventListener("lose", function(event) {
 function loseLevel1() {
 	var lowerMessage = document.createElement("div");
 		lowerMessage.setAttribute("id", "lowerMessage");
-		document.body.insertBefore(lowerMessage, cam);
+		cam.insertBefore(lowerMessage, ground);
 	var lowerMessageText = document.createElement("div");
 		lowerMessageText.setAttribute("id", "lowerMessageText");
 		lowerMessage.appendChild(lowerMessageText);
@@ -64,14 +64,14 @@ function winLevel1() {
 	var overlay = document.createElement("div");
 		overlay.setAttribute("id", "overlay");
 		overlay.setAttribute("class", "active");
-	document.body.insertBefore(overlay, cam);
+	cam.insertBefore(overlay, ground);
 		overlay.style.width = global_ground_width;
 		overlay.style.height = global_ground_height;
 
 	var text = document.createElement("div");
 		text.setAttribute("id", "overlaytext");
 		text.setAttribute("class", "overlaytext");
-	document.body.insertBefore(text, overlay);
+	cam.insertBefore(text, ground);
 		//text.style.marginLeft = Math.abs(parseInt(cam.style.marginLeft));// - global_window_size;
 		text.style.marginTop = Math.abs(parseInt(cam.style.marginTop)) + 25;
 	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is disabled and their stronghold is broken. We can now move inland to push the enemy back.</p><br /><a class='button' href='index.html'>Return To Missions</a>";

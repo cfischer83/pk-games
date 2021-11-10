@@ -8,6 +8,7 @@ var fireArray = new Array();
 var downTimer;
 var lastKey;
 var lastProjectileFired = 0; // will be timestamp to avoid too many firings
+var touchEnabled = ('ontouchstart' in document.documentElement);
 var allowFiring = true; // allow/disallow firing
 var debug = false;
 
@@ -29,7 +30,10 @@ preloadImage("explosion.gif");
 preloadImage("destroyed-explosion.gif");
 
 
-document.addEventListener("DOMContentLoaded", function(event) { 
+document.addEventListener("DOMContentLoaded", function(event) {
+	// annoying iOS toolbar hiding hack
+	window.scrollTo(1, 0);
+
 	p1		= document.getElementById("p1");
 	lifeStat= document.getElementById("p1").dataset.life;
 	ground	= document.getElementById("ground");
@@ -42,6 +46,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	setInterval("rotateTurrets()", 1000);
 	setInterval("promptEnemiesToFire()", 1000);
 	setDebug();
+
+
+	if (touchEnabled) {
+		placeTouchControls();
+	}
 
 
 
@@ -156,6 +165,33 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	disableScroll();
 });
 
+function placeTouchControls() {
+	var touchControls = document.createElement("div");
+		touchControls.setAttribute("id", "touch-controls");
+		touchControls.setAttribute("class", "touch");
+	cam.appendChild(touchControls);
+	var touchUp = document.createElement("div");
+		touchUp.setAttribute("id", "touch-up");
+		touchUp.setAttribute("class", "arrow-up");
+	touchControls.appendChild(touchUp);
+	var touchDown = document.createElement("div");
+		touchDown.setAttribute("id", "touch-down");
+		touchDown.setAttribute("class", "arrow-down");
+	touchControls.appendChild(touchDown);
+	var touchLeft = document.createElement("div");
+		touchLeft.setAttribute("id", "touch-left");
+		touchLeft.setAttribute("class", "arrow-left");
+	touchControls.appendChild(touchLeft);
+	var touchRight = document.createElement("div");
+		touchRight.setAttribute("id", "touch-right");
+		touchRight.setAttribute("class", "arrow-right");
+	touchControls.appendChild(touchRight);
+	var touchFire = document.createElement("div");
+		touchFire.setAttribute("id", "touch-fire");
+		touchFire.setAttribute("class", "touch");
+	cam.appendChild(touchFire);
+}
+
 function moveCharacterLeft(character) {
 	if (!character.classList.contains("walk")) {
 		character.classList.add("walk");
@@ -230,7 +266,11 @@ function getWindowWidth() {
 }
 
 function getWindowHeight() {
-	return window.innerHeight;
+	if (touchEnabled) {
+		// remove some height for touch controls
+		return document.documentElement.clientHeight - 310;
+	}
+	return document.documentElement.clientHeight;
 }
 
 function getGroundWidth() {
@@ -740,14 +780,14 @@ function moveCamRight(p1){
 		p1marginLeft = 0;
 	}
 	var cam = document.getElementById("cam");
-	var cam_marginLeft = parseInt(cam.style.marginLeft);
-	if (!cam_marginLeft) {
-		cam_marginLeft = 0;
+	var ground_marginLeft = parseInt(ground.style.marginLeft);
+	if (!ground_marginLeft) {
+		ground_marginLeft = 0;
 	}
-	//console.log("cam_marginLeft = " + cam_marginLeft + "; maxLeft = " + maxLeft);
-	if (p1marginLeft>=cam_center && Math.abs(cam_marginLeft) < maxLeft){
-		var new_cam_marginLeft = cam_marginLeft - global_increment_by;
-		cam.style.marginLeft = new_cam_marginLeft + "px";
+	//console.log("ground_marginLeft = " + ground_marginLeft + "; maxLeft = " + maxLeft);
+	if (p1marginLeft>=cam_center && Math.abs(ground_marginLeft) < maxLeft){
+		var new_ground_marginLeft = ground_marginLeft - global_increment_by;
+		ground.style.marginLeft = new_ground_marginLeft + "px";
 	}
 }
 function moveCamLeft(p1){
@@ -760,15 +800,15 @@ function moveCamLeft(p1){
 	}
 	var maxLeft = groundWidth - getWindowWidth() + cam_center; // when player is at right-most and goes left
 	var cam = document.getElementById("cam");
-	var cam_marginLeft = parseInt(cam.style.marginLeft);
-	if (!cam_marginLeft) {
-		cam_marginLeft = 0;
+	var ground_marginLeft = parseInt(ground.style.marginLeft);
+	if (!ground_marginLeft) {
+		ground_marginLeft = 0;
 	}
 	//console.log("p1marginLeft = " + p1marginLeft + "; maxLeft = " + maxLeft);
 	if (p1marginLeft>=cam_center && Math.abs(p1marginLeft) < maxLeft){
-		var new_cam_marginLeft = cam_marginLeft + global_increment_by;
-		if (new_cam_marginLeft > 0) {new_cam_marginLeft=0;}
-		cam.style.marginLeft = new_cam_marginLeft + "px";
+		var new_ground_marginLeft = ground_marginLeft + global_increment_by;
+		if (new_ground_marginLeft > 0) {new_ground_marginLeft=0;}
+		ground.style.marginLeft = new_ground_marginLeft + "px";
 	}
 }
 function moveCamUp(p1){
@@ -781,13 +821,13 @@ function moveCamUp(p1){
 		p1marginTop = 0;
 	}
 	var cam = document.getElementById("cam");
-	var cam_marginTop = parseInt(cam.style.marginTop);
-	if (!cam_marginTop) {
-		cam_marginTop = 0;
+	var ground_marginTop = parseInt(ground.style.marginTop);
+	if (!ground_marginTop) {
+		ground_marginTop = 0;
 	}
 	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
-		var new_cam_marginTop = cam_marginTop + global_increment_by;
-		cam.style.marginTop = new_cam_marginTop + "px";
+		var new_ground_marginTop = ground_marginTop + global_increment_by;
+		ground.style.marginTop = new_ground_marginTop + "px";
 	}
 }
 function moveCamDown(p1){
@@ -800,14 +840,14 @@ function moveCamDown(p1){
 		p1marginTop = 0;
 	}
 	var cam = document.getElementById("cam");
-	var cam_marginTop = parseInt(cam.style.marginTop);
-	if (!cam_marginTop) {
-		cam_marginTop = 0;
+	var ground_marginTop = parseInt(ground.style.marginTop);
+	if (!ground_marginTop) {
+		ground_marginTop = 0;
 	}
-	//console.log("cam_marginTop = " + Math.abs(cam_marginTop) + "; maxHeight = " + maxHeight);
-	if (p1marginTop>=cam_center && Math.abs(cam_marginTop) < maxHeight){
-		var new_cam_marginTop = cam_marginTop - global_increment_by;
-		cam.style.marginTop = new_cam_marginTop + "px";
+	//console.log("ground_marginTop = " + Math.abs(ground_marginTop) + "; maxHeight = " + maxHeight);
+	if (p1marginTop>=cam_center && Math.abs(ground_marginTop) < maxHeight){
+		var new_ground_marginTop = ground_marginTop - global_increment_by;
+		ground.style.marginTop = new_ground_marginTop + "px";
 	}
 }
 
@@ -909,6 +949,7 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 }
 
 function cancelKeyDirection(key) {
+	console.log("cancel: " + key);
 	switch(key) {
 		case "left"		: notPressingDownLeft(null); break;
 		case "right"	: notPressingDownRight(null); break;
@@ -918,6 +959,7 @@ function cancelKeyDirection(key) {
 }
 
 function changeKeyDirection(key) {
+	console.log("change: " + key);
 	switch(key) {
 		case "left"		: pressingDownLeft(null); break;
 		case "right"	: pressingDownRight(null); break;
@@ -934,6 +976,7 @@ function touchMove(e) {
 		var key = isTouchControlBeingTouched(positionX, positionY);
 		if (key == "left" || key == "right" || key == "up" || key == "down") {
 			if (key != keyDirection) {
+				console.log("CHANGE INPUT: " + keyDirection + " now is " + key);
 				cancelKeyDirection(keyDirection);
 				keyDirection = key;
 				changeKeyDirection(key);
@@ -944,15 +987,13 @@ function touchMove(e) {
 
 
 var timerID;
+var timerIDLeft, timerIDRight, timerIDUp, timerIDDown;
 var timerIDfire;
 var counter = 0;
 var keyDirection = null;
+var countTouches = 0;
 function touchControls() {
 	// catch dragging so we can change direction w/o touchEnd event
-	touchElms = document.getElementsByClassName("touch");
-	for (var i = 0; i < touchElms.length; i++) {
-		touchElms[i].style.display = "block";
-	}
 	document.body.addEventListener('touchmove', touchMove, false); 
 
 	var mainTouchContainer = document.querySelector("#touch-controls");
@@ -962,21 +1003,15 @@ function touchControls() {
 	var downTouch = document.querySelector("#touch-down");
 	var fireTouch = document.querySelector("#touch-fire");
 
-	var pressHoldEventLeft = new CustomEvent("pressHoldLeft");
-	var pressHoldEventRight = new CustomEvent("pressHoldRight");
-	var pressHoldEventUp = new CustomEvent("pressHoldUp");
-	var pressHoldEventDown = new CustomEvent("pressHoldDown");
-
-	// Increase or decreae value to adjust how long
-	// one should keep pressing down before the pressHold
-	// event fires
-	var pressHoldDuration = 200;
-
 	mainTouchContainer.addEventListener("mousedown", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("mouseup", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("mouseleave", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("touchstart", function(e){e.preventDefault();}, false);
 	mainTouchContainer.addEventListener("touchend", function(e){e.preventDefault();}, false);
+
+	ground.addEventListener("touchstart", function(e){e.preventDefault();}, false);
+	ground.addEventListener("touchend", function(e){e.preventDefault();}, false);
+	ground.addEventListener("touchmove", function(e){e.preventDefault();}, false);
 
 	leftTouch.addEventListener("mousedown", pressingDownLeft, false);
 	leftTouch.addEventListener("mouseup", notPressingDownLeft, false);
@@ -1006,30 +1041,48 @@ function touchControls() {
 	// fireTouch.addEventListener("mouseup", notPressingDownFire, false);
 	// fireTouch.addEventListener("mouseleave", notPressingDownFire, false);
 	// fireTouch.addEventListener("touchstart", pressingDownFire, false);
-	// fireTouch.addEventListener("touchend", notPressingDownFire, false);
-	fireTouch.addEventListener("touchstart", p1Fire, false);
+	fireTouch.addEventListener("touchend", notPressingDownFire, false);
+	fireTouch.addEventListener("touchstart", pressingDownFire, false);
+	document.addEventListener("touchend", documentTouchEnd, false);
 }
 
-// function pressingDownFire(e) {
-// 	// Start the timer
-// 	requestAnimationFrame(timerFire);
-// 	if (e) {
-// 		e.preventDefault();
-// 	}
-// 	p1Fire();
-// 	keyDirection = "right";
-// }
+function documentTouchEnd(e) {
+	// don't stop touches if you're just firing
+	if (e.changedTouches.length > 0) {
+		if (e.changedTouches[0].target.id == "touch-fire") {
+			return;
+		}
+	}
+	notPressingDownLeft(e);
+	notPressingDownRight(e);
+	notPressingDownUp(e);
+	notPressingDownDown(e);
+}
 
-// function notPressingDownFire(e) {
-// 	// Stop the timer
-// 	cancelAnimationFrame(timerFire);
-// 	cancelAnimationFrame(timerIDfire);
-// 	p1.classList.remove("walk");
-// 	keyDirection = null;
-// }
+function pressingDownFire(e) {
+	countTouches++;
+	// Start the timer
+	// requestAnimationFrame(timerFire);
+	// if (e) {
+	// 	e.preventDefault();
+	// }
+	p1Fire();
+	//keyDirection = "right";
+}
+
+function notPressingDownFire(e) {
+	countTouches--;
+	// Stop the timer
+	//cancelAnimationFrame(timerFire);
+	//cancelAnimationFrame(timerIDfire);
+	//p1.classList.remove("walk");
+	//keyDirection = null;
+}
 
 function pressingDownRight(e) {
+	countTouches++;
 	// Start the timer
+	console.log("pressingDownRight");
 	requestAnimationFrame(timerRight);
 	if (e) {
 		e.preventDefault();
@@ -1039,15 +1092,19 @@ function pressingDownRight(e) {
 }
 
 function notPressingDownRight(e) {
+	countTouches--;
 	// Stop the timer
-	cancelAnimationFrame(timerID);
+	console.log("notPressingDownRight");
+	cancelAnimationFrame(timerIDRight);
 	counter = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownLeft(e) {
+	countTouches++;
 	// Start the timer
+	console.log("pressingDownLeft");
 	requestAnimationFrame(timerLeft);
 	if (e) {
 		e.preventDefault();
@@ -1057,15 +1114,19 @@ function pressingDownLeft(e) {
 }
 
 function notPressingDownLeft(e) {
+	countTouches--;
 	// Stop the timer
-	cancelAnimationFrame(timerID);
+	console.log("notPressingDownLeft");
+	cancelAnimationFrame(timerIDLeft);
 	counter = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownUp(e) {
+	countTouches++;
 	// Start the timer
+	console.log("pressingDownUp");
 	requestAnimationFrame(timerUp);
 	if (e) {
 		e.preventDefault();
@@ -1075,15 +1136,19 @@ function pressingDownUp(e) {
 }
 
 function notPressingDownUp(e) {
+	countTouches--;
 	// Stop the timer
-	cancelAnimationFrame(timerID);
+	console.log("notPressingDownUp");
+	cancelAnimationFrame(timerIDUp);
 	counter = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownDown(e) {
+	countTouches++;
 	// Start the timer
+	console.log("pressingDownDown");
 	requestAnimationFrame(timerDown);
 	if (e) {
 		e.preventDefault();
@@ -1093,8 +1158,10 @@ function pressingDownDown(e) {
 }
 
 function notPressingDownDown(e) {
+	countTouches--;
 	// Stop the timer
-	cancelAnimationFrame(timerID);
+	console.log("notPressingDownDown");
+	cancelAnimationFrame(timerIDDown);
 	counter = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
@@ -1107,7 +1174,7 @@ function timerLeft() {
 	if (counter % 4 === 0) {
 		moveCharacterLeft(p1)
 	}
-	timerID = requestAnimationFrame(timerLeft);
+	timerIDLeft = requestAnimationFrame(timerLeft);
 	counter++;
 }
 
@@ -1115,7 +1182,7 @@ function timerRight() {
 	if (counter % 4 === 0) {
 		moveCharacterRight(p1)
 	}
-	timerID = requestAnimationFrame(timerRight);
+	timerIDRight = requestAnimationFrame(timerRight);
 	counter++;
 }
 
@@ -1123,7 +1190,7 @@ function timerUp() {
 	if (counter % 4 === 0) {
 		moveCharacterUp(p1)
 	}
-	timerID = requestAnimationFrame(timerUp);
+	timerIDUp = requestAnimationFrame(timerUp);
 	counter++;
 }
 
@@ -1131,7 +1198,7 @@ function timerDown() {
 	if (counter % 4 === 0) {
 		moveCharacterDown(p1)
 	}
-	timerID = requestAnimationFrame(timerDown);
+	timerIDDown = requestAnimationFrame(timerDown);
 	counter++;
 }
 

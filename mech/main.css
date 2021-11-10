@@ -1,4 +1,5 @@
 body {
+	background-color: #000;
 	margin: 0;
 	font-family: sans-serif;
 	scrollbar-width: none;
@@ -22,6 +23,9 @@ body#gamemenu {
 }
 p {
 	font-size: 1em;
+}
+#ground {
+	transition: all 67ms linear;
 }
 
 
@@ -91,7 +95,7 @@ header h1 {
 	width: 100%;
 	height: 100%;
 	position: absolute;
-	z-index: 2;
+	z-index: 5;
 }
 #overlay.active {
 	display: block;
@@ -116,7 +120,7 @@ header h1 {
 	background: #EEE;
 	padding: 20px;
 	border-radius: 10px;
-	z-index: 5;
+	z-index: 6;
 	animation-name: fadeIn;
 	animation-duration: 2000ms;
 	text-align: center;
@@ -135,7 +139,7 @@ header h1 {
 	font-size: 2em;
 	width: 80%;
 	line-height: 45px;
-	z-index: 4;
+	z-index: 6;
 }
 button, a.button {
 	background: none;
@@ -169,6 +173,9 @@ button:hover, a.button:hover {
 
 
 #cam {
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
 	transition: all 67ms linear;
 	position: relative;
 	scrollbar-width: none;
@@ -408,29 +415,28 @@ button:hover, a.button:hover {
 
 
 .touch {
-	display: none;
+	display: block;
 }
 #touch-controls {
-	z-index: 99;
+	z-index: 4;
 	position: fixed;
-	width: 240px;
-	bottom: 15px;
+	width: 328px;
+	bottom: 0;
 	left: 0;
+	margin: 0 0 20px 50px;
 }
 #touch-controls.touch {
-	z-index: 99;
+	z-index: 4;
 }
 #touch-left {
 	position: absolute;
-	bottom: 20px;
+	bottom: 55px;
 	left: 10px;
-	z-index: 99;
 }
 #touch-right {
 	position: absolute;
-	bottom: 20px;
+	bottom: 55px;
 	right: 10px;
-	z-index: 99;
 }
 #touch-left.pressing, #touch-right.pressing {
 	border-left-color: #55F;
@@ -439,48 +445,48 @@ button:hover, a.button:hover {
 .arrow-right {
 	width: 0; 
 	height: 0; 
-	border-top: 35px solid transparent;
-	border-bottom: 35px solid transparent;
-	border-left: 55px solid #FFF;
+	border-top: 55px solid transparent;
+	border-bottom: 55px solid transparent;
+	border-left: 85px solid #FFF;
 	margin-bottom: 33px;
 }
 
 .arrow-left {
 	width: 0; 
 	height: 0; 
-	border-top: 35px solid transparent;
-	border-bottom: 35px solid transparent; 
-	border-right: 55px solid #FFF;
+	border-top: 55px solid transparent;
+	border-bottom: 55px solid transparent; 
+	border-right: 85px solid #FFF;
 	margin-bottom: 33px;
 }
 
 .arrow-up {
 	width: 0; 
 	height: 0; 
-	border-right: 35px solid transparent;
-	border-bottom: 55px solid #FFF;
-	border-left: 35px solid transparent;
-	margin-left: 85px;
-	margin-bottom: 70px;
+	border-right: 55px solid transparent;
+	border-bottom: 85px solid #FFF;
+	border-left: 55px solid transparent;
+	margin-left: 110px;
+	margin-bottom: 120px;
 }
 
 .arrow-down {
 	width: 0; 
 	height: 0; 
-	border-left: 35px solid transparent;
-	border-top: 55px solid #FFF;
-	border-right: 35px solid transparent;
-	margin-left: 85px;
+	border-left: 55px solid transparent;
+	border-top: 85px solid #FFF;
+	border-right: 55px solid transparent;
+	margin-left: 110px;
 }
 #touch-fire {
 	position: fixed;
-	z-index: 99;
+	z-index: 4;
 	background: #FFF;
 	border-radius: 100px;
 	right: 25px;
 	bottom: 25px;
-	width: 100px;
-	height: 100px;
+	width: 200px;
+	height: 200px;
 }
 
 
