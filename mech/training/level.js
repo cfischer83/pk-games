@@ -64,7 +64,7 @@ document.addEventListener("touchstart", function(e) {
 		return false;
 	}
 
-	console.log(e.target.id);
+	//console.log(e.target.id);
 
 	if (e.target.id == 'touch-left') {
 		if (document.getElementById("leftarrow")) {
@@ -137,6 +137,12 @@ function completeStep2a() {
 	transitionStep("When your enemy hits you, your life goes down. <button id='completeStep2a' onclick='completeStep2b()'>OK</button>");
 }
 
+var completeStep2aInterval = setInterval(function() {
+	document.getElementById("completeStep2a")?.addEventListener("touchstart", function(e) {
+		completeStep2b();
+	})
+}, 300);
+
 function completeStep2b() {
 	document.getElementById('overlay').classList.remove('active');
 	document.getElementById('overlay').classList.add('inactive');
@@ -148,7 +154,8 @@ function completeStep2b() {
 function stepThree() {
 	step3 = true;
 	allowFiring = true;
-	transitionStep("Press the [space] bar to shoot");
+	var fireButton = (touchEnabled) ? "FIRE button" : "[space] key";
+	transitionStep("Press the " + fireButton + " to shoot");
 	document.addEventListener("fired", function(e) {
 		if (!step4) {
 		 	stepThreeB();
@@ -162,6 +169,12 @@ function stepThreeB() {
 	}
 }
 
+var completeStep2bInterval = setInterval(function() {
+	document.getElementById("completeStep2b")?.addEventListener("touchstart", function(e) {
+		completeStep3b();
+	})
+}, 300);
+
 function completeStep3b() {
 	step3b = true;
 	transitionStep("3...");
@@ -170,22 +183,37 @@ function completeStep3b() {
 	setTimeout('document.getElementById("lowerMessageText").innerHTML = "Fight!";stepFour();', 4000)
 }
 
+
 function stepFour() {
-	step4 = true;
 	var width = window.innerWidth;
 	var height = window.innerHeight;
 	var p1Details = p1.getBoundingClientRect();
 	var p1x = p1Details.x;
 	var x = (width / 2 >= p1x) ? (width - 100) : 10;
 	var y = (height / 2) - 44;
-	var enemy1 = addEnemy("turret", 50, x, y);
+	if (!step4) {
+		var enemy1 = addEnemy("turret", 50, x, y);
+	}
+	step4 = true;
 	document.addEventListener("enemyKill", function(e) {
-		transitionStep("Your training is now complete. <a href='index.html' class='button'>Go To Missions</a>");
+		transitionStep("Your training is now complete. <a href='index.html' id='successBtn' class='button'>Go To Missions</a>");
 	});
 	document.addEventListener("lose", function(e) {
-		transitionStep("You have lost your battle and brought shame to your family's name. <a href='training.html' class='button'>Try Again</a>");
+		transitionStep("You have lost your battle and brought shame to your family's name. <a href='training.html' id='tryagain' class='button'>Try Again</a>");
 	});
 }
+
+var successBtnInterval = setInterval(function() {
+	document.getElementById("successBtn")?.addEventListener("touchstart", function(e) {
+		window.location.href = "index.html";
+	})
+}, 300);
+
+var completeStep2bInterval = setInterval(function() {
+	document.getElementById("tryagain")?.addEventListener("touchstart", function(e) {
+		window.location.href = "training.html";
+	})
+}, 300);
 
 
 

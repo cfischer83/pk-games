@@ -417,71 +417,62 @@ button:hover, a.button:hover {
 .touch {
 	display: block;
 }
+body.touchEnabled #lowerMessage {
+	margin-bottom: 100px;
+}
 #touch-controls {
+	background: url(dpad.png) center center no-repeat;
 	z-index: 4;
 	position: fixed;
-	width: 328px;
+	width: 222px;
+	height: 222px;
 	bottom: 0;
 	left: 0;
-	margin: 0 0 20px 50px;
+	margin: 0 0 50px 50px;
 }
 #touch-controls.touch {
 	z-index: 4;
 }
+.debug #touch-left, .debug #touch-right, .debug #touch-up, .debug #touch-down {
+	background: #F00;
+	opacity: 0.5;
+}
 #touch-left {
 	position: absolute;
-	bottom: 55px;
-	left: 10px;
+	bottom: 69px;
+	width: 90px;
+	height: 85px;
 }
 #touch-right {
 	position: absolute;
-	bottom: 55px;
-	right: 10px;
+	bottom: 70px;
+	left: 134px;
+	width: 90px;
+	height: 85px;
+}
+#touch-up {
+	position: absolute;
+	bottom: 150px;
+	left: 67px;
+	width: 90px;
+	height: 85px;
+}
+#touch-down {
+	position: absolute;
+	bottom: -10px;
+	left: 65px;
+	width: 90px;
+	height: 85px;
 }
 #touch-left.pressing, #touch-right.pressing {
 	border-left-color: #55F;
 	border-right-color: #55F;
 }
-.arrow-right {
-	width: 0; 
-	height: 0; 
-	border-top: 55px solid transparent;
-	border-bottom: 55px solid transparent;
-	border-left: 85px solid #FFF;
-	margin-bottom: 33px;
-}
 
-.arrow-left {
-	width: 0; 
-	height: 0; 
-	border-top: 55px solid transparent;
-	border-bottom: 55px solid transparent; 
-	border-right: 85px solid #FFF;
-	margin-bottom: 33px;
-}
-
-.arrow-up {
-	width: 0; 
-	height: 0; 
-	border-right: 55px solid transparent;
-	border-bottom: 85px solid #FFF;
-	border-left: 55px solid transparent;
-	margin-left: 110px;
-	margin-bottom: 120px;
-}
-
-.arrow-down {
-	width: 0; 
-	height: 0; 
-	border-left: 55px solid transparent;
-	border-top: 85px solid #FFF;
-	border-right: 55px solid transparent;
-	margin-left: 110px;
-}
 #touch-fire {
 	position: fixed;
 	z-index: 4;
-	background: #FFF;
+	background: #dbe0de;
 	border-radius: 100px;
 	right: 25px;
 	bottom: 25px;

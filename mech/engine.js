@@ -166,6 +166,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 function placeTouchControls() {
+	document.body.classList.add("touchEnabled");
 	var touchControls = document.createElement("div");
 		touchControls.setAttribute("id", "touch-controls");
 		touchControls.setAttribute("class", "touch");
@@ -969,14 +970,16 @@ function changeKeyDirection(key) {
 }
 
 function touchMove(e) {
+	var touchingMultiple = 0; // try to prevent multiple touches on just dpad
 	for (var i = 0; i < e.touches.length; i++) {
 		var touch = e.touches[i];
 		var positionX = touch.pageX;
 		var positionY = touch.pageY;
 		var key = isTouchControlBeingTouched(positionX, positionY);
-		if (key == "left" || key == "right" || key == "up" || key == "down") {
+		if ((key == "left" || key == "right" || key == "up" || key == "down") && touchingMultiple == 0) {
+			touchingMultiple++;
 			if (key != keyDirection) {
-				console.log("CHANGE INPUT: " + keyDirection + " now is " + key);
+				console.log("CHANGE INPUT: " + touchingMultiple + " " + keyDirection + " now is " + key);
 				cancelKeyDirection(keyDirection);
 				keyDirection = key;
 				changeKeyDirection(key);
@@ -990,7 +993,12 @@ var timerID;
 var timerIDLeft, timerIDRight, timerIDUp, timerIDDown;
 var timerIDfire;
 var counter = 0;
-var keyDirection = null;
+var counterF = 0;
+var counterD = 0;
+var counterR = 0;
+var counterL = 0;
+var counterU = 0;
+var dPadInUse = "standing";
 var countTouches = 0;
 function touchControls() {
 	// catch dragging so we can change direction w/o touchEnd event
@@ -1043,6 +1051,7 @@ function touchControls() {
 	// fireTouch.addEventListener("touchstart", pressingDownFire, false);
 	fireTouch.addEventListener("touchend", notPressingDownFire, false);
 	fireTouch.addEventListener("touchstart", pressingDownFire, false);
+
 	document.addEventListener("touchend", documentTouchEnd, false);
 }
 
@@ -1050,6 +1059,7 @@ function documentTouchEnd(e) {
 	// don't stop touches if you're just firing
 	if (e.changedTouches.length > 0) {
 		if (e.changedTouches[0].target.id == "touch-fire") {
+			notPressingDownFire(null);
 			return;
 		}
 	}
@@ -1060,29 +1070,28 @@ function documentTouchEnd(e) {
 }
 
 function pressingDownFire(e) {
-	countTouches++;
 	// Start the timer
-	// requestAnimationFrame(timerFire);
-	// if (e) {
-	// 	e.preventDefault();
-	// }
+	requestAnimationFrame(timerFire);
+	if (e) {
+		e.preventDefault();
+	}
 	p1Fire();
-	//keyDirection = "right";
 }
 
 function notPressingDownFire(e) {
-	countTouches--;
 	// Stop the timer
-	//cancelAnimationFrame(timerFire);
-	//cancelAnimationFrame(timerIDfire);
-	//p1.classList.remove("walk");
-	//keyDirection = null;
+	cancelAnimationFrame(timerIDfire);
+	counter = 0;
+	counterF = 0;
 }
 
 function pressingDownRight(e) {
-	countTouches++;
+	if (dPadInUse !== "standing" && dPadInUse !== "right") {
+		notPressingDownRight(null);
+		return;
+	}
+	dPadInUse = "right";
 	// Start the timer
-	console.log("pressingDownRight");
 	requestAnimationFrame(timerRight);
 	if (e) {
 		e.preventDefault();
@@ -1092,19 +1101,22 @@ function pressingDownRight(e) {
 }
 
 function notPressingDownRight(e) {
-	countTouches--;
 	// Stop the timer
-	console.log("notPressingDownRight");
+	dPadInUse = "standing";
 	cancelAnimationFrame(timerIDRight);
 	counter = 0;
+	counterR = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownLeft(e) {
-	countTouches++;
+	if (dPadInUse !== "standing" && dPadInUse !== "left") {
+		notPressingDownLeft(null);
+		return;
+	}
+	dPadInUse = "left";
 	// Start the timer
-	console.log("pressingDownLeft");
 	requestAnimationFrame(timerLeft);
 	if (e) {
 		e.preventDefault();
@@ -1114,19 +1126,22 @@ function pressingDownLeft(e) {
 }
 
 function notPressingDownLeft(e) {
-	countTouches--;
 	// Stop the timer
-	console.log("notPressingDownLeft");
+	dPadInUse = "standing";
 	cancelAnimationFrame(timerIDLeft);
 	counter = 0;
+	counterL = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownUp(e) {
-	countTouches++;
+	if (dPadInUse !== "standing" && dPadInUse !== "up") {
+		notPressingDownUp(null);
+		return;
+	}
+	dPadInUse = "up";
 	// Start the timer
-	console.log("pressingDownUp");
 	requestAnimationFrame(timerUp);
 	if (e) {
 		e.preventDefault();
@@ -1136,19 +1151,22 @@ function pressingDownUp(e) {
 }
 
 function notPressingDownUp(e) {
-	countTouches--;
 	// Stop the timer
-	console.log("notPressingDownUp");
+	dPadInUse = "standing";
 	cancelAnimationFrame(timerIDUp);
 	counter = 0;
+	counterU = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
 
 function pressingDownDown(e) {
-	countTouches++;
+	if (dPadInUse !== "standing" && dPadInUse !== "down") {
+		notPressingDownUp(null);
+		return;
+	}
+	dPadInUse = "down";
 	// Start the timer
-	console.log("pressingDownDown");
 	requestAnimationFrame(timerDown);
 	if (e) {
 		e.preventDefault();
@@ -1158,11 +1176,11 @@ function pressingDownDown(e) {
 }
 
 function notPressingDownDown(e) {
-	countTouches--;
 	// Stop the timer
-	console.log("notPressingDownDown");
+	dPadInUse = "standing";
 	cancelAnimationFrame(timerIDDown);
 	counter = 0;
+	counterD = 0;
 	p1.classList.remove("walk");
 	keyDirection = null;
 }
@@ -1171,35 +1189,35 @@ function notPressingDownDown(e) {
 // Runs at 60fps when you are pressing down
 //
 function timerLeft() {
-	if (counter % 4 === 0) {
+	if (counterL % 4 === 0) {
 		moveCharacterLeft(p1)
 	}
 	timerIDLeft = requestAnimationFrame(timerLeft);
-	counter++;
+	counterL++;
 }
 
 function timerRight() {
-	if (counter % 4 === 0) {
+	if (counterR % 4 === 0) {
 		moveCharacterRight(p1)
 	}
 	timerIDRight = requestAnimationFrame(timerRight);
-	counter++;
+	counterR++;
 }
 
 function timerUp() {
-	if (counter % 4 === 0) {
+	if (counterU % 4 === 0) {
 		moveCharacterUp(p1)
 	}
 	timerIDUp = requestAnimationFrame(timerUp);
-	counter++;
+	counterU++;
 }
 
 function timerDown() {
-	if (counter % 4 === 0) {
+	if (counterD % 4 === 0) {
 		moveCharacterDown(p1)
 	}
 	timerIDDown = requestAnimationFrame(timerDown);
-	counter++;
+	counterD++;
 }
 
 function p1Fire(e) {
@@ -1216,10 +1234,10 @@ function p1Fire(e) {
 	}
 }
 
-// function timerFire() {
-// 	p1Fire();
-// 	timerIDfire = requestAnimationFrame(timerFire);
-// }
+function timerFire() {
+	p1Fire();
+	timerIDfire = requestAnimationFrame(timerFire);
+}
 
 
 
