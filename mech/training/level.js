@@ -2,6 +2,7 @@ var trainingKeyUp = false;
 var trainingKeyDown = false;
 var trainingKeyRight = false;
 var trainingKeyLeft = false;
+gameLevel = "training";
 
 var step1 = false;
 var step2 = false;

@@ -78,7 +78,7 @@ button, a.button {
 	text-decoration: none;
 }
 button:hover, a.button:hover {
-	background: #55F;
+	border-color: #FFF;
 	cursor: pointer;
 }
 
