@@ -291,7 +291,7 @@ function getWindowHeight() {
 		// remove some height for touch controls
 		return document.documentElement.clientHeight - 310;
 	}
-	return document.documentElement.clientHeight;
+	return window.innerHeight;
 }
 
 function getGroundWidth() {
@@ -848,7 +848,7 @@ function moveCamUp(p1){
 	if (!ground_marginTop) {
 		ground_marginTop = 0;
 	}
-	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
+	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0){
 		var new_ground_marginTop = ground_marginTop + global_increment_by;
 		ground.style.marginTop = new_ground_marginTop + "px";
 	}
