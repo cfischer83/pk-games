@@ -39,7 +39,8 @@ header {
 }
 header h1 {
 	font-family: 'Black Ops One', sans-serif;
-	color: #FFF;
+	color: #0f0;
+	text-shadow: 0 0 100px #090;
 	text-transform: uppercase;
 	font-size: 4em;
 	text-align: center;
@@ -65,7 +66,7 @@ header h1 {
 	background: #88A;
 }
 .game:hover p {
-	color: #FFF;
+	color: #000;
 }
 .game img {
 	border-top-left-radius: 10px;
@@ -155,7 +156,9 @@ button, a.button {
 	font-family: 'Black Ops One', sans-serif;
 }
 button:hover, a.button:hover {
-	background: #55F;
+	background: #0f0;
+	color: #000;
+	border-color: #000;
 	cursor: pointer;
 }
 #overlaytext h2 {
@@ -475,7 +478,7 @@ body.touchEnabled #lowerMessage {
 	background: #dbe0de;
 	border-radius: 100px;
 	right: 25px;
-	bottom: 25px;
+	bottom: 55px;
 	width: 200px;
 	height: 200px;
 }

@@ -11,6 +11,7 @@ var lastProjectileFired = 0; // will be timestamp to avoid too many firings
 var touchEnabled = ('ontouchstart' in document.documentElement);
 var allowFiring = true; // allow/disallow firing
 var debug = false;
+var gameLevel; // defined in level.js
 
 
 function preloadImage(url) {
@@ -30,6 +31,13 @@ preloadImage("explosion.gif");
 preloadImage("destroyed-explosion.gif");
 
 
+function setCamDimensions() {
+	cam.style.width = getWindowWidth();
+	cam.style.height = getWindowHeight();
+}
+
+window.addEventListener('resize', setCamDimensions);
+
 document.addEventListener("DOMContentLoaded", function(event) {
 	// annoying iOS toolbar hiding hack
 	window.scrollTo(1, 0);
@@ -41,8 +49,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	p1.style.marginLeft	= "30px";
 	p1.style.marginTop = "30px";
-	cam.style.width = getWindowWidth();
-	cam.style.height = getWindowHeight();
+	setCamDimensions();
 	setInterval("rotateTurrets()", 1000);
 	setInterval("promptEnemiesToFire()", 1000);
 	setDebug();
@@ -165,6 +172,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	disableScroll();
 });
 
+function pkAnalytics(action, label) {
+	if (ga) {
+		console.log('send to ga');
+		ga('send', {
+			hitType: 'event',
+			eventCategory: 'Game',
+			eventAction: action,
+			eventLabel: label
+		});
+	}
+}
+
 function placeTouchControls() {
 	document.body.classList.add("touchEnabled");
 	var touchControls = document.createElement("div");
@@ -263,6 +282,7 @@ function setDebug() {
 }
 
 function getWindowWidth() {
+	global_window_size = window.innerWidth;
 	return global_window_size;
 }
 
@@ -271,7 +291,7 @@ function getWindowHeight() {
 		// remove some height for touch controls
 		return document.documentElement.clientHeight - 310;
 	}
-	return document.documentElement.clientHeight;
+	return window.innerHeight;
 }
 
 function getGroundWidth() {
@@ -713,11 +733,13 @@ function loseGame() {
 	var event = new CustomEvent("lose", { "detail": "level 1" });
 	console.log(event);
 	document.dispatchEvent(event);
+	pkAnalytics("mech:lose", gameLevel);
 }
 
 function winGame() {
 	gamePlay = false;
 	console.log("win!");
+	pkAnalytics("mech:win", gameLevel);
 }
 
 function promptEnemiesToFire() {
@@ -826,7 +848,7 @@ function moveCamUp(p1){
 	if (!ground_marginTop) {
 		ground_marginTop = 0;
 	}
-	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight){
+	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0){
 		var new_ground_marginTop = ground_marginTop + global_increment_by;
 		ground.style.marginTop = new_ground_marginTop + "px";
 	}
