@@ -17,6 +17,7 @@ body {
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: contain;
+	/* transition: all 5ms linear; */
 }
 .red {
 	background-color: red;
@@ -43,10 +44,12 @@ p {
 }
 </style>
 <script type="text/javascript">
-var global_increment_by = 24;
+var global_increment_by = 5;
 var global_box_size = 50;
+var intervalTimeout = 10;
 var global_window_size = window.innerWidth;
 var global_it = 'red';
+var aDownTimer, wDownTimer, sDownTimer, dDownTimer, upDownTimer, rightDownTimer, downDownTimer, leftDownTimer;
 
 document.addEventListener("DOMContentLoaded", function(event) { 
 	var redBox = document.getElementById("redBox");
@@ -54,42 +57,133 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	resetBlocks(blueBox, redBox);
 });
 
+document.addEventListener("keydown", function(e) {
 
+	// start timer
+	if (e.which == 37) {
+		if (!leftDownTimer) {
+			leftDownTimer = setInterval(function() {
+				moveBlockLeft(redBox);
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 38) {
+		if (!upDownTimer) {
+			upDownTimer = setInterval(function() {
+				moveBlockUp(redBox);
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 39) {
+		if (!rightDownTimer) {
+			rightDownTimer = setInterval(function() {
+				moveBlockRight(redBox);
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 40) {
+		if (!downDownTimer) {
+			downDownTimer = setInterval(function() {
+				moveBlockDown(redBox);
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 65) { // a
+		if (!aDownTimer) {
+			aDownTimer = setInterval(function() {
+				moveBlockLeft(blueBox)
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 87) { // w
+		if (!wDownTimer) {
+			wDownTimer = setInterval(function() {
+				moveBlockUp(blueBox)
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 68) { // d
+		if (!dDownTimer) {
+			dDownTimer = setInterval(function() {
+				moveBlockRight(blueBox)
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else if (e.which == 83) { // s
+		if (!sDownTimer) {
+			sDownTimer = setInterval(function() {
+				moveBlockDown(blueBox)
+			}, intervalTimeout);
+		}
+		e.preventDefault();
+	} else {
+		//
+	}
 
-window.addEventListener("keyup", function(event) {
-	var key = event.keyCode;
-	var redBox = document.getElementById("redBox");
-	var blueBox = document.getElementById("blueBox");
-
-	// RED BOX
-	if (key == 37) { // left
-		moveBlockLeft(redBox);
+	return false;
+})
+document.addEventListener("keyup", function(e) {
+	if (e.which == 37) {
+		clearInterval(leftDownTimer);
+		leftDownTimer = null;
+	} else if (e.which == 38) {
+		clearInterval(upDownTimer);
+		upDownTimer = null;
+	} else if (e.which == 39) {
+		clearInterval(rightDownTimer);
+		rightDownTimer = null;
+	} else if (e.which == 40) {
+		clearInterval(downDownTimer);
+		downDownTimer = null;
+	} else if (e.which == 65) { // a
+		clearInterval(aDownTimer);
+		aDownTimer = null;
+	} else if (e.which == 87) { // w
+		clearInterval(wDownTimer);
+		wDownTimer = null;
+	} else if (e.which == 68) { // d
+		clearInterval(dDownTimer);
+		dDownTimer = null;
+	} else if (e.which == 83) { // s
+		clearInterval(sDownTimer);
+		sDownTimer = null;
 	}
-	if (key == 38) { // up
-		moveBlockUp(redBox);
-	}
-	if (key == 39) { // right 
-		moveBlockRight(redBox);
-	}
-	if (key == 40) { // down
-		moveBlockDown(redBox);
-	}
-
-	// BLUE BOX
-	if (key == 65) { // "a" left
-		moveBlockLeft(blueBox);
-	}
-	if (key == 87) { // "w" up
-		moveBlockUp(blueBox);
-	}
-	if (key == 68) { // "d" right 
-		moveBlockRight(blueBox);
-	}
-	if (key == 83) { // "s" down
-		moveBlockDown(blueBox);
-	}
-	setTimeout('doBlocksOverLap(blueBox, redBox)', 50);
 });
+
+// window.addEventListener("keyup", function(event) {
+// 	var key = event.keyCode;
+// 	var redBox = document.getElementById("redBox");
+// 	var blueBox = document.getElementById("blueBox");
+
+// 	// RED BOX
+// 	if (key == 37) { // left
+// 		moveBlockLeft(redBox);
+// 	}
+// 	if (key == 38) { // up
+// 		moveBlockUp(redBox);
+// 	}
+// 	if (key == 39) { // right 
+// 		moveBlockRight(redBox);
+// 	}
+// 	if (key == 40) { // down
+// 		moveBlockDown(redBox);
+// 	}
+
+// 	// BLUE BOX
+// 	if (key == 65) { // "a" left
+// 		moveBlockLeft(blueBox);
+// 	}
+// 	if (key == 87) { // "w" up
+// 		moveBlockUp(blueBox);
+// 	}
+// 	if (key == 68) { // "d" right 
+// 		moveBlockRight(blueBox);
+// 	}
+// 	if (key == 83) { // "s" down
+// 		moveBlockDown(blueBox);
+// 	}
+// 	setTimeout('doBlocksOverLap(blueBox, redBox)', 50);
+// });
 
 function moveBlockLeft(block) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
@@ -97,6 +191,7 @@ function moveBlockLeft(block) {
 	if (newMarginLeft >= 0) {
 		block.style.marginLeft = newMarginLeft + "px";
 	}
+	setTimeout('doBlocksOverLap(blueBox, redBox);', 50);
 }
 function moveBlockRight(block) {
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
@@ -104,6 +199,7 @@ function moveBlockRight(block) {
 	if (newMarginLeft <= (global_window_size-global_box_size)) {
 		block.style.marginLeft = newMarginLeft + "px";
 	}
+	setTimeout('doBlocksOverLap(blueBox, redBox);', 50);
 }
 function moveBlockUp(block) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
@@ -111,11 +207,13 @@ function moveBlockUp(block) {
 	if (newMarginTop >= 0) {
 		block.style.marginTop = newMarginTop + "px";
 	}
+	setTimeout('doBlocksOverLap(blueBox, redBox);', 50);
 }
 function moveBlockDown(block) {
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop + global_increment_by;
 	block.style.marginTop = newMarginTop + "px";
+	setTimeout('doBlocksOverLap(blueBox, redBox);', 50);
 }
 
 function doBlocksOverLap(box1, box2) {
@@ -139,6 +237,15 @@ function doBlocksOverLap(box1, box2) {
 	}
 }
 function resetBlocks(box1, box2) {
+	clearInterval(aDownTimer);
+	clearInterval(wDownTimer);
+	clearInterval(sDownTimer);
+	clearInterval(dDownTimer);
+	clearInterval(upDownTimer);
+	clearInterval(rightDownTimer);
+	clearInterval(downDownTimer);
+	clearInterval(leftDownTimer);
+	aDownTimer = null, wDownTimer = null, sDownTimer = null, dDownTimer = null, upDownTimer = null, rightDownTimer = null, downDownTimer = null, leftDownTimer = null;
 	box1.style.marginLeft = "0px";
 	box1.style.marginTop = "0px";
 	box2.style.marginLeft = (global_window_size-global_box_size) + "px";
@@ -160,14 +267,14 @@ function resetBlocks(box1, box2) {
 </head>
 <body>
 
-	<p id="instructions">Two player. Background color is "it". Other color should run away. Red uses arrow keys &#x2191; &#x2192; &#x2193; &#x2B07;. Blue uses W A S D keys.</p>
+	<p id="instructions">Two player. Background color is "it". Other color should run away.<br />Red uses arrow keys &#x2191; &#x2192; &#x2193; &#x2B07;. Blue uses W A S D keys.</p>
 
 <div class="box blue" id="blueBox"></div>
 <div class="box red" id="redBox"></div>
 
 <script type="text/javascript">
 if ('ontouchstart' in document.documentElement) {
-	document.getElementById("instructions").outerHTML = "<h1>This is a desktop-only game :( but you can try one of the other games!<br /><a href='../racing'>Racing</a> is mobile friendly.";
+	document.getElementById("instructions").outerHTML = "<h1>This is a desktop-only game :( but you can try one of the <a href='../index.html'>other games!</a> that are mobile friendly.";
 }
 </script>
 <script>(function() {
