@@ -466,6 +466,128 @@ function rotateTurrets() {
 }
 
 
+
+function initiateTanks() {
+	var tankAreas = document.getElementsByClassName("tankArea");
+	var tanks = document.getElementsByClassName("tank");
+	for (var i=0; i < tankAreas.length; i++) {
+		for (var j=0; j < tanks.length; j++) {
+			if (doBlocksOverLap(tankAreas[i], tanks[j])) {
+				moveTank(tanks[j], tankAreas[i]);
+				break;
+			}
+		}
+	}
+}
+
+setInterval('initiateTanks()', 100);
+
+function moveTank(tank, tankArea) {
+	var taBC = tankArea.getBoundingClientRect();
+	var taStartX = parseInt(tankArea.style.marginLeft)
+	var taEndX = parseInt(tankArea.style.marginLeft) + (taBC.width);
+	var taStartY = parseInt(tankArea.style.marginTop)
+	var taEndY = parseInt(tankArea.style.marginTop) + (taBC.height);
+
+	taStartXQ = taStartX - parseInt(tankArea.style.marginLeft);
+	taEndXQ = taEndX - parseInt(tankArea.style.marginLeft);
+	taStartYQ = taStartY - parseInt(tankArea.style.marginTop);
+	taEndYQ = taEndY - parseInt(tankArea.style.marginTop);
+
+	t = tank.getBoundingClientRect();
+	characterX = parseInt(tank.style.marginLeft) + (t.width / 2) - taStartX;
+	characterY = parseInt(tank.style.marginTop) + (t.height / 2) - taStartY;
+	var quadrant = findQuadrant(characterX, characterY, taStartXQ, taEndXQ, taStartYQ, taEndYQ);
+	var dataDirection = tank.dataset.direction;
+	var isDestroyed = tank.classList.contains("destroyed");
+	if (isDestroyed) {
+		return;
+	}
+	if (typeof dataDirection == 'undefined') {
+		if (quadrant == 1) {
+			changeDirection(tank, "right");
+			tank.dataset.direction = "right";
+			moveBlockRight(tank);
+		}
+		else if (quadrant == 2) {
+			changeDirection(tank, "down");
+			tank.dataset.direction = "down";
+			moveBlockDown(tank);
+		}
+		else if (quadrant == 3) {
+			changeDirection(tank, "left");
+			tank.dataset.direction = "left";
+			moveBlockLeft(tank);
+		}
+		else if (quadrant == 4) {
+			changeDirection(tank, "up");
+			tank.dataset.direction = "up";
+			moveBlockUp(tank);
+		}
+	} else {
+		var tx = parseInt(tank.style.marginLeft) - taStartX + (t.width / 2);
+		var ty = parseInt(tank.style.marginTop) - taStartY + (t.height / 2);
+		var taWidth = taBC.width;
+		var taHeight = taBC.height;
+		//console.log("tx + global_increment_by = " + (tx + global_increment_by) + " < taWidth " + taWidth)
+		if (dataDirection == "right") {
+			if (tx + global_increment_by < taWidth) {
+				moveBlockRight(tank);
+			} else {
+				changeDirection(tank, "down");
+				tank.dataset.direction = "down";
+			}
+		}
+		else if (dataDirection == "down") {
+			if (ty + global_increment_by < taHeight) {
+				moveBlockDown(tank);
+			} else {
+				changeDirection(tank, "left");
+				tank.dataset.direction = "left";
+			}
+		}
+		else if (dataDirection == "left") {
+			if (tx - global_increment_by > 0) {
+				moveBlockLeft(tank);
+			} else {
+				changeDirection(tank, "up");
+				tank.dataset.direction = "up";
+			}
+		}
+		else if (dataDirection == "up") {
+			if (ty - global_increment_by > 0) {
+				moveBlockUp(tank);
+			} else {
+				changeDirection(tank, "right");
+				tank.dataset.direction = "right";
+			}
+		}
+	}
+}
+
+function findQuadrant(characterX, characterY, xS, xE, yS, yE) {
+	var xMid = Math.round(xE / 2);
+	var yMid = Math.round(yE / 2);
+	var leftRight = (characterX <= xMid) ? "left" : "right";
+	var upDown = (characterY <= yMid) ? "up" : "down";
+	if (leftRight == "left" && upDown == "up") {
+		return 1;
+	}
+	else if (leftRight == "right" && upDown == "up") {
+		return 2;
+	}
+	else if (leftRight == "right" && upDown == "down") {
+		return 3;
+	}
+	else if (leftRight == "left" && upDown == "down") {
+		return 4;
+	} else {
+		return 0; // error
+	}
+}
+
+
+
 function fire(gunner, allegiance, projectileType) {
 	if (!gamePlay) {
 		return;

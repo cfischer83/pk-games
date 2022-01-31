@@ -303,6 +303,70 @@ button:hover, a.button:hover {
 
 
 
+.tank {
+	position: absolute;
+	width: 100px;
+	height: 100px;
+	transition: all 100ms linear;
+}
+.tank::before {
+	content: " ";
+	display: block;
+	width: 100px;
+	height: 100px;
+	background: url(img/tank.png) center center no-repeat;
+	background-size: contain;
+	position: absolute;
+}
+.tank.up::before {
+	background-image: url(img/tank-up.png);
+}
+.tank.down::before {
+	background-image: url(img/tank-down.png);
+}
+.tank.left::before {
+	background-image: url(img/tank.png);
+	transform: scaleX(-1);
+}
+.tank.right::before {
+	background-image: url(img/tank.png);
+}
+.tank.left.destroyed::before, .tank.right.destroyed::before {
+	background-image: url(img/tank-destroyed.png);
+}
+.tank.down.destroyed::before, .tank.up.destroyed::before {
+	background-image: url(img/tank-destroyed-v.png);
+}
+.tank.destroyed::after {
+	content: " ";
+	background-image: url(destroyed-explosion.gif);
+	position: absolute;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: -52px;
+	width: 200px;
+	height: 200px;
+}
+.tank.destroyed.dead::after {
+	background-image: none;
+}
+
+
+
+
+.tankArea {
+	position: absolute;
+	z-index: 0;
+}
+.debug .tankArea {
+	background-color: rgba(253, 0, 253, 0.5);
+}
+
+
+
+
+
 .erppc {
 	display: block;
 	position: absolute;
