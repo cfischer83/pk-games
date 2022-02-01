@@ -262,7 +262,9 @@ button:hover, a.button:hover {
 	position: absolute;
 }
 
-
+.enemy {
+	position: absolute;
+}
 .turret {
 	position: absolute;
 	background: url(turret-up-left.png) center center no-repeat;

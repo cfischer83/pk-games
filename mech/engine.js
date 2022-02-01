@@ -877,7 +877,7 @@ function promptEnemiesToFire() {
 }
 
 function enemyWithinRange(enemy) {
-	var inRange = 1000;
+	var inRange = 1250;
 	var enemeyDetails = enemy.getBoundingClientRect();
 	var enemyX = enemeyDetails.x + (enemeyDetails.width / 2);
 	var enemyY = enemeyDetails.y + (enemeyDetails.height / 2);

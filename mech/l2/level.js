@@ -1,31 +1,35 @@
 gameLevel = "L2";
 
 document.addEventListener("DOMContentLoaded", function(event) { 
-	var enemy1 = addEnemy("tank", 30, 300, 300, "right");
-	var enemy2 = addEnemy("tank", 30, 800, 200);
+	var enemy1 = addEnemy("tank", 30, 300, 1300, "right");
+	var enemy2 = addEnemy("tank", 30, 1800, 1500, "right");
+	var enemy3 = addEnemy("turret", 50, 1861, 1765);
+	var enemy4 = addEnemy("turret", 50, 4075, 1639);
+	var enemy5 = addEnemy("tank", 30, 4267, 1792, "right");
+	var enemy6 = addEnemy("tank", 30, 4467, 1792, "right");
+	var enemy7 = addEnemy("tank", 30, 4667, 1792, "right");
+	var enemy8 = addEnemy("tank", 30, 4867, 1792, "right");
+	var enemy9 = addEnemy("tank", 30, 4800, 700, "right");
+	var pyramid = addEnemy("pyramid", 50, 5082, 936);
 
-	var obstacle1 = addObstacle(831, 286, 1530, 0);
-	var obstacle2 = addObstacle(250, 150, 1300, 0);
-	var obstacle3 = addObstacle(390, 350, 2099, 249);
-	var obstacle4 = addObstacle(190, 230, 1923, 230);
-	var obstacle5 = addObstacle(364, 228, 0, 1001);
-	var obstacle6 = addObstacle(173, 144, 318, 1159);
-	var obstacle7 = addObstacle(535, 286, 2921, 909);
-	var obstacle8 = addObstacle(561, 486, 2698, 1192);
-	var obstacleWater1 = addObstacle(2999, 100, 0, 1701, false);
-	var obstacleWater2 = addObstacle(200, 500, 2799, 1700, false);
-	var obstacleWater3 = addObstacle(1260, 939, 1949, 2099, false);
-	var obstacleWater4 = addObstacle(1000, 700, 950, 2099, false);
-	var obstacleWater5 = addObstacle(400, 750, 899, 2775, false);
-	var obstacleWater6 = addObstacle(70, 100, 1300, 2775, false);
-	var obstacleWater7 = addObstacle(1260, 125, 1949, 3184, false);
-	var obstacleWater8 = addObstacle(1259, 123, 1949, 3458, false);
+	var obstacle1 = addObstacle(1549, 132, 4235, 528);
+	var obstacle2 = addObstacle(40, 1190, 4235, 528);
+	var obstacle3 = addObstacle(40, 1140, 5769, 539);
+	var obstacle4 = addObstacle(137, 187, 5705, 1478);
+	var obstacle5 = addObstacle(447, 192, 4235, 1495);
+	var obstacle6 = addObstacle(1000, 500, 765, 0);
+	var obstacle7 = addObstacle(535, 332, 996, 494);
 
 	preloadImage("turret-down-left.png");
 	preloadImage("turret-down-right.png");
 	preloadImage("turret-up-left.png");
 	preloadImage("turret-up-right.png");
 	preloadImage("missile.gif");
+	preloadImage("img/tank-destroyed.png");
+	preloadImage("img/tank-destroyed-v.png");
+	preloadImage("img/tank-down.png");
+	preloadImage("img/tank-up.png");
+	preloadImage("img/tank.png");
 });
 
 // Winning this level is done when all enemies are defeated.

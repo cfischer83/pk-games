@@ -1,7 +1,36 @@
 #ground {
 	background: url(bg.jpg) 0 0 repeat #553;
-	width: 4000px;
+	width: 6000px;
 	height: 4000px;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
+}
+
+.pyramid {
+	position: absolute;
+	width: 320px;
+	height: 275px;
+}
+.pyramid::before {
+	position: absolute;
+	width: 540px;
+	height: 385px;
+	content: " ";
+	background: url(pyramid.png) center center no-repeat;
+	margin: -55px 0 0 -110px;
+}
+.pyramid.destroyed::before {
+	background: url(pyramid-destroyed.png) center center no-repeat;
+}
+.pyramid.pyramid.destroyed::after {
+	position: absolute;
+	width: 740px;
+	height: 740px;
+	content: " ";
+	background: url(../destroyed-explosion.gif) center center no-repeat;
+	background-size: contain;
+	margin: -210px 0 0 -210px;
+}
+.pyramid.pyramid.destroyed.dead::after {
+	background-image: none;
 }
