@@ -49,6 +49,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	p1.style.marginLeft	= "30px";
 	p1.style.marginTop = "30px";
+	p1.setAttribute("data-x", "30");
+	p1.setAttribute("data-y", "30");
+
 	setCamDimensions();
 	setInterval("rotateTurrets()", 1000);
 	setInterval("promptEnemiesToFire()", 1000);
@@ -342,6 +345,7 @@ function moveBlockLeft(block, windowBoundary = false, increment = global_increme
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft - increment;
 	if (newMarginLeft >= 0 || !windowBoundary) {
+		block.setAttribute("data-x", newMarginLeft);
 		block.style.marginLeft = newMarginLeft + "px";
 	}
 }
@@ -349,6 +353,7 @@ function moveBlockRight(block, windowBoundary = false, increment = global_increm
 	var marginLeft = block.style.marginLeft ? parseInt(block.style.marginLeft) : 0;
 	var newMarginLeft = marginLeft + increment;
 	if (newMarginLeft <= (getGroundWidth() - global_box_size) || !windowBoundary) {
+		block.setAttribute("data-x", newMarginLeft);
 		block.style.marginLeft = newMarginLeft + "px";
 	}
 }
@@ -356,6 +361,7 @@ function moveBlockUp(block, windowBoundary = false, increment = global_increment
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop - increment;
 	if (newMarginTop >= 0 || !windowBoundary) {
+		block.setAttribute("data-y", newMarginTop);
 		block.style.marginTop = newMarginTop + "px";
 	}
 }
@@ -363,6 +369,7 @@ function moveBlockDown(block, windowBoundary = false, increment = global_increme
 	var marginTop = block.style.marginTop ? parseInt(block.style.marginTop) : 0;
 	var newMarginTop = marginTop + increment;
 	if (newMarginTop <= (getGroundHeight() - global_box_size) || !windowBoundary) {
+		block.setAttribute("data-y", newMarginTop);
 		block.style.marginTop = newMarginTop + "px";
 	}
 }
@@ -402,20 +409,41 @@ function willBlocksOverlap(box1, box2, direction) {
 	}
 	//console.log("box1XEnd = " + box1XEnd);
 	var box1viewportOffset = box1.getBoundingClientRect();
-	var box1XStart	= (box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0) + paddingHorizontal;
-	var box1XEnd 	= box1XStart + box1viewportOffset.width + paddingHorizontal;
+	// var box1XStart	= (box1viewportOffset.x ? parseInt(box1viewportOffset.x) : 0) + paddingHorizontal;
+	// var box1XEnd 	= box1XStart + box1viewportOffset.width + paddingHorizontal;
 		//console.log("box1XEnd = " + box1XEnd);
-	var box1YStart	= (box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0) + paddingVertical;
+	// var box1YStart	= (box1viewportOffset.y ? parseInt(box1viewportOffset.y) : 0) + paddingVertical;
+	// var box1YEnd	= box1YStart + box1viewportOffset.height + paddingVertical;
+
+	var box1dataX = box1.dataset.x || 0;
+	var box1dataY = box1.dataset.y || 0;
+
+
+	var box1XStart	= parseInt(box1dataX) + paddingHorizontal;
+	var box1XEnd	= box1XStart + box1viewportOffset.width + paddingHorizontal;
+	var box1YStart	= parseInt(box1dataY) + paddingVertical;
 	var box1YEnd	= box1YStart + box1viewportOffset.height + paddingVertical;
+	// console.log("box1XStart = " +box1XStart+ "-- box1XEnd = " +box1XEnd+ "-- box1YStart = " +box1YStart+ "-- box1YEnd = " +box1YEnd+ "")
 
 	var box2viewportOffset = box2.getBoundingClientRect();
-	var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
+	// var box2XStart	= box2viewportOffset.x ? parseInt(box2viewportOffset.x) : 0;
+	// var box2XEnd 	= box2XStart + box2.getBoundingClientRect().width;
+	// var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
+	// var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
+
+	var box2dataX = box2.dataset.x || 0;
+	var box2dataY = box2.dataset.y || 0;
+
+	var box2XStart	= parseInt(box2dataX);
 	var box2XEnd 	= box2XStart + box2.getBoundingClientRect().width;
-	var box2YStart	= box2viewportOffset.y ? parseInt(box2viewportOffset.y) : 0;
+	var box2YStart	= parseInt(box2dataY);
 	var box2YEnd	= box2YStart + box2.getBoundingClientRect().height;
 
-	var xOverlap 	= (box1XEnd >= box2XStart && box1XStart <= box2XEnd);
-	var yOverlap 	= (box1YEnd >= box2YStart && box1YStart <= box2YEnd);
+	var xOverlap 	= (box1XEnd > box2XStart && box1XStart < box2XEnd);
+	var yOverlap 	= (box1YEnd > box2YStart && box1YStart < box2YEnd);
+	if ((xOverlap && yOverlap)) {
+		//console.log("WILL")
+	}
 	return (xOverlap && yOverlap);
 }
 
@@ -1006,6 +1034,8 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 		enemy.setAttribute("data-allegiance", "enemy");
 		enemy.setAttribute("data-kill-required", "true");
 		enemy.setAttribute("data-hittable", "true");
+		enemy.setAttribute("data-x", left);
+		enemy.setAttribute("data-y", top);
 		enemy.setAttribute("data-life", life);
 		enemy.setAttribute("data-direction", direction);
 		ground.appendChild(enemy);
@@ -1014,14 +1044,19 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 	return enemy;
 }
 
-function addObstacle(width, height, left, top, hittable = true) {
+function addObstacle(width, height, left, top, hittable = true, classes = '', life = false) {
 	var ground = document.getElementById("ground");
 	var obstacle = document.createElement("div");
 	var rando = Math.random();
-		obstacle.setAttribute("class", "obstacle");
+		obstacle.setAttribute("class", "obstacle " + classes);
 		obstacle.setAttribute("id", "obstacle" + rando);
 		obstacle.setAttribute("data-allegiance", "obstacle");
 		obstacle.setAttribute("data-hittable", hittable);
+		obstacle.setAttribute("data-x", left);
+		obstacle.setAttribute("data-y", top);
+		if (life) {
+			obstacle.setAttribute("data-life", life);
+		}
 		ground.appendChild(obstacle);
 		obstacle.style.marginLeft = parseInt(left) + "px";
 		obstacle.style.marginTop = parseInt(top) + "px";

@@ -20,6 +20,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacle6 = addObstacle(1000, 500, 765, 0);
 	var obstacle7 = addObstacle(535, 332, 996, 494);
 
+	var tree0 = addObstacle(78, 78, 301, 81, true, 'tree tree1', 15);
+	var tree1 = addObstacle(78, 78, 4101, 1951, true, 'tree tree1', 15);
+	var tree2 = addObstacle(78, 78, 4350, 2150, true, 'tree tree2', 15);
+	var tree3 = addObstacle(78, 78, 5101, 1481, true, 'tree tree1', 15);
+	var tree4 = addObstacle(78, 78, 5181, 1471, true, 'tree tree2', 15);
+	var tree5 = addObstacle(78, 78, 5261, 1501, true, 'tree tree1', 15);
+	var tree6 = addObstacle(78, 78, 5341, 1461, true, 'tree tree1', 15);
+	var tree7 = addObstacle(78, 78, 5001, 1381, true, 'tree tree1', 15);
+
 	preloadImage("turret-down-left.png");
 	preloadImage("turret-down-right.png");
 	preloadImage("turret-up-left.png");

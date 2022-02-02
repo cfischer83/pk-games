@@ -261,6 +261,48 @@ button:hover, a.button:hover {
 .obstacle {
 	position: absolute;
 }
+.tree1 {
+	position: absolute;
+	width: 80px;
+	height: 80px;
+}
+.tree2 {
+	position: absolute;
+	width: 75px;
+	height: 75px;
+}
+.tree1::before {
+	background: url(img/tree1.png) 0 0 no-repeat;
+}
+.tree2::before {
+	background: url(img/tree2.png) 0 0 no-repeat;
+}
+.tree::before {
+	position: absolute;
+	content: " ";
+	display: block;
+	width: 132px;
+	height: 205px;
+	margin: -110px 0 0 0;
+}
+.tree1.destroyed::before {
+	background-image: url(img/tree1-destroyed.png);
+}
+.tree2.destroyed::before {
+	background-image: url(img/tree2-destroyed.png);
+}
+.tree.destroyed::after {
+	position: absolute;
+	content: " ";
+	display: block;
+	background: url(destroyed-explosion.gif) 0 0 no-repeat;
+	width: 200px;
+	height: 200px;
+	margin: -80px 0 0 -50px;
+}
+.tree.dead::after {
+	background-image: none;
+}
 
 .enemy {
 	position: absolute;
