@@ -34,3 +34,11 @@
 .pyramid.pyramid.destroyed.dead::after {
 	background-image: none;
 }
+.rook-top {
+	margin: 1439px 0 0 4532px;
+	position: absolute;
+	background: url(rook-top.png) 0 0 no-repeat;
+	width: 152px;
+	height: 235px;
+	z-index: 1;
+}

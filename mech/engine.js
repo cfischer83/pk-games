@@ -614,6 +614,18 @@ function findQuadrant(characterX, characterY, xS, xE, yS, yE) {
 	}
 }
 
+document.addEventListener("enemyKill", function(data) {
+	console.log(data);
+	var enemyAr = data.detail.split("|")
+	var enemyType = enemyAr[0];
+	var characterId = enemyAr[1];
+	if (enemyType == 'tank') {
+		document.getElementById(characterId).classList.remove("enemy");
+		document.getElementById(characterId).style.zIndex = 0;
+		document.getElementById(characterId).setAttribute("data-hittable", "false")
+	}
+});
+
 
 
 function fire(gunner, allegiance, projectileType) {
@@ -871,11 +883,15 @@ function destroyCharacter(character) {
 		if (character.id == p1.id) {
 			loseGame();
 		} else {
-			enemyType = character.classList.contains("turret") ? "turret" : "unknown";
-			var event = new CustomEvent("enemyKill", { "detail": enemyType });
+			enemyType = getEnemyType(character);
+			var event = new CustomEvent("enemyKill", { "detail": enemyType + "|" + character.id });
 			document.dispatchEvent(event);
 		}
 	}
+}
+
+function getEnemyType(character) {
+	return character.dataset.enemyType || "unknown";
 }
 
 function loseGame() {
@@ -1031,6 +1047,7 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 	var rando = Math.random();
 		enemy.setAttribute("class", enemyType + " enemy");
 		enemy.setAttribute("id", "enemy" + rando);
+		enemy.setAttribute("data-enemy-type", enemyType);
 		enemy.setAttribute("data-allegiance", "enemy");
 		enemy.setAttribute("data-kill-required", "true");
 		enemy.setAttribute("data-hittable", "true");

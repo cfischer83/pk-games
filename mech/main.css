@@ -191,6 +191,7 @@ button:hover, a.button:hover {
 	transition: all 67ms linear;
 	position: absolute;
 	border: 0px solid blue;
+	z-index: 1;
 }
 #p1::before {
 	content: " ";
@@ -260,6 +261,9 @@ button:hover, a.button:hover {
 
 .obstacle {
 	position: absolute;
+}
+.tree {
+	z-index: 2;
 }
 .tree1 {
 	position: absolute;
@@ -418,6 +422,7 @@ button:hover, a.button:hover {
 	height: 20px;
 	background: url(erppc.gif) 0 0 no-repeat;
 	background-size: contain;
+	z-index: 2;
 }
 .erppc.explosion {
 	background: none;
@@ -441,6 +446,7 @@ button:hover, a.button:hover {
 	position: absolute;
 	width: 15px;
 	height: 15px;
+	z-index: 2;
 }
 .missile span {
 	content: " ";
