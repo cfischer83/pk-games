@@ -400,6 +400,38 @@ button:hover, a.button:hover {
 	background-image: none;
 }
 
+.b52 {
+	background: url(img/b52.png);
+	background-size: contain;
+	background-repeat: no-repeat;
+	position: absolute;
+	width: 350px;
+	height: 279px;
+	transform: scaleX(-1);
+	transition: all 100ms linear;
+	z-index: 3;
+	margin-top: 700px;
+}
+.b52::before {
+	content: " ";
+	background: url(img/b52-shadow.png);
+	background-size: contain;
+	background-repeat: no-repeat;
+	position: absolute;
+	width: 350px;
+	height: 279px;
+	margin: 350px 0 0 -300px;
+	opacity: .5;
+	z-index: 0;
+}
+.b52.left {
+	transform: scaleX(-1);
+	transform: none;
+}
+.b52.left::before {
+	margin: 350px 0 0 300px;
+}
+
 
 
 

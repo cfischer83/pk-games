@@ -614,6 +614,75 @@ function findQuadrant(characterX, characterY, xS, xE, yS, yE) {
 	}
 }
 
+function initiatePlanes(target, direction) {
+	console.log("PLANE!");
+	var ground = document.getElementById("ground");
+	var enemy = document.createElement("div");
+	var rando = Math.random();
+	if (!direction) {
+		var direction = (rando * 6000 > 3000) ? "left" : "right";
+	}
+	var posX = parseInt(target.style.marginLeft);
+	var posY = parseInt(target.style.marginTop);
+	var xDiff = (posX > posY) ? (posX - posY) : 0;
+	var yDiff = (posY > posX) ? (posY - posX) : 0;
+	var shadowBuffer = 700;
+	var left,top;
+	if (direction == "left") {
+		left = posX + posY + shadowBuffer;
+		if (posX > posY) {
+			top = -Math.abs(yDiff) - shadowBuffer;
+		} else {
+			top = -shadowBuffer;
+		}
+	} else {
+		left = posX - posY - shadowBuffer;
+		if (posX > posY) {
+			top = -Math.abs(yDiff) - shadowBuffer;
+		} else {
+			top = -shadowBuffer;
+		}
+	}
+		enemy.setAttribute("class", "b52 " + direction);
+		enemy.setAttribute("id", "enemy" + rando);
+		enemy.setAttribute("data-enemy-type", "b52");
+		enemy.setAttribute("data-allegiance", "enemy");
+		enemy.setAttribute("data-fires", "true");
+		enemy.setAttribute("data-kill-required", "false");
+		enemy.setAttribute("data-hittable", "false");
+		enemy.setAttribute("data-x", left);
+		enemy.setAttribute("data-y", top);
+		enemy.setAttribute("data-direction", direction);
+		ground.appendChild(enemy);
+		enemy.style.marginLeft = parseInt(left) + "px";
+		enemy.style.marginTop = parseInt(top) + "px";
+}
+
+function movePlanes() {
+	var planes = document.getElementsByClassName("b52");
+	for (var i=0; i < planes.length; i++) {
+		movePlane(planes[i]);
+		cleanUpPlane(planes[i]);
+	}
+}
+
+function movePlane(plane) {
+	if (plane.classList.contains("left")) {
+		moveBlockLeft(plane, false);
+	} else {
+		moveBlockRight(plane, false);
+	}
+	moveBlockDown(plane, false);
+}
+
+setInterval('movePlanes()', 100);
+
+function cleanUpPlane(plane) {
+	if (parseInt(plane.style.marginTop) > parseInt(ground.offsetHeight)) {
+		plane.remove();
+	}
+}
+
 document.addEventListener("enemyKill", function(data) {
 	console.log(data);
 	var enemyAr = data.detail.split("|")
@@ -643,6 +712,9 @@ function fire(gunner, allegiance, projectileType) {
 		ground.appendChild(projectile);
 		document.getElementById("projectile" + rando).style.marginLeft = fireStartX;
 		document.getElementById("projectile" + rando).style.marginTop = fireStartY;
+	if (gunner.dataset.enemyType == 'b52') {
+		projectile.setAttribute("data-air", "true");
+	}
 	var projectileSpan = document.createElement("span");
 	projectile.appendChild(projectileSpan);
 	var dir = gunner.dataset.direction;
@@ -840,6 +912,10 @@ function checkProjectileHittingObject(projectileArrayElm, hitType) {
 		if (obstacles[i].dataset?.allegiance == projectile.dataset?.allegiance) {
 			friendlyFire = true;
 		}
+		 // not exactly friendly fire but 'air' missiles should bypass obstacles
+		if (projectile?.dataset?.air == 'true' && obstacles[i].dataset?.allegiance == 'obstacle') {
+			friendlyFire = true;
+		}
 		//console.log("obstacles[i].dataset?.allegiance = " + obstacles[i].dataset?.allegiance)
 		//console.log("projectile.dataset?.allegiance = " + projectile.dataset?.allegiance)
 		if (doBlocksOverLap(projectile, obstacles[i]) && !friendlyFire) {
@@ -912,7 +988,7 @@ function promptEnemiesToFire() {
 	if (!gamePlay) {
 		return;
 	}
-	var enemies = document.getElementsByClassName("enemy");
+	var enemies = document.querySelectorAll("[data-allegiance='enemy'][data-fires='true']");
 	for (var i = 0; i < enemies.length; i++) {
 		if (enemyWithinRange(enemies[i])) {
 			makeEnemyFire(enemies[i]);
@@ -1049,6 +1125,7 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 		enemy.setAttribute("id", "enemy" + rando);
 		enemy.setAttribute("data-enemy-type", enemyType);
 		enemy.setAttribute("data-allegiance", "enemy");
+		enemy.setAttribute("data-fires", "true");
 		enemy.setAttribute("data-kill-required", "true");
 		enemy.setAttribute("data-hittable", "true");
 		enemy.setAttribute("data-x", left);

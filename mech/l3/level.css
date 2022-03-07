@@ -1,0 +1,7 @@
+#ground {
+	background: url(bg.jpg) 0 0 repeat #553;
+	width: 3840px;
+	height: 6000px;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
