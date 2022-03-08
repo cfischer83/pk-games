@@ -5,3 +5,49 @@
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
+
+.ggtank {
+	width: 100px;
+	height: 100px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	position: absolute;
+	transition: 100ms;
+}
+.ggtank.down {
+	background-image: url(tank-red-down.png);
+}
+.ggtank.up {
+	background-image: url(tank-red-up.png);
+}
+.ggtank.left {
+	background-image: url(tank-red.png);
+	transform: scaleX(-1);
+}
+.ggtank.right {
+	background-image: url(tank-red.png);
+}
+.ggtank.right.destroyed, .ggtank.left.destroyed {
+	background-image: url(tank-red-destroyed.png);
+}
+.ggtank.up.destroyed, .ggtank.down.destroyed {
+	background-image: url(tank-red-destroyed-v.png);
+}
+.ggtank.destroyed::after {
+	content: " ";
+	background-image: url(../destroyed-explosion.gif);
+	position: absolute;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: -52px;
+	width: 200px;
+	height: 200px;
+}
+.ggtank.destroyed.dead::after {
+	background-image: none;
+}
+
+.ggtankturner {
+	position: absolute;
+}

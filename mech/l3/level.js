@@ -1,7 +1,7 @@
 gameLevel = "L3";
 
 document.addEventListener("DOMContentLoaded", function(event) { 
-	// var enemy1 = addEnemy("turret", 50, 1550, 850);
+	 var enemy1 = addEnemy("turret", 50, 500, 400);
 	// var enemy2 = addEnemy("turret", 50, 1550, 1150);
 	var enemy3 = addEnemy("turret", 50, 1500, 2800);
 	var enemy4 = addEnemy("turret", 50, 1800, 2800);
@@ -30,7 +30,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	// var obstacleWater7 = addObstacle(1260, 125, 1949, 3184, false);
 	// var obstacleWater8 = addObstacle(1259, 123, 1949, 3458, false);
 
-	var planesInterval = setInterval('initiatePlanesRandom()', 10000);
+	//var planesInterval = setInterval('initiatePlanesRandom()', 10000);
+
+	document.getElementById("ggtank1").style.marginLeft = "150px";
+	document.getElementById("ggtank1").style.marginTop = "200px";
+	document.getElementById("ggtank2").style.marginLeft = "150px";
+	document.getElementById("ggtank2").style.marginTop = "300px";
+	document.getElementById("ggtank3").style.marginLeft = "150px";
+	document.getElementById("ggtank3").style.marginTop = "400px";
 
 	preloadImage("turret-down-left.png");
 	preloadImage("turret-down-right.png");
@@ -47,22 +54,47 @@ function initiatePlanesRandom() {
 	}
 }
 
-// Winning this level is done when all enemies are defeated.
+function initiateConvoy() {
+	var tanks = document.querySelectorAll(".ggtank:not(.destroyed)");
+	var turners = document.querySelectorAll(".ggtankturner");
+	for (var i = 0; i < tanks.length; i++) {
+		for (var j = 0; j < turners.length; j++) {
+			if (doBlocksOverLap(tanks[i], turners[j])) {
+				direction = turners[j].dataset.direction;
+				tanks[i].setAttribute("data-direction", direction);
+				changeDirection(tanks[i], direction);
+			}
+		}
+		var tankDir = tanks[i].dataset.direction;
+		switch(tankDir) {
+			case "up": moveBlockUp(tanks[i], true, 3); break;
+			case "right": moveBlockRight(tanks[i], true, 3); break;
+			case "down": moveBlockDown(tanks[i], true, 3); break;
+			case "left": moveBlockLeft(tanks[i], true, 3); break;
+		}
+	}
+}
+
+var initTanks = null;
+setTimeout('initTanks = setInterval("initiateConvoy();",100)', 4000);
+
+
+// Winning this level is done when at least one tank makes it to the end.
 document.addEventListener("enemyKill", function(event) { 
 	var enemiesLeft = document.querySelectorAll("[data-kill-required='true']:not(.destroyed)");
 	if (enemiesLeft.length == 0) {
 		winGame();
-		winLevel1();
+		winLevel3();
 	}
 });
 
 
 // Winning this level is done when all enemies are defeated.
 document.addEventListener("lose", function(event) {
-	loseLevel1();
+	loseLevel3();
 });
 
-function loseLevel1() {
+function loseLevel3() {
 	var lowerMessage = document.createElement("div");
 		lowerMessage.setAttribute("id", "lowerMessage");
 		cam.insertBefore(lowerMessage, ground);
@@ -72,7 +104,7 @@ function loseLevel1() {
 		lowerMessageText.innerHTML = "<p>You have lost your battle and brought shame to your family's name.</p><a href='L1.html' class='button'>Try Again</a> <a href='index.html' class='button'>Return To Missions</a>";
 }
 
-function winLevel1() {
+function winLevel3() {
 	var overlay = document.createElement("div");
 		overlay.setAttribute("id", "overlay");
 		overlay.setAttribute("class", "active");

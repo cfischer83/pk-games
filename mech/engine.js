@@ -450,9 +450,9 @@ function willBlocksOverlap(box1, box2, direction) {
 function changeDirection(obj, dir) {
 	obj.classList.remove("left", "up", "right", "down");
 	obj.classList.add(dir);
-	if (obj.id == "p1") {
+	//if (obj.id == "p1") {
 		obj.dataset.direction = dir;
-	}
+	//}
 }
 
 
@@ -615,7 +615,6 @@ function findQuadrant(characterX, characterY, xS, xE, yS, yE) {
 }
 
 function initiatePlanes(target, direction) {
-	console.log("PLANE!");
 	var ground = document.getElementById("ground");
 	var enemy = document.createElement("div");
 	var rando = Math.random();
@@ -876,9 +875,43 @@ function pointProjectile(projectile, moveBy, helperMoveBy, projectileHomingDetai
 	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
 }
 
-function getNearestAllegiance(projectile, hitAllegiance) {
-	// TODO: math to find nearest foe (enemy or good guy)
-	return p1;
+function getNearestAllegiance(projectile) {
+	goods = document.querySelectorAll("[data-allegiance='good'][data-hittable='true']");
+	// add all good guys to array so can sort by closest "range"
+	goodsArr = new Array();
+	for (var i = 0; i < goods.length; i++) {
+		goods[i].range = compareObjectRange(goods[i], projectile);
+		goodsArr[i] = goods[i];
+	}
+	goodsArr.sort((a,b) => (a.range > b.range) ? 1 : ((b.range > a.range) ? -1 : 0));
+
+	return goodsArr[0];
+}
+
+function compareObjectRange(obj1, obj2) {
+	var obj1Details = obj1.getBoundingClientRect();
+	var obj1X = obj1Details.x + (obj1Details.width / 2);
+	var obj1Y = obj1Details.y + (obj1Details.height / 2);
+
+	var obj2Details = obj2.getBoundingClientRect();
+	var obj2X = parseInt(obj2Details.x + (obj2Details.width / 2));
+	var obj2Y = parseInt(obj2Details.y + (obj2Details.height / 2));
+
+	var obj1Count = Math.abs(obj1X) + Math.abs(obj1Y);
+	var obj2Count = Math.abs(obj2X) + Math.abs(obj2Y);
+
+	// Pythagorean
+	var xSquared = Math.abs(obj1X - obj2X);
+		xSquared = xSquared * xSquared;
+	var ySquared = Math.abs(obj1Y - obj2Y);
+		ySquared = ySquared * ySquared;
+
+	var zSquared = Math.round(xSquared + ySquared);
+	var c = Math.round(Math.sqrt(zSquared));
+
+	//console.log("good " + obj1.id + " = " + obj1X + "x"+obj1Y+" projectile = " + obj2X + "x"+obj2Y+" diff = " + c);
+
+	return Math.abs(c);
 }
 
 function homingDirection(projectile, nearestFoe) {
@@ -997,22 +1030,35 @@ function promptEnemiesToFire() {
 }
 
 function enemyWithinRange(enemy) {
+	// var inRange = 1250;
+	// var enemeyDetails = enemy.getBoundingClientRect();
+	// var enemyX = enemeyDetails.x + (enemeyDetails.width / 2);
+	// var enemyY = enemeyDetails.y + (enemeyDetails.height / 2);
+
+	// var p1Details = p1.getBoundingClientRect();
+	// var p1X = p1Details.x + (p1Details.width / 2);
+	// var p1Y = p1Details.y + (p1Details.height / 2);
+
+	// var withinX = (p1X - enemyX < inRange && p1X - enemyX > -Math.abs(inRange));
+	// var withinY = (p1Y - enemyY < inRange && p1Y - enemyY > -Math.abs(inRange));
+
 	var inRange = 1250;
-	var enemeyDetails = enemy.getBoundingClientRect();
-	var enemyX = enemeyDetails.x + (enemeyDetails.width / 2);
-	var enemyY = enemeyDetails.y + (enemeyDetails.height / 2);
-
-	var p1Details = p1.getBoundingClientRect();
-	var p1X = p1Details.x + (p1Details.width / 2);
-	var p1Y = p1Details.y + (p1Details.height / 2);
-
-	var withinX = (p1X - enemyX < inRange && p1X - enemyX > -Math.abs(inRange));
-	var withinY = (p1Y - enemyY < inRange && p1Y - enemyY > -Math.abs(inRange));
-	
-	if (withinX && withinY) {
-		return true;
+	goods = document.querySelectorAll("[data-allegiance='good'][data-hittable='true']");
+	// add all good guys to array so can sort by closest "range"
+	goodsArr = new Array();
+	for (var i = 0; i < goods.length; i++) {
+		if (compareObjectRange(goods[i], enemy) <= inRange) {
+			// just return true if any enemy is within range
+			return true;
+		}
 	}
+
 	return false;
+	
+	// if (withinX && withinY) {
+	// 	return true;
+	// }
+	// return false;
 }
 
 function makeEnemyFire(enemy) {
