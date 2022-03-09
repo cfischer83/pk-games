@@ -24,7 +24,7 @@
 	background-image: url(tank-red.png);
 	transform: scaleX(-1);
 }
-.ggtank.right {
+.ggtank.right, .ggtank.stop {
 	background-image: url(tank-red.png);
 }
 .ggtank.right.destroyed, .ggtank.left.destroyed {
@@ -50,4 +50,35 @@
 
 .ggtankturner {
 	position: absolute;
+	width: 10px;
+	height: 10px;
 }
+.debug .ggtankturner {
+	background: #f00;
+}
+.satellite {
+	position: absolute;
+	width: 192px;
+	height: 197px;
+	background-image: url(satellite.png);
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+.satellite.destroyed {
+	background-image: url(satellite-destroyed.png);
+}
+.satellite.destroyed::after {
+	content: " ";
+	background-image: url(../destroyed-explosion.gif);
+	position: absolute;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: -78px;
+	width: 400px;
+	height: 400px;
+}
+.satellite.destroyed.dead::after {
+	background-image: none;
+}
+

@@ -457,7 +457,8 @@ function changeDirection(obj, dir) {
 
 
 function turretDirection(turret) {
-	var p1Details = p1.getBoundingClientRect();
+	var nearestEnemy = getNearestGoodGuy(turret)
+	var p1Details = nearestEnemy.getBoundingClientRect();
 	var p1x	= p1Details.x;
 	var p1y	= p1Details.y;
 
@@ -766,7 +767,7 @@ function fireERPPC(firedArrayElm, dir) {
 function fireMissile(firedArrayElm) {
 	var projectile = document.getElementById(firedArrayElm);
 	var hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
-	var nearestFoe = getNearestAllegiance(projectile, hitAllegiance);
+	var nearestFoe = getNearestGoodGuy(projectile);
 	var directionDetails = homingDirection(projectile, nearestFoe);
 	var xDir = directionDetails[2];
 	var yDir = directionDetails[3];
@@ -875,12 +876,12 @@ function pointProjectile(projectile, moveBy, helperMoveBy, projectileHomingDetai
 	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
 }
 
-function getNearestAllegiance(projectile) {
-	goods = document.querySelectorAll("[data-allegiance='good'][data-hittable='true']");
+function getNearestGoodGuy(obj) {
+	goods = document.querySelectorAll("[data-allegiance='good'][data-hittable='true']:not(.destroyed)");
 	// add all good guys to array so can sort by closest "range"
 	goodsArr = new Array();
 	for (var i = 0; i < goods.length; i++) {
-		goods[i].range = compareObjectRange(goods[i], projectile);
+		goods[i].range = compareObjectRange(goods[i], obj);
 		goodsArr[i] = goods[i];
 	}
 	goodsArr.sort((a,b) => (a.range > b.range) ? 1 : ((b.range > a.range) ? -1 : 0));
@@ -993,8 +994,15 @@ function destroyCharacter(character) {
 			loseGame();
 		} else {
 			enemyType = getEnemyType(character);
-			var event = new CustomEvent("enemyKill", { "detail": enemyType + "|" + character.id });
-			document.dispatchEvent(event);
+			if (character.dataset.allegiance == "enemy") {
+				var event = new CustomEvent("enemyKill", { "detail": enemyType + "|" + character.id });
+			} else if (character.dataset.allegiance == "enemy") {
+				var event = new CustomEvent("goodKill", { "detail": enemyType + "|" + character.id });
+			}
+
+			if (event) {
+				document.dispatchEvent(event);
+			}
 		}
 	}
 }
@@ -1163,7 +1171,7 @@ function moveCamDown(p1){
 }
 
 
-function addEnemy(enemyType, life, left, top, direction = "left") {
+function addEnemy(enemyType, life, left, top, direction = "left", fires = "true") {
 	var ground = document.getElementById("ground");
 	var enemy = document.createElement("div");
 	var rando = Math.random();
@@ -1171,7 +1179,7 @@ function addEnemy(enemyType, life, left, top, direction = "left") {
 		enemy.setAttribute("id", "enemy" + rando);
 		enemy.setAttribute("data-enemy-type", enemyType);
 		enemy.setAttribute("data-allegiance", "enemy");
-		enemy.setAttribute("data-fires", "true");
+		enemy.setAttribute("data-fires", fires);
 		enemy.setAttribute("data-kill-required", "true");
 		enemy.setAttribute("data-hittable", "true");
 		enemy.setAttribute("data-x", left);
