@@ -4,15 +4,14 @@ var gameWin = false;
 document.addEventListener("DOMContentLoaded", function(event) { 
 	var enemy1 = addEnemy("turret", 50, 3650, 850);
 	var enemy2 = addEnemy("turret", 50, 3350, 550);
-	var enemy3 = addEnemy("turret", 50, 3000, 750);
+	// var enemy3 = addEnemy("turret", 50, 3000, 750);
 	var enemy4 = addEnemy("turret", 50, 3650, 3386);
 	var enemy5 = addEnemy("turret", 50, 1400, 2927);
-	var enemy6 = addEnemy("turret", 50, 1700, 3000);
+	// var enemy6 = addEnemy("turret", 50, 1700, 3000);
 	var enemy7 = addEnemy("turret", 50, 1259, 3386);
 	var enemy8 = addEnemy("turret", 50, 1770, 3386);
-	// var enemy9 = addEnemy("turret", 50, 3282, 742);
-	// var enemy10 = addEnemy("turret", 50, 3682, 503);
-	// var enemy11 = addEnemy("turret", 50, 3583, 207);
+	var enemy10 = addEnemy("turret", 50, 3067, 5271);
+	var enemy11 = addEnemy("turret", 50, 3429, 5271);
 
 	var satellite1 = addEnemy("satellite", 30, 3300, 100, "left", "false");
 	var satellite2 = addEnemy("satellite", 30, 300, 2900, "left", "false");
@@ -23,11 +22,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var obstacle4 = addObstacle(3250, 775, 0, 2122);
 	var obstacle5 = addObstacle(190, 514, 2867, 0);
 	var obstacle6 = addObstacle(3300, 775, 558, 3470);
-	// var obstacle7 = addObstacle(535, 286, 2921, 909);
-	// var obstacle8 = addObstacle(561, 486, 2698, 1192);
-	// var obstacleWater1 = addObstacle(2999, 100, 0, 1701, false);
-	// var obstacleWater2 = addObstacle(200, 500, 2799, 1700, false);
-	// var obstacleWater3 = addObstacle(1260, 939, 1949, 2099, false);
+	var obstacle7 = addObstacle(3020, 775, 0, 5370, false);
+	var obstacle8 = addObstacle(214, 160, 3000, 5524, false);
+	var obstacle9 = addObstacle(450, 142, 3400, 5502, false);
+	var obstacle10 = addObstacle(850, 142, 3000, 5912, false);
+	var obstacle11 = addObstacle(100, 775, 0, 3470);
 	// var obstacleWater4 = addObstacle(1000, 700, 950, 2099, false);
 	// var obstacleWater5 = addObstacle(400, 750, 899, 2775, false);
 	// var obstacleWater6 = addObstacle(70, 100, 1300, 2775, false);
@@ -42,7 +41,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var tree5 = addObstacle(78, 78, 3663, 354, true, 'tree tree1', 15);
 	var tree6 = addObstacle(78, 78, 3626, 160, true, 'tree tree1', 15);
 
-	var planesInterval = setInterval('initiatePlanesRandom()', 5000);
+	setTimeout('initiatePlanes(p1, "right");', 3000);
+	var planesInterval = setInterval('initiatePlanesRandom()', 10000);
 
 	document.getElementById("ggtank1").style.marginLeft = "150px";
 	document.getElementById("ggtank1").style.marginTop = "200px";
@@ -65,7 +65,7 @@ function initiatePlanesRandom() {
 	}
 	// 1/2 chance every 10 seconds
 	var rando = Math.random() * 3000;
-	if (rando <= 3000) {
+	if (rando <= 2000) {
 		var goods = document.querySelectorAll("[data-allegiance='good'].ggtank:not(.destroyed)");
 		var rando2 = Math.random() * 1000;
 		var randoMultiplier = 160;
@@ -83,6 +83,35 @@ function initiatePlanesRandom() {
 	}
 }
 
+passed_bottom_threshold = false;
+function checkBottomThreshold() {
+	var ggtanks = document.querySelectorAll(".ggtank:not(.destroyed)");
+	var finalRunThreshold = document.getElementById("finalRunThreshold");
+	for (var i = 0; i < ggtanks.length; i++) {
+		if (doBlocksOverLap(finalRunThreshold, ggtanks[i])) {
+			passed_bottom_threshold = true;
+		}
+	}
+}
+setInterval("checkBottomThreshold();", 500);
+
+function planesOverThreshold() {
+	console.log("threshold plane")
+	if (!planes_keep_coming || !passed_bottom_threshold) {
+		return;
+	}
+	var rando = Math.random() * 2000;
+	if (rando <= 1000) {
+		addEnemy("b52", 5, -700, 3560, "right", "true");
+	} else {
+		addEnemy("b52", 5, 3840, 3560, "left", "true");
+	}
+}
+setInterval("planesOverThreshold();", 5000);
+
+
+global_gg_tank_speed = 4;
+
 function initiateConvoy() {
 	if (gameWin) {
 		return;
@@ -99,10 +128,10 @@ function initiateConvoy() {
 		}
 		var tankDir = tanks[i].dataset.direction;
 		switch(tankDir) {
-			case "up": moveBlockUp(tanks[i], true, 3); break;
-			case "right": moveBlockRight(tanks[i], true, 3); break;
-			case "down": moveBlockDown(tanks[i], true, 3); break;
-			case "left": moveBlockLeft(tanks[i], true, 3); break;
+			case "up": moveBlockUp(tanks[i], true, global_gg_tank_speed); break;
+			case "right": moveBlockRight(tanks[i], true, global_gg_tank_speed); break;
+			case "down": moveBlockDown(tanks[i], true, global_gg_tank_speed); break;
+			case "left": moveBlockLeft(tanks[i], true, global_gg_tank_speed); break;
 			case "stop": stopGGTanks(); break;
 		}
 	}
@@ -122,9 +151,45 @@ setTimeout('initTanks = setInterval("initiateConvoy();",100)', 4000);
 document.addEventListener("enemyKill", function(event) {
 	var satellites = document.querySelectorAll(".satellite:not(.destroyed)");
 	if (satellites.length == 0) {
-		planes_keep_coming = false;
+		var planes = document.querySelectorAll(".b52");
+		var shadowBuffer = 700;
+		// if a plane is not in cam view, delete it. Otherwise planes stick around too long
+		for (var i = 0; i < planes.length; i++) {
+			// plane above viewport
+			var planeShadowBottom = parseInt(planes[i].style.marginTop) + shadowBuffer;
+			if (Math.abs(parseInt(ground.style.marginTop)) > planeShadowBottom) {
+				planes[i].remove();
+				continue;
+			}
+			// plane below viewport
+			var planeTop = parseInt(planes[i].style.marginTop);
+			var camBottom = Math.abs(ground.style.marginTop) + getWindowHeight();
+			if (planeTop > camBottom) {
+				planes[i].remove();
+			}
+		}
+		if (planes_keep_coming) {
+			initLateTanks();
+			planes_keep_coming = false;
+		}
 	}
 });
+
+function initLateTanks() {
+	var lateEnemy1 = addEnemy("tank", 30, -100, 2300, "up");
+	var lateEnemy2 = addEnemy("tank", 30, 3900, 3370, "right");
+	// mid tree section
+	setTimeout('addEnemy("tank", 30, -100, 2300, "up");', 15000);
+	setTimeout('addEnemy("tank", 30, -100, 2300, "up");', 60000);
+	setTimeout('addEnemy("tank", 30, -100, 2300, "up");', 70000);
+
+	// bottom tree section
+	setTimeout('addEnemy("tank", 30, 3900, 3370, "right");', 15000);
+	setTimeout('addEnemy("tank", 30, 3900, 3370, "right");', 30000);
+	setTimeout('addEnemy("tank", 30, 3900, 3370, "right");', 60000);
+	setTimeout('addEnemy("tank", 30, 3900, 3370, "right");', 80000);
+	setTimeout('addEnemy("tank", 30, 3900, 3370, "right");', 100000);
+}
 
 // check that good tanks are still alive or lose
 document.addEventListener("goodKill", function(event) {
@@ -163,7 +228,7 @@ function winLevel3() {
 	cam.insertBefore(text, ground);
 		//text.style.marginLeft = Math.abs(parseInt(cam.style.marginLeft));// - global_window_size;
 		text.style.marginTop = Math.abs(parseInt(cam.style.marginTop)) + 25;
-	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is disabled and their stronghold is broken. We can now move inland to push the enemy back.</p><br /><a class='button' href='index.html'>Return To Missions</a>";
+	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>You have escorted the convoy to its location.</p><br /><a class='button' href='index.html'>Return To Missions</a>";
 
 }
 

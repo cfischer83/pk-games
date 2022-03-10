@@ -457,7 +457,10 @@ function changeDirection(obj, dir) {
 
 
 function turretDirection(turret) {
-	var nearestEnemy = getNearestGoodGuy(turret)
+	var nearestEnemy = getNearestGoodGuy(turret);
+	if (!nearestEnemy) {
+		return;
+	}
 	var p1Details = nearestEnemy.getBoundingClientRect();
 	var p1x	= p1Details.x;
 	var p1y	= p1Details.y;
@@ -499,8 +502,8 @@ function rotateTurrets() {
 function initiateTanks() {
 	var tankAreas = document.getElementsByClassName("tankArea");
 	var tanks = document.getElementsByClassName("tank");
-	for (var i=0; i < tankAreas.length; i++) {
-		for (var j=0; j < tanks.length; j++) {
+	for (var j=0; j < tanks.length; j++) {
+		for (var i=0; i < tankAreas.length; i++) {
 			if (doBlocksOverLap(tankAreas[i], tanks[j])) {
 				moveTank(tanks[j], tankAreas[i]);
 				break;
@@ -1174,14 +1177,16 @@ function moveCamDown(p1){
 function addEnemy(enemyType, life, left, top, direction = "left", fires = "true") {
 	var ground = document.getElementById("ground");
 	var enemy = document.createElement("div");
+	var classes = (enemyType == "b52") ? (enemyType + " " + direction) : enemyType + " enemy";
+	var hittable = (enemyType == "b52") ? "false" : "true";
 	var rando = Math.random();
-		enemy.setAttribute("class", enemyType + " enemy");
+		enemy.setAttribute("class", classes);
 		enemy.setAttribute("id", "enemy" + rando);
 		enemy.setAttribute("data-enemy-type", enemyType);
 		enemy.setAttribute("data-allegiance", "enemy");
 		enemy.setAttribute("data-fires", fires);
 		enemy.setAttribute("data-kill-required", "true");
-		enemy.setAttribute("data-hittable", "true");
+		enemy.setAttribute("data-hittable", hittable);
 		enemy.setAttribute("data-x", left);
 		enemy.setAttribute("data-y", top);
 		enemy.setAttribute("data-life", life);
