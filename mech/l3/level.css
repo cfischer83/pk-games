@@ -86,3 +86,33 @@
 	position: absolute;
 }
 
+#barometer1 {
+	right: 80px;
+}
+#barometer2 {
+	right: 40px;
+}
+#barometer3 {
+	right: 0;
+}
+#barometer1, #barometer2, #barometer3 {
+	width: 40px;
+	position: absolute;
+	top: 50px;
+}
+#life-tracking-ggtank1 {
+	
+}
+#life-tracking-ggtank2 {
+
+}
+#life-tracking-ggtank3 {
+
+}
+#life-tracking-ggtank1, #life-tracking-ggtank2, #life-tracking-ggtank3 {
+	width: 35px;
+	height: 15.2px;
+	display: block;
+	background: url(tank-life.png) top left no-repeat;
+	background-size: cover;
+}

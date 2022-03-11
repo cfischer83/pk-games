@@ -43,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	window.scrollTo(1, 0);
 
 	p1		= document.getElementById("p1");
-	lifeStat= document.getElementById("p1").dataset.life;
 	ground	= document.getElementById("ground");
 	cam		= document.getElementById("cam");
 
@@ -977,16 +976,24 @@ function removeLife(obstacle) {
 			destroyCharacter(obstacle);
 		}
 		obstacle.setAttribute('data-life', life);
-		if (obstacle.id == p1.id) {
-			removeLifeStats();
-		}
+		removeLifeStats(obstacle);
 	}
 }
 
-function removeLifeStats() {
-	var newLifeStat = p1.dataset.life;
-	var statPercent = newLifeStat / lifeStat * 100;
-	document.getElementById("life-tracking").style.width = statPercent + "%";
+function removeLifeStats(obstacle) {
+	var newLifeStat = obstacle.dataset.life;
+	var originalLifeStat = obstacle.dataset.startLife;
+	var lifeStatID = (obstacle.id == "p1") ? "life-tracking" : "life-tracking-" + obstacle.id;
+	var statPercent = newLifeStat / originalLifeStat * 100;
+	if (obstacle.id == 'p1') {
+		document.getElementById("life-tracking").style.width = statPercent + "%";
+	} else {
+		if (document.getElementById(lifeStatID)) {
+			console.log("lifeStatID == " + lifeStatID)
+			marginLeft = -Math.round((100-statPercent)/10) * 35;//Math.abs(100 - (Math.round(statPercent / 10) * 10));
+			document.getElementById(lifeStatID).style.backgroundPosition = marginLeft + "px 0";
+		}
+	}
 }
 
 function destroyCharacter(character) {
@@ -999,7 +1006,7 @@ function destroyCharacter(character) {
 			enemyType = getEnemyType(character);
 			if (character.dataset.allegiance == "enemy") {
 				var event = new CustomEvent("enemyKill", { "detail": enemyType + "|" + character.id });
-			} else if (character.dataset.allegiance == "enemy") {
+			} else if (character.dataset.allegiance == "good") {
 				var event = new CustomEvent("goodKill", { "detail": enemyType + "|" + character.id });
 			}
 

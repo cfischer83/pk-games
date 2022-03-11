@@ -1,5 +1,6 @@
 gameLevel = "L3";
 var gameWin = false;
+var gameLose = false;
 
 document.addEventListener("DOMContentLoaded", function(event) { 
 	var enemy1 = addEnemy("turret", 50, 3650, 850);
@@ -56,6 +57,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	preloadImage("turret-up-left.png");
 	preloadImage("turret-up-right.png");
 	preloadImage("missile.gif");
+	preloadImage("../img/b52-shadow.png");
+	preloadImage("../img/b52.png");
 });
 
 var planes_keep_coming = true;
@@ -96,7 +99,6 @@ function checkBottomThreshold() {
 setInterval("checkBottomThreshold();", 500);
 
 function planesOverThreshold() {
-	console.log("threshold plane")
 	if (!planes_keep_coming || !passed_bottom_threshold) {
 		return;
 	}
@@ -113,7 +115,7 @@ setInterval("planesOverThreshold();", 5000);
 global_gg_tank_speed = 4;
 
 function initiateConvoy() {
-	if (gameWin) {
+	if (gameWin || gameLose) {
 		return;
 	}
 	var tanks = document.querySelectorAll(".ggtank:not(.destroyed)");
@@ -132,16 +134,20 @@ function initiateConvoy() {
 			case "right": moveBlockRight(tanks[i], true, global_gg_tank_speed); break;
 			case "down": moveBlockDown(tanks[i], true, global_gg_tank_speed); break;
 			case "left": moveBlockLeft(tanks[i], true, global_gg_tank_speed); break;
-			case "stop": stopGGTanks(); break;
+			case "win": winGGTanks(); break;
 		}
 	}
 }
 
-function stopGGTanks() {
+function winGGTanks() {
 	initTanks = null;
 	gameWin = true;
 	winGame();
 	winLevel3();
+}
+
+function stopGGTanks() {
+	initTanks = null;
 }
 
 var initTanks = null;
@@ -205,13 +211,15 @@ document.addEventListener("lose", function(event) {
 });
 
 function loseLevel3() {
+	gameLose = true;
+	stopGGTanks();
 	var lowerMessage = document.createElement("div");
 		lowerMessage.setAttribute("id", "lowerMessage");
 		cam.insertBefore(lowerMessage, ground);
 	var lowerMessageText = document.createElement("div");
 		lowerMessageText.setAttribute("id", "lowerMessageText");
 		lowerMessage.appendChild(lowerMessageText);
-		lowerMessageText.innerHTML = "<p>You have lost your battle and brought shame to your family's name.</p><a href='L1.html' class='button'>Try Again</a> <a href='index.html' class='button'>Return To Missions</a>";
+		lowerMessageText.innerHTML = "<p>You have lost your battle and brought shame to your family's name.</p><a href='L3.html' class='button'>Try Again</a> <a href='index.html' class='button'>Return To Missions</a>";
 }
 
 function winLevel3() {
