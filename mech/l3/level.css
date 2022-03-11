@@ -24,7 +24,7 @@
 	background-image: url(tank-red.png);
 	transform: scaleX(-1);
 }
-.ggtank.right, .ggtank.stop {
+.ggtank.right, .ggtank.win {
 	background-image: url(tank-red.png);
 }
 .ggtank.right.destroyed, .ggtank.left.destroyed {
