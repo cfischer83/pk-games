@@ -101,13 +101,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					return;
 				}
 				if (e.which == 37) {
-					moveCharacterLeft(p1);
+					moveP1Left();
 				} else if (e.which == 38) {
-					moveCharacterUp(p1);
+					moveP1Up();
 				} else if (e.which == 39) {
-					moveCharacterRight(p1);
+					moveP1Right();
 				} else if (e.which == 40) {
-					moveCharacterDown(p1);
+					moveP1Down();
 				} else {
 					//
 				}
@@ -214,45 +214,78 @@ function placeTouchControls() {
 	cam.appendChild(touchFire);
 }
 
-function moveCharacterLeft(character) {
+function moveCharacterLeft(character, windowBoundary = true) {
+	actuallyMoved = false;
 	if (!character.classList.contains("walk")) {
 		character.classList.add("walk");
 	}
 	if (!playerObstacles(character,"left")) {
-		moveCamLeft(character);
-		moveBlockLeft(character, true);
+		moveBlockLeft(character, windowBoundary);
+		actuallyMoved = true;
 	}
 	changeDirection(character, "left");
+	return actuallyMoved;
 }
-function moveCharacterRight(character) {
+function moveCharacterRight(character, windowBoundary = true) {
+	actuallyMoved = false;
 	if (!character.classList.contains("walk")) {
 		character.classList.add("walk");
 	}
 	if (!playerObstacles(character,"right")) {
-		moveCamRight(character);
-		moveBlockRight(character, true);
+		moveBlockRight(character, windowBoundary);
+		actuallyMoved = true;
 	}
 	changeDirection(character, "right");	
+	return actuallyMoved;
 }
-function moveCharacterUp(character) {
+function moveCharacterUp(character, windowBoundary = true) {
+	actuallyMoved = false;
 	if (!character.classList.contains("walk")) {
 		character.classList.add("walk");
 	}
 	if (!playerObstacles(character,"up")) {
-		moveCamUp(character);
-		moveBlockUp(character, true);
+		moveBlockUp(character, windowBoundary);
+		actuallyMoved = true;
 	}
 	changeDirection(character, "up");
+	return actuallyMoved;
 }
-function moveCharacterDown(character) {
+function moveCharacterDown(character, windowBoundary = true) {
+	actuallyMoved = false;
 	if (!character.classList.contains("walk")) {
 		character.classList.add("walk");
 	}
 	if (!playerObstacles(character,"down")) {
-		moveCamDown(character);
-		moveBlockDown(character, true);
+		moveBlockDown(character, windowBoundary);
+		actuallyMoved = true;
 	}
 	changeDirection(character, "down");
+	return actuallyMoved;
+}
+
+function moveP1Left() {
+	var moved = moveCharacterLeft(p1);
+	if (moved) {
+		moveCamLeft(p1);
+	}
+}
+function moveP1Right() {
+	var moved = moveCharacterRight(p1);
+	if (moved) {
+		moveCamRight(p1);
+	}
+}
+function moveP1Up() {
+	var moved = moveCharacterUp(p1);
+	if (moved) {
+		moveCamUp(p1);
+	}
+}
+function moveP1Down() {
+	var moved = moveCharacterDown(p1);
+	if (moved) {
+		moveCamDown(p1);
+	}
 }
 
 
@@ -328,7 +361,11 @@ function isMovingKey(k) {
 
 function playerObstacles(player, direction) {
 	obstacles = document.getElementsByClassName("obstacle");
-	enemies = document.getElementsByClassName("enemy");
+	if (player.dataset.allegiance == "enemy") {
+		enemies = document.getElementsByClassName("good");
+	} else {
+		enemies = document.getElementsByClassName("enemy");
+	}
 	var allObstacles = [...obstacles, ...enemies];
 	for (i = 0; i < allObstacles.length; i++) {
 		if (willBlocksOverlap(player, allObstacles[i], direction)) {
@@ -697,6 +734,206 @@ document.addEventListener("enemyKill", function(data) {
 	}
 });
 
+function initNPCMechs() {
+	mechs = document.querySelectorAll("[data-enemy-type='npcmech']:not(.destroyed)");
+	for (var i = 0; i < mechs.length; i++) {
+		moveNPCMech(mechs[i]);
+	}
+}
+setInterval('initNPCMechs();', 67);
+
+function moveNPCMech(mech) {
+	var tooClose = 200; // don't move closer if this close
+	var circleLength = 300; // start circling
+	var target = getNearestGoodGuy(mech);
+	var mechLastDirection = mech.dataset.lastDirection;
+	if (!target) {
+		return;
+	}
+	var npcX	= parseInt(mech.dataset.x);
+	var npcY	= parseInt(mech.dataset.y);
+	var targetX = parseInt(target.dataset.x);
+	var targetY = parseInt(target.dataset.y);
+	var close	= getDistanceBetweenObjects(npcX, npcY, targetX, targetY);
+	var closeX	= close[0];
+	var closeY	= close[1];
+	var direction = getDirectionToMove(npcX, npcY, targetX, targetY);
+
+	// outside of 'circling' radius
+	if (closeX > circleLength || closeY > circleLength) {
+
+		if (mechLastDirection == "left" && closeX > circleLength && npcX > targetX) {
+			console.log("npc A");
+			direction = "left";
+			moveCharacterLeft(mech, false);
+		}
+		else if (mechLastDirection == "right" && closeX > circleLength && npcX < targetX) {
+			console.log("npc B");
+			direction = "right";
+			moveCharacterRight(mech, false);
+		}
+		else if (mechLastDirection == "up" && closeY > circleLength && npcY > targetY) {
+			console.log("npc C");
+			direction = "up";
+			moveCharacterUp(mech, false);
+		}
+		else if (mechLastDirection == "down" && closeY > circleLength && npcY < targetY) {
+			console.log("npc D");
+			direction = "down";
+			moveCharacterDown(mech, false);
+		}
+
+	}
+	// too close... gotta move away from target
+	else if (closeX < tooClose && closeY < tooClose) {
+
+		if (closeX > closeY) { // gotta move up or down
+			if (npcY > targetY) {
+				console.log("npc 1");
+				direction = "down";
+				moveCharacterDown(mech, false);
+			} else {
+				console.log("npc 2");
+				direction = "up";
+				moveCharacterUp(mech, false);
+			}
+		}
+		else {
+			if (npcX > targetX) {
+				console.log("npc 3");
+				direction = "right";
+				moveCharacterRight(mech, false);
+			} else {
+				console.log("npc 4");
+				direction = "left";
+				moveCharacterLeft(mech, false);
+			}
+		}
+
+	}
+	// inbetween tooClose and circeLength. This is the time to encircle your target
+	else {
+
+		if (mechLastDirection == "up" && npcX > targetX) { // bottom right to top right
+			if (npcY - global_increment_by < targetY - circleLength) { // next move would go outside circleLength
+				console.log("npc a");
+				direction = "left";
+				moveCharacterLeft(mech, false);
+			} else {
+				console.log("npc b");
+				direction = "up";
+				moveCharacterUp(mech, false);
+			}
+		}
+		else if (mechLastDirection == "up" && npcX < targetX) { // bottom left to top left
+			if (npcY - global_increment_by < targetY - circleLength) { // next move would go outside circleLength
+				console.log("npc c");
+				direction = "right";
+				moveCharacterRight(mech, false);
+			} else {
+				console.log("npc d");
+				direction = "up";
+				moveCharacterUp(mech, false);
+			}
+		}
+		else if (mechLastDirection == "left" && npcY < targetY) { // top right to top left
+			if (npcX - global_increment_by < targetX - circleLength) { // next move would go outside circleLength
+				console.log("npc e");
+				direction = "down";
+				moveCharacterDown(mech, false);
+			} else {
+				console.log("npc f");
+				direction = "left";
+				moveCharacterLeft(mech, false);
+			}
+		}
+		else if (mechLastDirection == "left" && npcY > targetY) { // bottom right to bottom left
+			if (npcX - global_increment_by < targetX - circleLength) { // next move would go outside circleLength
+				console.log("npc g");
+				direction = "up";
+				moveCharacterUp(mech, false);
+			} else {
+				console.log("npc h");
+				direction = "left";
+				moveCharacterLeft(mech, false);
+			}
+		}
+		if (mechLastDirection == "down" && npcX < targetX) { // top left to bottom left
+			if (npcY + global_increment_by < targetY + circleLength) { // next move would go outside circleLength
+				console.log("npc i");
+				direction = "down";
+				moveCharacterDown(mech, false);
+			} else {
+				console.log("npc j");
+				direction = "right";
+				moveCharacterRight(mech, false);
+			}
+		}
+		if (mechLastDirection == "down" && npcX > targetX) { // top right to bottom right
+			if (npcY + global_increment_by < targetY + circleLength) { // next move would go outside circleLength
+				console.log("npc k");
+				direction = "down";
+				moveCharacterDown(mech, false);
+			} else {
+				console.log("npc l");
+				direction = "left";
+				moveCharacterLeft(mech, false);
+			}
+		}
+		else if (mechLastDirection == "right" && npcY > targetY) { // bottom left to bottom right
+			if (npcX + global_increment_by < targetX + circleLength) { // next move would go outside circleLength
+				console.log("npc m");
+				direction = "right";
+				moveCharacterRight(mech, false);
+			} else {
+				console.log("npc n");
+				direction = "up";
+				moveCharacterUp(mech, false);
+			}
+		}
+		else if (mechLastDirection == "right" && npcY < targetY) { // top left to top right
+			if (npcX + global_increment_by < targetX + circleLength) { // next move would go outside circleLength
+				console.log("npc o");
+				direction = "right";
+				moveCharacterRight(mech, false);
+			} else {
+				console.log("npc p");
+				direction = "down";
+				moveCharacterDown(mech, false);
+			}
+		}
+
+	}
+
+	mech.setAttribute("data-last-direction", direction);
+}
+
+function getDirectionToMove(npcX, npcY, targetX, targetY) {
+	xDiff = Math.abs(npcX - targetX);
+	yDiff = Math.abs(npcY - targetY);
+	//console.log("xDiff = " + xDiff + " yDiff = " + yDiff)
+	if (xDiff > yDiff) { // further away horizontally than vertically
+		if (parseInt(npcX) > parseInt(targetX)) {
+			return "left";
+		} else {
+			return "right";
+		}
+	} else { // futher away vertically than horizontally
+		if (parseInt(npcY) > parseInt(targetY)) {
+			return "up";
+		} else {
+			return "down";
+		}
+	}
+}
+
+function getDistanceBetweenObjects(box1X, box1Y, box2X, box2Y) {
+	var x = Math.abs(box1X - box2X);
+	var y = Math.abs(box1Y - box2Y);
+	//console.log("x = " + x + " y = " + y)
+	return [x,y];
+}
+
 
 
 function fire(gunner, allegiance, projectileType) {
@@ -989,15 +1226,17 @@ function removeLifeStats(obstacle) {
 		document.getElementById("life-tracking").style.width = statPercent + "%";
 	} else {
 		if (document.getElementById(lifeStatID)) {
-			console.log("lifeStatID == " + lifeStatID)
-			marginLeft = -Math.round((100-statPercent)/10) * 35;//Math.abs(100 - (Math.round(statPercent / 10) * 10));
-			document.getElementById(lifeStatID).style.backgroundPosition = marginLeft + "px 0";
+			//console.log("lifeStatID == " + lifeStatID)
+			//marginLeft = -Math.round((100-statPercent)/10) * 35;//Math.abs(100 - (Math.round(statPercent / 10) * 10));
+			reverseStat = parseInt(100 - Math.round(statPercent/10) * 10);
+			document.getElementById(lifeStatID).style.backgroundPosition = reverseStat + "% 0";
 		}
 	}
 }
 
 function destroyCharacter(character) {
 	if (!character.classList.contains("destroyed")) {
+		character.classList.remove("walk");
 		character.classList.add("destroyed");
 		setTimeout("document.getElementById('" + character.id + "').classList.add('dead');", 2500);
 		if (character.id == p1.id) {
@@ -1184,7 +1423,7 @@ function moveCamDown(p1){
 function addEnemy(enemyType, life, left, top, direction = "left", fires = "true") {
 	var ground = document.getElementById("ground");
 	var enemy = document.createElement("div");
-	var classes = (enemyType == "b52") ? (enemyType + " " + direction) : enemyType + " enemy";
+	var classes = (enemyType == "b52") ? (enemyType + " " + direction) : enemyType + " enemy " + direction;
 	var hittable = (enemyType == "b52") ? "false" : "true";
 	var rando = Math.random();
 		enemy.setAttribute("class", classes);
@@ -1202,6 +1441,13 @@ function addEnemy(enemyType, life, left, top, direction = "left", fires = "true"
 		enemy.style.marginLeft = parseInt(left) + "px";
 		enemy.style.marginTop = parseInt(top) + "px";
 	return enemy;
+}
+
+function addAtlas(left, top, direction = "left") {
+	var atlas = addEnemy("npcmech", 150, left, top, direction, true);
+		atlas.classList.add("atlas");
+		atlas.setAttribute("data-mech-type", "atlas");
+	return atlas;
 }
 
 function addObstacle(width, height, left, top, hittable = true, classes = '', life = false) {
@@ -1289,7 +1535,7 @@ function isTouchControlBeingTouched(fingerX, fingerY) {
 }
 
 function cancelKeyDirection(key) {
-	console.log("cancel: " + key);
+	//console.log("cancel: " + key);
 	switch(key) {
 		case "left"		: notPressingDownLeft(null); break;
 		case "right"	: notPressingDownRight(null); break;
@@ -1299,7 +1545,7 @@ function cancelKeyDirection(key) {
 }
 
 function changeKeyDirection(key) {
-	console.log("change: " + key);
+	//console.log("change: " + key);
 	switch(key) {
 		case "left"		: pressingDownLeft(null); break;
 		case "right"	: pressingDownRight(null); break;
@@ -1318,7 +1564,7 @@ function touchMove(e) {
 		if ((key == "left" || key == "right" || key == "up" || key == "down") && touchingMultiple == 0) {
 			touchingMultiple++;
 			if (key != keyDirection) {
-				console.log("CHANGE INPUT: " + touchingMultiple + " " + keyDirection + " now is " + key);
+				//console.log("CHANGE INPUT: " + touchingMultiple + " " + keyDirection + " now is " + key);
 				cancelKeyDirection(keyDirection);
 				keyDirection = key;
 				changeKeyDirection(key);
@@ -1435,7 +1681,7 @@ function pressingDownRight(e) {
 	if (e) {
 		e.preventDefault();
 	}
-	moveCharacterRight(p1);
+	moveP1Right();
 	keyDirection = "right";
 }
 
@@ -1460,7 +1706,7 @@ function pressingDownLeft(e) {
 	if (e) {
 		e.preventDefault();
 	}
-	moveCharacterLeft(p1);
+	moveP1Left();
 	keyDirection = "left";
 }
 
@@ -1485,7 +1731,7 @@ function pressingDownUp(e) {
 	if (e) {
 		e.preventDefault();
 	}
-	moveCharacterUp(p1);
+	moveP1Up();
 	keyDirection = "up";
 }
 
@@ -1510,7 +1756,7 @@ function pressingDownDown(e) {
 	if (e) {
 		e.preventDefault();
 	}
-	moveCharacterDown(p1);
+	moveP1Down();
 	keyDirection = "down";
 }
 
@@ -1529,7 +1775,7 @@ function notPressingDownDown(e) {
 //
 function timerLeft() {
 	if (counterL % 4 === 0) {
-		moveCharacterLeft(p1)
+		moveP1Left(p1)
 	}
 	timerIDLeft = requestAnimationFrame(timerLeft);
 	counterL++;
@@ -1537,7 +1783,7 @@ function timerLeft() {
 
 function timerRight() {
 	if (counterR % 4 === 0) {
-		moveCharacterRight(p1)
+		moveP1Right(p1)
 	}
 	timerIDRight = requestAnimationFrame(timerRight);
 	counterR++;
@@ -1545,7 +1791,7 @@ function timerRight() {
 
 function timerUp() {
 	if (counterU % 4 === 0) {
-		moveCharacterUp(p1)
+		moveP1Up(p1)
 	}
 	timerIDUp = requestAnimationFrame(timerUp);
 	counterU++;
@@ -1553,7 +1799,7 @@ function timerUp() {
 
 function timerDown() {
 	if (counterD % 4 === 0) {
-		moveCharacterDown(p1)
+		moveP1Down(p1)
 	}
 	timerIDDown = requestAnimationFrame(timerDown);
 	counterD++;

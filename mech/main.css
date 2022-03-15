@@ -184,7 +184,7 @@ button:hover, a.button:hover {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
-#p1 {
+.warhawk {
 	width: 50px;
 	height: 70px;
 	background-position: center;
@@ -193,7 +193,7 @@ button:hover, a.button:hover {
 	border: 0px solid blue;
 	z-index: 1;
 }
-#p1::before {
+.warhawk::before {
 	content: " ";
 	width: 120px;
 	height: 110px;
@@ -203,44 +203,44 @@ button:hover, a.button:hover {
 	background-position: center center;
 	background-repeat: no-repeat;
 }
-#p1.right::before {
+.warhawk.right::before {
 	background-image: url(warhawk-standing.gif);
 	transform: rotate(-17deg);
 }
-#p1.right.walk::before {
+.warhawk.right.walk::before {
 	background-image: url(warhawk-walking-h.gif);
 	transform: rotate(-17deg);
 }
 
-#p1.left::before {
+.warhawk.left::before {
 	background-image: url(warhawk-standing.gif);
 	transform: scaleX(-1) rotate(-17deg);
 }
-#p1.left.walk::before {
+.warhawk.left.walk::before {
 	background-image: url(warhawk-walking-h.gif);
 	transform: scaleX(-1) rotate(-17deg);
 }
 
-#p1.down::before {
+.warhawk.down::before {
 	background-image: url(warhawk-standing-down.gif);
 }
-#p1.down.walk::before {
+.warhawk.down.walk::before {
 	background-image: url(warhawk-walking-down.gif);
 }
 
-#p1.up::before {
+.warhawk.up::before {
 	background-image: url(warhawk-standing-up.png);
 }
-#p1.up.walk::before {
+.warhawk.up.walk::before {
 	background-image: url(warhawk-walking-up.gif);
 }
-#p1.destroyed {
+.warhawk.destroyed {
 	z-index: 3;
 }
-#p1.destroyed::before, #p1.dead::before {
+.warhawk.destroyed::before, .warhawk.dead::before {
 	background-image: url(warhawk-destroyed.png);
 }
-#p1.destroyed::after {
+.warhawk.destroyed::after {
 	content: " ";
 	display: block;
 	width: 165px;
@@ -254,7 +254,81 @@ button:hover, a.button:hover {
 	animation-name: explosionDissipation2;
     animation-duration: 4000ms;
 }
-#p1.dead::after {
+.warhawk.dead::after {
+	display: none;
+}
+
+
+.atlas {
+	width: 50px;
+	height: 70px;
+	background-position: center;
+	transition: all 67ms linear;
+	position: absolute;
+	border: 0px solid blue;
+	z-index: 1;
+}
+.atlas::before {
+	content: " ";
+	width: 150px;
+	height: 150px;
+	margin: -53px 0 0 -45px;
+	display: block;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+.atlas.right::before {
+	background-image: url(img/atlas-stand.gif);
+	transform: scaleX(-1) rotate(5deg);
+}
+.atlas.right.walk::before {
+	background-image: url(img/atlas-walk.gif);
+	transform: scaleX(-1) rotate(5deg);
+}
+
+.atlas.left::before {
+	background-image: url(img/atlas-stand.gif);
+}
+
+.atlas.left.walk::before {
+	background-image: url(img/atlas-walk.gif);
+}
+
+.atlas.down::before {
+	background-image: url(img/atlas-stand-down.gif);
+}
+.atlas.down.walk::before {
+	background-image: url(img/atlas-walk-down.gif);
+}
+
+.atlas.up::before {
+	background-image: url(img/atlas-stand-up.gif);
+}
+.atlas.up.walk::before {
+	background-image: url(img/atlas-walk-up.gif);
+}
+.atlas.destroyed {
+	z-index: 3;
+}
+.atlas.destroyed::before, .atlas.dead::before {
+	background-image: url(img/atlas-destroyed.gif);
+}
+.atlas.destroyed::after {
+	content: " ";
+	display: block;
+	width: 165px;
+	height: 200px;
+	margin: -146px 0 0 -63px;
+	background-image: url(img/destroyed-explosion.gif);
+	background-repeat: no-repeat;
+	background-size: contain;
+	z-index: 2;
+	position: relative;
+	animation-name: explosionDissipation2;
+    animation-duration: 4000ms;
+}
+.atlas.dead::after {
 	display: none;
 }
 

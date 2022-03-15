@@ -56,9 +56,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	preloadImage("turret-down-right.png");
 	preloadImage("turret-up-left.png");
 	preloadImage("turret-up-right.png");
+	preloadImage("turret-destroyed.png");
 	preloadImage("missile.gif");
-	preloadImage("../img/b52-shadow.png");
-	preloadImage("../img/b52.png");
+	preloadImage("img/b52-shadow.png");
+	preloadImage("img/b52.png");
+	preloadImage("tank-red-destroyed-v.png");
+	preloadImage("tank-red-destroyed.png");
+	preloadImage("tank-red-down.png");
+	preloadImage("tank-red-up.png");
+	preloadImage("tank-red.png");
 });
 
 var planes_keep_coming = true;
