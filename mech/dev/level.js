@@ -3,12 +3,12 @@ gameLevel = "Dev";
 document.addEventListener("DOMContentLoaded", function(event) { 
 
 	p1.style.marginLeft = "600px";
-	p1.style.marginTop = "30px";
+	p1.style.marginTop = "300px";
 	p1.setAttribute("data-x",600);
-	p1.setAttribute("data-y",30);
+	p1.setAttribute("data-y",300);
 
 	//var enemy1 = addAtlas(1550, 850);
-	var enemy2 = addAtlas(30, 30, "right");
+	var enemy2 = addAtlas(1200, 900, "right");
 	// var enemy2 = addEnemy("turret", 50, 1550, 1150);
 	// var enemy3 = addEnemy("turret", 50, 1500, 2800);
 	// var enemy4 = addEnemy("turret", 50, 1800, 2800);
@@ -49,7 +49,7 @@ document.addEventListener("enemyKill", function(event) {
 	var enemiesLeft = document.querySelectorAll("[data-kill-required='true']:not(.destroyed)");
 	if (enemiesLeft.length == 0) {
 		winGame();
-		winLevelDev();
+		setTimeout('winLevelDev();', 3000);
 	}
 });
 

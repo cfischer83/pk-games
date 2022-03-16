@@ -740,7 +740,7 @@ function initNPCMechs() {
 		moveNPCMech(mechs[i]);
 	}
 }
-setInterval('initNPCMechs();', 67);
+setInterval('initNPCMechs();', 50);
 
 function moveNPCMech(mech) {
 	var tooClose = 200; // don't move closer if this close
@@ -758,6 +758,7 @@ function moveNPCMech(mech) {
 	var closeX	= close[0];
 	var closeY	= close[1];
 	var direction = getDirectionToMove(npcX, npcY, targetX, targetY);
+	var moved = false;
 
 	// outside of 'circling' radius
 	if (closeX > circleLength || closeY > circleLength) {
@@ -765,49 +766,81 @@ function moveNPCMech(mech) {
 		if (mechLastDirection == "left" && closeX > circleLength && npcX > targetX) {
 			console.log("npc A");
 			direction = "left";
-			moveCharacterLeft(mech, false);
+			moved = moveCharacterLeft(mech, false);
 		}
 		else if (mechLastDirection == "right" && closeX > circleLength && npcX < targetX) {
 			console.log("npc B");
 			direction = "right";
-			moveCharacterRight(mech, false);
+			moved = moveCharacterRight(mech, false);
 		}
 		else if (mechLastDirection == "up" && closeY > circleLength && npcY > targetY) {
 			console.log("npc C");
 			direction = "up";
-			moveCharacterUp(mech, false);
+			moved = moveCharacterUp(mech, false);
 		}
 		else if (mechLastDirection == "down" && closeY > circleLength && npcY < targetY) {
 			console.log("npc D");
 			direction = "down";
-			moveCharacterDown(mech, false);
+			moved = moveCharacterDown(mech, false);
 		}
 
 	}
 	// too close... gotta move away from target
 	else if (closeX < tooClose && closeY < tooClose) {
 
-		if (closeX > closeY) { // gotta move up or down
-			if (npcY > targetY) {
-				console.log("npc 1");
-				direction = "down";
-				moveCharacterDown(mech, false);
-			} else {
-				console.log("npc 2");
-				direction = "up";
-				moveCharacterUp(mech, false);
-			}
+		// if (closeX > closeY) { // gotta move up or down
+		// 	if (npcY > targetY) {
+		// 		console.log("npc 1");
+		// 		direction = "down";
+		// 		moveCharacterDown(mech, false);
+		// 	} else {
+		// 		console.log("npc 2");
+		// 		direction = "up";
+		// 		moveCharacterUp(mech, false);
+		// 	}
+		// }
+		// else {
+		// 	if (npcX > targetX) {
+		// 		console.log("npc 3");
+		// 		direction = "right";
+		// 		moveCharacterRight(mech, false);
+		// 	} else {
+		// 		console.log("npc 4");
+		// 		direction = "left";
+		// 		moveCharacterLeft(mech, false);
+		// 	}
+		// }
+		if (mechLastDirection == "up" && npcY <= targetY) { // you're above target, keep going up
+			direction = "up";
+			moved = moveCharacterUp(mech, false);
 		}
-		else {
-			if (npcX > targetX) {
-				console.log("npc 3");
-				direction = "right";
-				moveCharacterRight(mech, false);
-			} else {
-				console.log("npc 4");
-				direction = "left";
-				moveCharacterLeft(mech, false);
-			}
+		else if (mechLastDirection == "up" && npcY > targetY) { // you're below target, go down
+			direction = "down";
+			moved = moveCharacterDown(mech, false);
+		}
+		else if (mechLastDirection == "right" && npcX >= targetX) { // you're to the right of target, keep going right
+			direction = "right";
+			moved = moveCharacterRight(mech, false);
+		}
+		else if (mechLastDirection == "right" && npcX < targetX) { // you're to the left of target, go left
+			direction = "left";
+			moved = moveCharacterLeft(mech, false);
+		}
+		else if (mechLastDirection == "down" && npcY >= targetY) { // you're below target, keep going down
+			direction = "down";
+			moved = moveCharacterDown(mech, false);
+		}
+		else if (mechLastDirection == "down" && npcY < targetY) { // you're below target, keep going down
+			direction = "up";
+			moved = moveCharacterUp(mech, false);
+		}
+		else if (mechLastDirection == "left" && npcX < targetX) { // you're to the left of target, keep going left
+			direction = "left";
+			moved = moveCharacterLeft(mech, false);
+		}
+		else { // if all else fails, go right
+			direction = "right";
+			moved = moveCharacterLeft(mech, false);
 		}
 
 	}
@@ -818,94 +851,131 @@ function moveNPCMech(mech) {
 			if (npcY - global_increment_by < targetY - circleLength) { // next move would go outside circleLength
 				console.log("npc a");
 				direction = "left";
-				moveCharacterLeft(mech, false);
+				moved = moveCharacterLeft(mech, false);
 			} else {
 				console.log("npc b");
 				direction = "up";
-				moveCharacterUp(mech, false);
+				moved = moveCharacterUp(mech, false);
 			}
 		}
 		else if (mechLastDirection == "up" && npcX < targetX) { // bottom left to top left
 			if (npcY - global_increment_by < targetY - circleLength) { // next move would go outside circleLength
 				console.log("npc c");
 				direction = "right";
-				moveCharacterRight(mech, false);
+				moved = moveCharacterRight(mech, false);
 			} else {
 				console.log("npc d");
 				direction = "up";
-				moveCharacterUp(mech, false);
+				moved = moveCharacterUp(mech, false);
 			}
 		}
 		else if (mechLastDirection == "left" && npcY < targetY) { // top right to top left
 			if (npcX - global_increment_by < targetX - circleLength) { // next move would go outside circleLength
 				console.log("npc e");
 				direction = "down";
-				moveCharacterDown(mech, false);
+				moved = moveCharacterDown(mech, false);
 			} else {
 				console.log("npc f");
 				direction = "left";
-				moveCharacterLeft(mech, false);
+				moved = moveCharacterLeft(mech, false);
 			}
 		}
 		else if (mechLastDirection == "left" && npcY > targetY) { // bottom right to bottom left
 			if (npcX - global_increment_by < targetX - circleLength) { // next move would go outside circleLength
 				console.log("npc g");
 				direction = "up";
-				moveCharacterUp(mech, false);
+				moved = moveCharacterUp(mech, false);
 			} else {
 				console.log("npc h");
 				direction = "left";
-				moveCharacterLeft(mech, false);
+				moved = moveCharacterLeft(mech, false);
 			}
 		}
 		if (mechLastDirection == "down" && npcX < targetX) { // top left to bottom left
 			if (npcY + global_increment_by < targetY + circleLength) { // next move would go outside circleLength
 				console.log("npc i");
 				direction = "down";
-				moveCharacterDown(mech, false);
+				moved = moveCharacterDown(mech, false);
 			} else {
 				console.log("npc j");
 				direction = "right";
-				moveCharacterRight(mech, false);
+				moved = moveCharacterRight(mech, false);
 			}
 		}
 		if (mechLastDirection == "down" && npcX > targetX) { // top right to bottom right
 			if (npcY + global_increment_by < targetY + circleLength) { // next move would go outside circleLength
 				console.log("npc k");
 				direction = "down";
-				moveCharacterDown(mech, false);
+				moved = moveCharacterDown(mech, false);
 			} else {
 				console.log("npc l");
 				direction = "left";
-				moveCharacterLeft(mech, false);
+				moved = moveCharacterLeft(mech, false);
 			}
 		}
 		else if (mechLastDirection == "right" && npcY > targetY) { // bottom left to bottom right
 			if (npcX + global_increment_by < targetX + circleLength) { // next move would go outside circleLength
 				console.log("npc m");
 				direction = "right";
-				moveCharacterRight(mech, false);
+				moved = moveCharacterRight(mech, false);
 			} else {
 				console.log("npc n");
 				direction = "up";
-				moveCharacterUp(mech, false);
+				moved = moveCharacterUp(mech, false);
 			}
 		}
 		else if (mechLastDirection == "right" && npcY < targetY) { // top left to top right
 			if (npcX + global_increment_by < targetX + circleLength) { // next move would go outside circleLength
 				console.log("npc o");
 				direction = "right";
-				moveCharacterRight(mech, false);
+				moved = moveCharacterRight(mech, false);
 			} else {
 				console.log("npc p");
 				direction = "down";
-				moveCharacterDown(mech, false);
+				moved = moveCharacterDown(mech, false);
 			}
 		}
 
 	}
 
+	// if (!moved) { // ran into an obstacle
+	// 	directions = ["up", "right", "down", "left"];
+	// 	randomDirections = new Array();
+	// 	var i2;
+	// 	for (var i = 0; i < directions.length; i++) {
+	// 		if (directions[i] != direction) {
+	// 			randomDirections.push(directions[i]);
+	// 			i2++;
+	// 		}
+	// 	}
+	// 	console.log(randomDirections);
+	// 	var rando = Math.random() * 3000;
+	// 	if (rando < 1000) {
+	// 		direction = randomDirections[0];
+	// 	} else if (rando < 2000) {
+	// 		direction = randomDirections[1];
+	// 	} else {
+	// 		direction = randomDirections[2];
+	// 	}
+	// 	moveByDirection(mech, direction);
+	// }
+
 	mech.setAttribute("data-last-direction", direction);
+}
+
+function moveByDirection(obj, direction) {
+	if (direction == "left") {
+		moveCharacterLeft(obj, false);
+	}
+	else if (direction == "up") {
+		moveCharacterUp(obj, false);
+	}
+	else if (direction == "right") {
+		moveCharacterRight(obj, false);
+	}
+	else if (direction == "bottom") {
+		moveCharacterBottom(obj, false);
+	}
 }
 
 function getDirectionToMove(npcX, npcY, targetX, targetY) {
@@ -960,8 +1030,10 @@ function fire(gunner, allegiance, projectileType) {
 	fireArray.push("projectile" + rando);
 	if (projectileType == "erppc") {
 		fireERPPC("projectile" + rando, dir);
-	} else {
+	} else if (projectileType == "missile") {
 		fireMissile("projectile" + rando);
+	} else {
+		fireLaser("projectile" + rando);
 	}
 }
 
@@ -1004,6 +1076,60 @@ function fireERPPC(firedArrayElm, dir) {
 }
 
 function fireMissile(firedArrayElm) {
+	var projectile = document.getElementById(firedArrayElm);
+	var hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
+	var nearestFoe = getNearestGoodGuy(projectile);
+	var directionDetails = homingDirection(projectile, nearestFoe);
+	var xDir = directionDetails[2];
+	var yDir = directionDetails[3];
+	var diff = directionDetails[4];
+	
+	var moveByDetails = calculateMoveBy(diff);
+	var moveBy = moveByDetails[0];
+	var helperMoveBy = moveByDetails[1];
+	pointProjectile(projectile, moveBy, helperMoveBy, directionDetails);
+
+	//console.log("diff = " + diff+ "; helperMoveBy = " + helperMoveBy)
+	fireArray[firedArrayElm] = setInterval(function() {
+		if (projectile) {
+			hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
+			checkProjectileHittingObject(firedArrayElm, hitAllegiance);
+			checkProjectileHittingObject(firedArrayElm, "obstacle");
+
+			if (xDir == "left") {
+				moveBlockLeft(projectile, false, moveBy);
+			} else if (xDir == "right") {
+				moveBlockRight(projectile, false, moveBy);
+			}
+			if (yDir == "up") {
+				moveBlockUp(projectile, false, helperMoveBy);
+			} else if (yDir == "down") {
+				moveBlockDown(projectile, false, helperMoveBy);
+			}
+		}
+	},30);
+
+	// begin fade out animation
+	setTimeout(function() {
+		clearInterval(fireArray[firedArrayElm]);
+		elm = document.getElementById(firedArrayElm);
+		if (elm && elm.classList.contains("explosion")) {
+			elm.classList.add("fade");
+		}
+		if (elm && !elm.classList.contains("explosion")) {
+			elm.remove();
+		} else {
+			// clear item after explosion animation
+			setTimeout(function() {
+				if (document.getElementById(firedArrayElm)) {
+					document.getElementById(firedArrayElm).remove();
+				}
+			}, 1000);
+		}
+	}, 4000);
+}
+
+function fireLaser(firedArrayElm) {
 	var projectile = document.getElementById(firedArrayElm);
 	var hitAllegiance = (projectile.dataset.allegiance == "good") ? "enemy" : "good";
 	var nearestFoe = getNearestGoodGuy(projectile);
@@ -1112,7 +1238,7 @@ function pointProjectile(projectile, moveBy, helperMoveBy, projectileHomingDetai
 			//console.log("Math.abs(("+helperMoveBy+" - "+moveBy+") / "+helperMoveBy+" * 45) + 135 == " + rotateAngle);
 		}
 	}
-	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg)");
+	span.setAttribute("style", "transform: rotate(" + rotateAngle + "deg);");
 }
 
 function getNearestGoodGuy(obj) {
@@ -1325,7 +1451,11 @@ function makeEnemyFire(enemy) {
 	var rando = Math.random() * 3000;
 	// every 1/3
 	if (rando <= 1000) {
-		fire(enemy, "enemy", "missile");
+		if (enemy.dataset.enemyType == 'npcmech') {
+			fire(enemy, "enemy", "laser");
+		} else {
+			fire(enemy, "enemy", "missile");
+		}
 	}
 }
 
@@ -1444,7 +1574,7 @@ function addEnemy(enemyType, life, left, top, direction = "left", fires = "true"
 }
 
 function addAtlas(left, top, direction = "left") {
-	var atlas = addEnemy("npcmech", 150, left, top, direction, true);
+	var atlas = addEnemy("npcmech", 0, left, top, direction, true);
 		atlas.classList.add("atlas");
 		atlas.setAttribute("data-mech-type", "atlas");
 	return atlas;
