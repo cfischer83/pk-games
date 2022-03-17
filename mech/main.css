@@ -605,6 +605,18 @@ button:hover, a.button:hover {
 	border: 2px solid #F00;
 	border-radius: 5px;
 }
+.laser span::before {
+	content: " ";
+	position: absolute;
+	width: 125px;
+	height: 125px;
+	background: #F00;
+	border-radius: 125px;
+	margin: -36px 0px 0 -57px;
+	opacity: 0;
+	animation-name: laserPulse;
+	animation-duration: 300ms;
+}
 .laser.explosion span {
 	display: none;
 }
@@ -629,7 +641,26 @@ button:hover, a.button:hover {
 
 
 
-
+@keyframes laserPulse {
+	0% {
+		opacity: 1;
+		width: 1px;
+		height: 1px;
+		margin: 24px 0px 0 1px;
+	}
+	50% {
+		opacity: 0.3;
+		width: 60px;
+		height: 60px;
+		margin: -6px 0px 0 -28px;
+	}
+	100% {
+		opacity: 0;
+		width: 120px;
+		height: 120px;
+		margin: -60px 0 0 -15px;
+	}
+}
 @keyframes quickFadeIn {
 	0% {
 		opacity: 0;
