@@ -767,9 +767,9 @@ function moveNPCMech(mech) {
 	// try to get unstuck from an obstacle
 	if (tempForceDirection > 0) {
 		moveByDirection(mech, mechLastDirection);
-		var newDirectionCounter = tempForceDirection - 1;
+		var newDirectionCounter = parseInt(tempForceDirection) - 1;
 		mech.setAttribute("data-temp-force-direction", newDirectionCounter);
-		//console.log("tempForceDirection = " + tempForceDirection + " mechLastDirection = "+mechLastDirection);
+		direction = mechLastDirection;
 	}
 
 	// outside of 'circling' radius
@@ -834,9 +834,11 @@ function moveNPCMech(mech) {
 		else { // if all else fails, go right
 			if (npcX >= targetX) {
 				direction = "right";
+				//console.log("aa")
 				moved = moveCharacterRight(mech, false);
 			} else {
 				direction = "left";
+				//console.log("bb")
 				moved = moveCharacterLeft(mech, false);
 			}
 		}
@@ -862,7 +864,7 @@ function moveNPCMech(mech) {
 				direction = "right";
 				moved = moveCharacterRight(mech, false);
 			} else {
-				console.log("npc d");
+				//console.log("npc d");
 				direction = "up";
 				moved = moveCharacterUp(mech, false);
 			}
@@ -938,23 +940,12 @@ function moveNPCMech(mech) {
 
 	}
 
-	//console.log("direction = " + direction + " moved = " + moved);
-	//console.log("here");
 	var stuck = false;
 	if (!moved) {
 		var obstacles = document.getElementsByClassName("obstacle");
 		for (i = 0; i < obstacles.length; i++) {
 			if (willBlocksOverlap(mech, obstacles[i], direction)) {
 				stuck = true;
-				if (tempForceDirection == 0) {
-					mech.setAttribute("data-temp-force-direction", "20");
-				}
-				// switch(direction) {
-				// 	case "up": direction = "down";
-				// 	case "down": direction = "up";
-				// 	case "left": direction = "right";
-				// 	case "right": direction = "left";
-				// }
 			}
 		}
 	}
@@ -962,7 +953,7 @@ function moveNPCMech(mech) {
 	if (!moved && stuck && tempForceDirection == 0) { // ran into an obstacle
 		direction = getDirectionThatsNot(direction);
 		//console.log("RR " + direction + " tempForceDirection = " + tempForceDirection);
-		moveByDirection(mech, direction);
+		mech.setAttribute("data-temp-force-direction", "20");
 	}
 
 	mech.setAttribute("data-last-direction", direction);
@@ -971,14 +962,11 @@ function moveNPCMech(mech) {
 function getDirectionThatsNot(notThisDirection) {
 	directions = ["up", "right", "down", "left"];
 	randomDirections = new Array();
-	var i2;
 	for (var i = 0; i < directions.length; i++) {
 		if (directions[i] != notThisDirection) {
 			randomDirections.push(directions[i]);
-			i2++;
 		}
 	}
-	//console.log(randomDirections);
 	var rando = Math.random() * 3000;
 	if (rando < 1000) {
 		direction = randomDirections[0];
@@ -987,6 +975,8 @@ function getDirectionThatsNot(notThisDirection) {
 	} else {
 		direction = randomDirections[2];
 	}
+
+	//console.log("randomDirections = " +randomDirections[0]+"," +randomDirections[1]+","+randomDirections[2]+" notThisDirection = " + notThisDirection + " direction = " + direction);
 	return direction;
 }
 
@@ -1477,7 +1467,7 @@ function makeEnemyFire(enemy) {
 	}
 	var rando = Math.random() * 3000;
 	// every 1/3
-	if (rando <= 3000) {
+	if (rando <= 1000) {
 		if (enemy.dataset.enemyType == 'npcmech') {
 			fire(enemy, "enemy", "laser");
 		} else {
@@ -1537,7 +1527,7 @@ function moveCamLeft(p1){
 	}
 }
 function moveCamUp(p1){
-	var cam_center = getWindowHeight() / 2 - global_box_size;
+	var cam_center = Math.floor((getWindowHeight() / 2 - global_player_height) /10) * 10;
 	var groundDetails = ground.getBoundingClientRect();
 	var groundHeight	= groundDetails.height;
 	var maxHeight = Math.floor((groundHeight - getWindowHeight() + cam_center) / 10) * 10;
@@ -1550,7 +1540,9 @@ function moveCamUp(p1){
 	if (!ground_marginTop) {
 		ground_marginTop = 0;
 	}
-	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0){
+	console.log(p1marginTop + " >= " + cam_center + " && " + Math.abs(p1marginTop) + " < " + maxHeight + " && " + ground_marginTop + " < 0")
+	//if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0){
+	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0) {
 		var new_ground_marginTop = ground_marginTop + global_increment_by;
 		ground.style.marginTop = new_ground_marginTop + "px";
 	}

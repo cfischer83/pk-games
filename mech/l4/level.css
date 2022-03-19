@@ -1,0 +1,15 @@
+#ground {
+	background: url(bg.jpg) 0 0 repeat #553;
+	width: 3840px;
+	height: 3840px;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+#cityscape {
+    background: url(cityscape.png) 0 0 no-repeat;
+    width: 3840px;
+    height: 950px;
+    position: absolute;
+    margin: 2890px 0 0 0;
+    z-index: 3;
+}
