@@ -548,7 +548,7 @@ function initiateTanks() {
 	}
 }
 
-setInterval('initiateTanks()', 100);
+//setInterval('initiateTanks()', 100);
 
 function moveTank(tank, tankArea) {
 	var taBC = tankArea.getBoundingClientRect();
@@ -714,7 +714,7 @@ function movePlane(plane) {
 	moveBlockDown(plane, false);
 }
 
-setInterval('movePlanes()', 100);
+//setInterval('movePlanes()', 100);
 
 function cleanUpPlane(plane) {
 	if (parseInt(plane.style.marginTop) > parseInt(ground.offsetHeight)) {
@@ -740,7 +740,7 @@ function initNPCMechs() {
 		moveNPCMech(mechs[i]);
 	}
 }
-setInterval('initNPCMechs();', 50);
+//setInterval('initNPCMechs();', 50);
 
 function moveNPCMech(mech) {
 	var tooClose = 200; // don't move closer if this close
@@ -1430,18 +1430,6 @@ function promptEnemiesToFire() {
 }
 
 function enemyWithinRange(enemy) {
-	// var inRange = 1250;
-	// var enemeyDetails = enemy.getBoundingClientRect();
-	// var enemyX = enemeyDetails.x + (enemeyDetails.width / 2);
-	// var enemyY = enemeyDetails.y + (enemeyDetails.height / 2);
-
-	// var p1Details = p1.getBoundingClientRect();
-	// var p1X = p1Details.x + (p1Details.width / 2);
-	// var p1Y = p1Details.y + (p1Details.height / 2);
-
-	// var withinX = (p1X - enemyX < inRange && p1X - enemyX > -Math.abs(inRange));
-	// var withinY = (p1Y - enemyY < inRange && p1Y - enemyY > -Math.abs(inRange));
-
 	var inRange = 1250;
 	goods = document.querySelectorAll("[data-allegiance='good'][data-hittable='true']");
 	// add all good guys to array so can sort by closest "range"
@@ -1454,11 +1442,6 @@ function enemyWithinRange(enemy) {
 	}
 
 	return false;
-	
-	// if (withinX && withinY) {
-	// 	return true;
-	// }
-	// return false;
 }
 
 function makeEnemyFire(enemy) {
@@ -1593,7 +1576,7 @@ function addEnemy(enemyType, life, left, top, direction = "left", fires = "true"
 }
 
 function addAtlas(left, top, direction = "left") {
-	var atlas = addEnemy("npcmech", 0, left, top, direction, true);
+	var atlas = addEnemy("npcmech", 150, left, top, direction, true);
 		atlas.classList.add("atlas");
 		atlas.setAttribute("data-mech-type", "atlas");
 	return atlas;

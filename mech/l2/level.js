@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var enemy13 = addEnemy("turret", 50, 5585, 1849);
 	var enemy14 = addEnemy("turret", 50, 4379, 723);
 	var pyramid = addEnemy("pyramid", 50, 5082, 936);
+	setInterval('initiateTanks()', 100);
 
 	var obstacle1 = addObstacle(1549, 132, 4235, 528);
 	var obstacle2 = addObstacle(40, 1190, 4235, 528);

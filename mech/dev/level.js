@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	//var enemy1 = addAtlas(1550, 850);
 	var enemy2 = addAtlas(1200, 900, "right");
+	setInterval('initNPCMechs();', 50);
 	// var enemy2 = addEnemy("turret", 50, 1550, 1150);
 	// var enemy3 = addEnemy("turret", 50, 1500, 2800);
 	// var enemy4 = addEnemy("turret", 50, 1800, 2800);

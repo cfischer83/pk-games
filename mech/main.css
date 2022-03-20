@@ -532,6 +532,8 @@ button:hover, a.button:hover {
 	background: url(erppc.gif) 0 0 no-repeat;
 	background-size: contain;
 	z-index: 2;
+	border-radius: 20px;
+	box-shadow: 0 0 15px 0 #39f;
 }
 .erppc.explosion {
 	background: none;
@@ -588,7 +590,7 @@ button:hover, a.button:hover {
 	position: absolute;
 	width: 15px;
 	height: 15px;
-	z-index: 1;
+	z-index: 2;
 }
 .laser span {
 	content: " ";
@@ -716,7 +718,7 @@ button:hover, a.button:hover {
 	right: 0;
 	background: rgba(255, 255, 255, 0.2);
 	color: #FFF;
-	z-index: 2;
+	z-index: 3;
 }
 #life {
 	float: right;

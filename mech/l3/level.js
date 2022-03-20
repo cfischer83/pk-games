@@ -1,6 +1,7 @@
 gameLevel = "L3";
 var gameWin = false;
 var gameLose = false;
+var planeInterval = null;
 
 document.addEventListener("DOMContentLoaded", function(event) { 
 	var enemy1 = addEnemy("turret", 50, 3650, 850);
@@ -13,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var enemy8 = addEnemy("turret", 50, 1770, 3386);
 	var enemy10 = addEnemy("turret", 50, 3067, 5271);
 	var enemy11 = addEnemy("turret", 50, 3429, 5271);
+	planeInterval = setInterval('movePlanes()', 100);
 
 	var satellite1 = addEnemy("satellite", 30, 3300, 100, "left", "false");
 	var satellite2 = addEnemy("satellite", 30, 300, 2900, "left", "false");
@@ -188,6 +190,7 @@ document.addEventListener("enemyKill", function(event) {
 });
 
 function initLateTanks() {
+	setInterval('initiateTanks()', 100);
 	var lateEnemy1 = addEnemy("tank", 30, -100, 2300, "up");
 	var lateEnemy2 = addEnemy("tank", 30, 3900, 3370, "right");
 	// mid tree section
