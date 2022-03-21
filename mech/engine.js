@@ -7,6 +7,7 @@ var global_window_size = window.innerWidth;
 var fireArray = new Array();
 var downTimer;
 var lastKey;
+var keyArray = new Array();
 var lastProjectileFired = 0; // will be timestamp to avoid too many firings
 var touchEnabled = ('ontouchstart' in document.documentElement);
 var allowFiring = true; // allow/disallow firing
@@ -64,10 +65,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 	document.addEventListener("keydown", function(e) {
+		keyArray.push(e.key);
+		if (keyArray.length > 10) {
+			keyArray.shift();
+			kodiakNami();
+		}
 		if (!gamePlay) {
 			return;
 		}
-		if (e.keyCode == '32' && allowFiring) {
+		if (e.key == ' ' && allowFiring) {
 			newFireDate = new Date();
 			newFireTime = newFireDate.getTime();
 			if (getTimeDifference(lastProjectileFired, newFireTime)) {
@@ -79,13 +85,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			e.preventDefault();
 			return false;
 		}
-		if (!isMovingKey(e.keyCode)) {
+		if (!isMovingKey(e.key)) {
 			return;
 		}
 		e.preventDefault();
 
 		// if not still the same key, stop the timer
-		if (e.which !== lastKey) {
+		if (e.key !== lastKey) {
 			if (downTimer) {
 				clearInterval(downTimer);
 				downTimer = null;
@@ -93,20 +99,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		}
 
 		// remember previous key
-		lastKey = e.which;
+		lastKey = e.key;
 		if (!downTimer) {
 			// start timer
 			downTimer = setInterval(function() {
 				if (!gamePlay) {
 					return;
 				}
-				if (e.which == 37) {
+				if (e.key == "ArrowLeft") {
 					moveP1Left();
-				} else if (e.which == 38) {
+				} else if (e.key == "ArrowUp") {
 					moveP1Up();
-				} else if (e.which == 39) {
+				} else if (e.key == "ArrowRight") {
 					moveP1Right();
-				} else if (e.which == 40) {
+				} else if (e.key == "ArrowDown") {
 					moveP1Down();
 				} else {
 					//
@@ -116,10 +122,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		return false;
 	})
 	document.addEventListener("keyup", function(e) {
-		if (isMovingKey(e.keyCode)) {
+		if (isMovingKey(e.key)) {
 			p1.classList.remove("walk");
 			// stop timer
-			if (downTimer && lastKey == e.keyCode) {
+			if (downTimer && lastKey == e.key) {
 				clearInterval(downTimer);
 				downTimer = null;
 				lastKey = 0;
@@ -173,6 +179,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	disableScroll();
 });
+
+function kodiakNami() {
+	var arMerge = keyArray.join("");
+	if (arMerge.toLowerCase() == "arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba") {
+		console.log("Kodiak Nami!");
+		if (p1.classList.contains("warhawk")) {
+			preloadImage("img/atlas-walk.gif");
+			preloadImage("img/atlas-walk-up.gif");
+			preloadImage("img/atlas-walk-down.gif");
+			preloadImage("img/atlas-stand.gif");
+			preloadImage("img/atlas-stand-up.gif");
+			preloadImage("img/atlas-stand-down.gif");
+			preloadImage("img/atlas-destroyed.gif");
+			preloadImage("img/atlas-destroyed-v.png");
+			p1.classList.add("atlas");
+			p1.classList.remove("warhawk");
+		} else {
+			p1.classList.add("warhawk");
+			p1.classList.remove("atlas");
+		}
+	}
+}
 
 function pkAnalytics(action, label) {
 	if (ga) {
@@ -353,7 +381,7 @@ function getGroundHeight() {
 
 /* Is this left, up, right, down key */
 function isMovingKey(k) {
-	if (k == "37" || k == "38" || k == "39" || k == "40") {
+	if (k == "ArrowLeft" || k == "ArrowUp" || k == "ArrowRight" || k == "ArrowDown") {
 		return true;
 	}
 	return false;
@@ -1523,7 +1551,7 @@ function moveCamUp(p1){
 	if (!ground_marginTop) {
 		ground_marginTop = 0;
 	}
-	console.log(p1marginTop + " >= " + cam_center + " && " + Math.abs(p1marginTop) + " < " + maxHeight + " && " + ground_marginTop + " < 0")
+	//console.log(p1marginTop + " >= " + cam_center + " && " + Math.abs(p1marginTop) + " < " + maxHeight + " && " + ground_marginTop + " < 0")
 	//if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0){
 	if (p1marginTop>=cam_center && Math.abs(p1marginTop) < maxHeight && ground_marginTop < 0) {
 		var new_ground_marginTop = ground_marginTop + global_increment_by;

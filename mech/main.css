@@ -537,6 +537,7 @@ button:hover, a.button:hover {
 }
 .erppc.explosion {
 	background: none;
+	box-shadow: none;
 }
 .erppc.explosion::before {
 	content: " ";
@@ -546,10 +547,23 @@ button:hover, a.button:hover {
 	margin: -60px 0 0 -15px;
 	background: url(explosion.gif) 0 0 no-repeat;
 	background-size: contain;
+	box-shadow: none;
 }
 .erppc.explosion.fade::before {
 	animation-name: explosionDissipation;
     animation-duration: 1000ms;
+}
+.erppc span {
+	content: " ";
+	position: absolute;
+	width: 125px;
+	height: 125px;
+	background: #59F;
+	border-radius: 125px;
+	margin: -36px 0px 0 -57px;
+	opacity: 0;
+	animation-name: erppcPulse;
+	animation-duration: 300ms;
 }
 
 .missile {
@@ -643,6 +657,22 @@ button:hover, a.button:hover {
 
 
 
+@keyframes erppcPulse {
+	0% {
+		opacity: 1;
+		width: 1px;
+		height: 1px;
+		margin: 9px 0px 0 9px;
+		transition-timing-function: linear;
+	}
+	100% {
+		opacity: 0;
+		width: 120px;
+		height: 120px;
+		margin: -54px 0px 0 -53px;
+		transition-timing-function: linear;
+	}
+}
 @keyframes laserPulse {
 	0% {
 		opacity: 1;
@@ -660,7 +690,7 @@ button:hover, a.button:hover {
 		opacity: 0;
 		width: 120px;
 		height: 120px;
-		margin: -60px 0 0 -15px;
+		margin: -36px 0px 0 -57px;
 	}
 }
 @keyframes quickFadeIn {

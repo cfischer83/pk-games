@@ -60,7 +60,7 @@ function winLevelSecret() {
 	cam.insertBefore(text, ground);
 		//text.style.marginLeft = Math.abs(parseInt(cam.style.marginLeft));// - global_window_size;
 		text.style.marginTop = Math.abs(parseInt(cam.style.marginTop)) + 25;
-	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is destroyed and pushed out past the inner sphere!</p><br /><a class='button' href='index.html'>Return To Missions</a>";
+	document.getElementById("overlaytext").innerHTML = "<h2>Victory!</h2><p>The enemy is destroyed and pushed them out past the inner sphere!</p><br /><a class='button' href='index.html'>Return To Missions</a>";
 
 }
 
