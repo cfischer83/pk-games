@@ -76,7 +76,7 @@ p {
 	box-shadow: 5px 5px 15px 1px rgba(0,0,0,0.5);
 }
 .game img {
-	border: 1px solid #000;
+	border: 2px solid #000;
 }
 .game:hover {
 	background: #FF99FF;
@@ -102,14 +102,38 @@ p {
 	height: 0;
 	color: #FFF;
 	text-align: center;
-	top: 9px;
-	right: -32px;
+	top: 4px;
+	right: -38px;
 	transform: rotate(45deg);
 	border-bottom: 30px solid red;
 	border-left: 30px solid transparent;
 	border-right: 30px solid transparent;
 	line-height: 30px;
 	text-shadow: 1px 1px 1px #000;
+}
+.new::before {
+	position: absolute;
+	content: " ";
+	display: block;
+	width: 0px;
+	height: 0px;
+	border-bottom: 8px solid #A00;
+	border-right: 8px solid transparent;
+	transform: rotate(-45deg);
+	right: 70px;
+	top: 26px;
+}
+.new::after {
+	position: absolute;
+	content: " ";
+	display: block;
+	width: 0;
+	height: 0;
+	border-bottom: 11px solid #A00;
+	border-right: 11px solid transparent;
+	transform: rotate(-45deg);
+	right: -28px;
+	top: 24px;
 }
 footer {
 	display: block;
