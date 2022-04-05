@@ -1,0 +1,275 @@
+<html>
+<head>
+<title>Snake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Press+Start+2P&family=Sen&display=swap" rel="stylesheet" />
+<style type="text/css">
+	#snake-grid {
+		position: relative;
+	}
+	table {
+		border-right: 1px solid #ccc;
+		border-bottom: 1px solid #ccc;
+		box-sizing: border-box;
+	}
+	tr {
+		/* border-right: 1px solid #000;
+		border-bottom: 1px solid #000; */
+	}
+	table td {
+		width: 10px;
+		height: 10px;
+		border-top: 1px solid #ccc;
+		border-left: 1px solid #ccc;
+		box-sizing: border-box;
+	}
+	.snake {
+		background: #F00;
+	}
+	.food {
+		background-color: #00F;
+	}
+</style>
+<script type="text/javascript">
+var snakeArr = new Array();
+var directionHistory = new Array();
+var rows = 35;
+var cols = 35;
+var startCol = 4;
+var startRow = 3;
+var boxSize = 10;
+var direction = "right";
+
+document.addEventListener("DOMContentLoaded", function(event) {
+	var snakeGrid = document.getElementById("snake-grid");
+	var tableStr = "<table id='snake-table' cellspacing='0' cellpadding='0'>";
+	for (var i = 0; i < rows; i++) {
+		tableStr += "<tr id='tr-" + i + "'>";
+		for (var j = 0; j < cols; j++) {
+			tableStr += "<td id='tr-" + i + "-td-" + j + "'></td>";
+		}
+		tableStr += "</tr>";
+	}
+	tableStr += "</table>";
+	snakeGrid.innerHTML = tableStr;
+
+	placeSnakeInCel(startRow, startCol-4, true);
+	placeSnakeInCel(startRow, startCol-3, true);
+	placeSnakeInCel(startRow, startCol-2, true);
+	placeSnakeInCel(startRow, startCol-1, true);
+	placeSnakeInCel(startRow, startCol, true);
+	createFood();
+});
+
+document.addEventListener("keydown", function(e) {
+	if (e.key == "ArrowLeft" && direction != "right") {
+		direction = "left";
+	} else if (e.key == "ArrowUp" && direction != "down") {
+		direction = "up";
+	} else if (e.key == "ArrowRight" && direction != "left") {
+		direction = "right";
+	} else if (e.key == "ArrowDown" && direction != "up") {
+		direction = "down";
+	} else {
+		//
+	}
+});
+
+function moveSnake() {
+	if (checkHittingObstacle()) {
+		loseGame();
+		return;
+	}
+	var len = parseInt(snakeArr.length);
+	directionHistory.unshift(direction);
+	var gotfood = false;
+	for (var i = 0; i < len; i++) {
+		if (i == 0) {
+			if (checkReachedFood()) {
+				gotfood = true;
+				lastElement = snakeArr[snakeArr.length - 1].toString();
+				console.log(lastElement);
+			}
+		}
+		var splitAr = snakeArr[i].split(":");
+		var row = parseInt(splitAr[0]);
+		var col = parseInt(splitAr[1]);
+		var rightCol = parseInt(col) + 1;
+		var leftCol = parseInt(col) - 1;
+		var upRow = parseInt(row) - 1;
+		var downRow = parseInt(row) + 1;
+		if (directionHistory[i] == "right") {
+			moveSegmentRight(snakeArr[i]);
+			snakeArr[i] = row+":"+rightCol;
+		}
+		else if (directionHistory[i] == "down") {
+			moveSegmentDown(snakeArr[i]);
+			snakeArr[i] = downRow+":"+col;
+		}
+		else if (directionHistory[i] == "left") {
+			moveSegmentLeft(snakeArr[i]);
+			snakeArr[i] = row+":"+leftCol;
+		}
+		else if (directionHistory[i] == "up") {
+			moveSegmentUp(snakeArr[i]);
+			snakeArr[i] = upRow+":"+col;
+		}
+	}
+	if (gotfood) {
+		lastElementSplit = lastElement.split(":");
+		var newLastRow = lastElementSplit[0];
+		var newLastCol = lastElementSplit[1];
+		console.log(directionHistory);
+		placeSnakeInCel(newLastRow, newLastCol, false);
+	}
+	console.log(snakeArr);
+	//alert('snakeArr.length == ' + snakeArr.length)
+	//snakeArr.pop(snakeArr);
+}
+
+function checkReachedFood() {
+	var splitAr = snakeArr[0].split(":");
+	var row = parseInt(splitAr[0]);
+	var col = parseInt(splitAr[1]);
+	if (document.getElementById("tr-" + row + "-td-" + col).classList.contains("food")) {
+		document.getElementById("tr-" + row + "-td-" + col).classList.remove("food");
+		createFood();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function createFood() {
+	var randomRow = Math.round(Math.random() * rows);
+	var randomCol = Math.round(Math.random() * cols);
+	var spot = document.getElementById("tr-" + randomRow + "-td-" + randomCol);
+	if (spot.classList.contains("snake")) {
+		console.log("ERROR: tr-" + randomRow + "-td-" + randomCol)
+		createFood();
+	} else {
+		document.getElementById("tr-" + randomRow + "-td-" + randomCol).classList.add("food")
+	}
+}
+
+function checkHittingObstacle() {
+	var splitAr = snakeArr[0].split(":");
+	var row = parseInt(splitAr[0]);
+	var col = parseInt(splitAr[1]);
+	var rightCol = parseInt(col) + 1;
+	var leftCol = parseInt(col) - 1;
+	var upRow = parseInt(row) - 1;
+	var downRow = parseInt(row) + 1;
+	if (direction == "left" && leftCol < 0) {
+		return true;
+	}
+	else if (direction == "up" && upRow < 0) {
+		return true;
+	}
+	else if (direction == "right" && rightCol >= cols) {
+		return true;
+	}
+	else if (direction == "down"  && downRow >= rows) {
+		return true;
+	}
+	else if (direction == "left" && document.getElementById("tr-" + row + "-td-" + leftCol).classList.contains("snake")) {
+		return true;
+	}
+	else if (direction == "right" && document.getElementById("tr-" + row + "-td-" + rightCol).classList.contains("snake")) {
+		return true;
+	}
+	else if (direction == "up" && document.getElementById("tr-" + upRow + "-td-" + col).classList.contains("snake")) {
+		return true;
+	}
+	else if (direction == "down" && document.getElementById("tr-" + downRow + "-td-" + col).classList.contains("snake")) {
+		return true;
+	}
+}
+
+function moveSegmentRight(segment) {
+	var splitAr = segment.split(":");
+	var row = splitAr[0];
+	var col = splitAr[1];
+	var nextCol = parseInt(col) + 1;
+	document.getElementById("tr-" + row + "-td-" + col).classList.remove("snake");
+	document.getElementById("tr-" + row + "-td-" + nextCol).classList.add("snake");
+}
+
+function moveSegmentLeft(segment) {
+	var splitAr = segment.split(":");
+	var row = splitAr[0];
+	var col = splitAr[1];
+	var nextCol = parseInt(col) - 1;
+	document.getElementById("tr-" + row + "-td-" + col).classList.remove("snake");
+	document.getElementById("tr-" + row + "-td-" + nextCol).classList.add("snake");
+}
+
+function moveSegmentDown(segment) {
+	var splitAr = segment.split(":");
+	var row = splitAr[0];
+	var col = splitAr[1];
+	var nextRow = parseInt(row) + 1;
+	document.getElementById("tr-" + row + "-td-" + col).classList.remove("snake");
+	document.getElementById("tr-" + nextRow + "-td-" + col).classList.add("snake");
+}
+
+function moveSegmentUp(segment) {
+	var splitAr = segment.split(":");
+	var row = splitAr[0];
+	var col = splitAr[1];
+	var nextRow = parseInt(row) - 1;
+	document.getElementById("tr-" + row + "-td-" + col).classList.remove("snake");
+	document.getElementById("tr-" + nextRow + "-td-" + col).classList.add("snake");
+}
+
+function placeSnakeInCel(row, col, start) {
+	document.getElementById("tr-" + row + "-td-" + col).classList.add("snake");
+	if (start) {
+		directionHistory.unshift(direction);
+		snakeArr.unshift(row+":"+col);
+	} else {
+		directionHistory.push(direction);
+		snakeArr.push(row+":"+col);
+	}
+	
+}
+
+var start_game = false;
+function startGame() {
+	start_game = setInterval('moveSnake()', 200);
+}
+
+function loseGame() {
+	clearInterval(start_game);
+	alert("you lose");
+}
+</script>
+</head>
+<body>
+
+
+<div id="snake-grid">
+</div>
+<button onclick="startGame();">Start</button>
+
+
+<script>(function() {
+	(function (i, s, o, g, r, a, m) {
+		i['GoogleAnalyticsObject'] = r;
+		i[r] = i[r] || function () {
+				(i[r].q = i[r].q || []).push(arguments)
+			}, i[r].l = 1 * new Date();
+		a = s.createElement(o),
+			m = s.getElementsByTagName(o)[0];
+		a.async = 1;
+		a.src = g;
+		m.parentNode.insertBefore(a, m)
+	})(window, document, 'script', 'https://google-analytics.com/analytics.js', 'ga');
+	
+	ga('create', 'UA-3392560-1', 'auto');
+			ga('send', 'pageview');
+	})();
+ </script> 
+</body>
+</html>
