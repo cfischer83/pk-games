@@ -1,80 +1,171 @@
 <html>
 <head>
-<title>Snake</title>
+<title>Snakes on a Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Press+Start+2P&family=Sen&display=swap" rel="stylesheet" />
 <style type="text/css">
+	body {
+		background-color: #222;
+	}
+	header {
+		text-align: center;
+		margin: 15px 0;
+	}
 	#snake-grid {
 		position: relative;
 	}
 	table {
-		border-right: 1px solid #ccc;
-		border-bottom: 1px solid #ccc;
 		box-sizing: border-box;
+		margin: 0 auto;
 	}
 	tr {
 		/* border-right: 1px solid #000;
 		border-bottom: 1px solid #000; */
 	}
 	table td {
+		background-color: #EEE;
 		width: 10px;
 		height: 10px;
 		border-top: 1px solid #ccc;
 		border-left: 1px solid #ccc;
 		box-sizing: border-box;
 	}
-	.snake {
-		background: #F00;
-	}
 	.food {
 		background-color: #00F;
+		border-color: #00F;
 	}
+	.snake {
+		background: #F00;
+		border-color: #F00;
+	}
+	button {
+		border: 2px solid #FFF;
+		border-radius: 5px;
+		background-color: transparent;
+		color: #FFF;
+		padding: 5px 15px;
+		font-size: 18px;
+		margin: 4px 7px;
+	}
+	button:hover {
+		background-color: #FFF;
+		color: #000;
+		cursor: pointer;
+		box-shadow: 1px 1px 10px 0px #FFF;
+	}
+	button.selected {
+		background-color: #FFF;
+		color: #000;
+	}
+	button:disabled {
+		border-color: #999;
+		color: #999;
+		cursor: not-allowed;
+	}
+	button.selected:disabled {
+		background-color: #CCC;
+		color: #777;
+	}
+	button:disabled:hover {
+		border-color: #999;
+		color: #999;
+		background-color: transparent;
+		box-shadow: none;
+	}
+	button.selected:disabled:hover {
+		background-color: #CCC;
+		color: #777;
+	}
+	footer {
+		text-align: center;
+		margin: 15px 0 0;
+	}
+
 </style>
 <script type="text/javascript">
 var snakeArr = new Array();
-var directionHistory = new Array();
+var arrowHistory = new Array(); // record of which keys were pressed. Different than directionHistory where multiple keys could be pressed between intervals
+var directionHistory = new Array(); // record of actual turns. Different than arrowHistory where this keeps track of turns.
 var rows = 35;
 var cols = 35;
 var startCol = 4;
 var startRow = 3;
-var boxSize = 10;
 var direction = "right";
+var boardSize = "35x35";
+var speed = 100; // ms to move snake. Higher is slower.
 
 document.addEventListener("DOMContentLoaded", function(event) {
+	setBoard(35, 35);
+});
+
+document.addEventListener("keydown", function(e) {
+	if (e.key == "ArrowLeft" && direction != "right") {
+		direction = "left";
+		e.preventDefault();
+	} else if (e.key == "ArrowUp" && direction != "down") {
+		direction = "up";
+		e.preventDefault();
+	} else if (e.key == "ArrowRight" && direction != "left") {
+		direction = "right";
+		e.preventDefault();
+	} else if (e.key == "ArrowDown" && direction != "up") {
+		direction = "down";
+		e.preventDefault();
+	} else {
+		//
+	}
+});
+
+function createTable() {
 	var snakeGrid = document.getElementById("snake-grid");
 	var tableStr = "<table id='snake-table' cellspacing='0' cellpadding='0'>";
 	for (var i = 0; i < rows; i++) {
 		tableStr += "<tr id='tr-" + i + "'>";
 		for (var j = 0; j < cols; j++) {
-			tableStr += "<td id='tr-" + i + "-td-" + j + "'></td>";
+			tableStr += "<td id='tr-" + i + "-td-" + j + "' class='a'></td>";
 		}
 		tableStr += "</tr>";
 	}
 	tableStr += "</table>";
 	snakeGrid.innerHTML = tableStr;
+}
 
+function setBoard(newrows, newcols) {
+	rows = newrows;
+	cols = newcols;
+	snakeArr = [];
+	arrowHistory = [];
+	direction = "right";
+	boardSize = newrows + "x" + newcols;
+
+	var boardButtons = document.getElementsByClassName("board");
+	console.log(boardButtons)
+	for (var i = 0; i < boardButtons.length; i++) {
+		boardButtons[i].classList.remove("selected");
+	}
+	document.getElementById("boardButton" + rows + "x" + cols).classList.add("selected");
+
+	createTable();
 	placeSnakeInCel(startRow, startCol-4, true);
 	placeSnakeInCel(startRow, startCol-3, true);
 	placeSnakeInCel(startRow, startCol-2, true);
 	placeSnakeInCel(startRow, startCol-1, true);
 	placeSnakeInCel(startRow, startCol, true);
 	createFood();
-});
+}
 
-document.addEventListener("keydown", function(e) {
-	if (e.key == "ArrowLeft" && direction != "right") {
-		direction = "left";
-	} else if (e.key == "ArrowUp" && direction != "down") {
-		direction = "up";
-	} else if (e.key == "ArrowRight" && direction != "left") {
-		direction = "right";
-	} else if (e.key == "ArrowDown" && direction != "up") {
-		direction = "down";
-	} else {
-		//
+function setSpeed(sp) {
+	speed = sp;
+
+	var speedButtons = document.getElementsByClassName("speed");
+	console.log(speedButtons)
+	for (var i = 0; i < speedButtons.length; i++) {
+		speedButtons[i].classList.remove("selected");
 	}
-});
+	document.getElementById("speed" + sp).classList.add("selected");
+
+}
 
 function moveSnake() {
 	if (checkHittingObstacle()) {
@@ -82,14 +173,13 @@ function moveSnake() {
 		return;
 	}
 	var len = parseInt(snakeArr.length);
-	directionHistory.unshift(direction);
+	arrowHistory.unshift(direction);
 	var gotfood = false;
 	for (var i = 0; i < len; i++) {
 		if (i == 0) {
 			if (checkReachedFood()) {
 				gotfood = true;
 				lastElement = snakeArr[snakeArr.length - 1].toString();
-				console.log(lastElement);
 			}
 		}
 		var splitAr = snakeArr[i].split(":");
@@ -99,19 +189,19 @@ function moveSnake() {
 		var leftCol = parseInt(col) - 1;
 		var upRow = parseInt(row) - 1;
 		var downRow = parseInt(row) + 1;
-		if (directionHistory[i] == "right") {
+		if (arrowHistory[i] == "right") {
 			moveSegmentRight(snakeArr[i]);
 			snakeArr[i] = row+":"+rightCol;
 		}
-		else if (directionHistory[i] == "down") {
+		else if (arrowHistory[i] == "down") {
 			moveSegmentDown(snakeArr[i]);
 			snakeArr[i] = downRow+":"+col;
 		}
-		else if (directionHistory[i] == "left") {
+		else if (arrowHistory[i] == "left") {
 			moveSegmentLeft(snakeArr[i]);
 			snakeArr[i] = row+":"+leftCol;
 		}
-		else if (directionHistory[i] == "up") {
+		else if (arrowHistory[i] == "up") {
 			moveSegmentUp(snakeArr[i]);
 			snakeArr[i] = upRow+":"+col;
 		}
@@ -120,12 +210,8 @@ function moveSnake() {
 		lastElementSplit = lastElement.split(":");
 		var newLastRow = lastElementSplit[0];
 		var newLastCol = lastElementSplit[1];
-		console.log(directionHistory);
 		placeSnakeInCel(newLastRow, newLastCol, false);
 	}
-	console.log(snakeArr);
-	//alert('snakeArr.length == ' + snakeArr.length)
-	//snakeArr.pop(snakeArr);
 }
 
 function checkReachedFood() {
@@ -142,14 +228,18 @@ function checkReachedFood() {
 }
 
 function createFood() {
-	var randomRow = Math.round(Math.random() * rows);
-	var randomCol = Math.round(Math.random() * cols);
+	var randomRow = Math.round(Math.random() * (rows-1));
+	var randomCol = Math.round(Math.random() * (cols-1));
 	var spot = document.getElementById("tr-" + randomRow + "-td-" + randomCol);
-	if (spot.classList.contains("snake")) {
-		console.log("ERROR: tr-" + randomRow + "-td-" + randomCol)
-		createFood();
-	} else {
-		document.getElementById("tr-" + randomRow + "-td-" + randomCol).classList.add("food")
+	try {
+		if (spot.classList.contains("snake")) {
+			console.log("Landed on snake: tr-" + randomRow + "-td-" + randomCol)
+			createFood();
+		} else {
+			document.getElementById("tr-" + randomRow + "-td-" + randomCol).classList.add("food")
+		}
+	} catch (e) {
+		console.log("tr-" + randomRow + "-td-" + randomCol + " --- " + e)
 	}
 }
 
@@ -225,11 +315,12 @@ function moveSegmentUp(segment) {
 
 function placeSnakeInCel(row, col, start) {
 	document.getElementById("tr-" + row + "-td-" + col).classList.add("snake");
+	// start of array (done at beginning of game) or end of array (as you eat food)
 	if (start) {
-		directionHistory.unshift(direction);
+		arrowHistory.unshift(direction);
 		snakeArr.unshift(row+":"+col);
 	} else {
-		directionHistory.push(direction);
+		arrowHistory.push(direction);
 		snakeArr.push(row+":"+col);
 	}
 	
@@ -237,21 +328,72 @@ function placeSnakeInCel(row, col, start) {
 
 var start_game = false;
 function startGame() {
-	start_game = setInterval('moveSnake()', 200);
+	start_game = setInterval('moveSnake()', speed);
+	toggleButtons();
+	document.getElementById("reset").style.display = "inline";
+	document.getElementById("start").style.display = "none";
+}
+
+
+function toggleButtons() {
+	var controlButtons = document.getElementsByClassName("controls");
+	for (var i = 0; i < controlButtons.length; i++) {
+		if (controlButtons[i].disabled) {
+			controlButtons[i].disabled = false;
+		} else {
+			controlButtons[i].disabled = true;
+		}
+	}
+}
+
+function resetGame() {
+	document.getElementById("boardButton" + boardSize).click();
+	document.getElementById("reset").style.display = "none";
+	document.getElementById("start").style.display = "inline";
 }
 
 function loseGame() {
 	clearInterval(start_game);
-	alert("you lose");
+	pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + speed);
+	alert("Your snake is " + snakeArr.length + " segments long!");
+	toggleButtons();
+	document.getElementById("reset").style.display = "inline";
+	document.getElementById("start").style.display = "none";
+
+}
+
+function pkAnalytics(action, label) {
+	if (ga) {
+		console.log('send to ga ' + action + " - " + label);
+		ga('send', {
+			hitType: 'event',
+			eventCategory: 'Game',
+			eventAction: action,
+			eventLabel: label
+		});
+	}
 }
 </script>
 </head>
 <body>
 
+	<header>
+		<button onclick="setBoard(9, 9)" id="boardButton9x9" class="board controls">9x9</button>
+		<button onclick="setBoard(20, 20)" id="boardButton20x20" class="board controls">20x20</button>
+		<button onclick="setBoard(35, 35)" id="boardButton35x35" class="board controls selected">35x35</button>
+		<br />
+		<button onclick="setSpeed(150);" id="speed150" class="speed controls">Easy</button>
+		<button onclick="setSpeed(100);" id="speed100" class="speed controls selected">Hard</button>
+		<button onclick="setSpeed(50);" id="speed50" class="speed controls">Impossible</button>
+	</header>
 
-<div id="snake-grid">
-</div>
-<button onclick="startGame();">Start</button>
+	<div id="snake-grid">
+	</div>
+
+	<footer>
+		<button onclick="startGame();" id="start">Start</button>
+		<button onclick="resetGame();" id="reset" style="display:none;">Reset</button>
+	</footer>
 
 
 <script>(function() {
