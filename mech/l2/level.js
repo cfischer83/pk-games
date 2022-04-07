@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	preloadImage("turret-down-right.png");
 	preloadImage("turret-up-left.png");
 	preloadImage("turret-up-right.png");
+	preloadImage("turret-destroyed.png");
+	preloadImage("pyramid-destroyed.png");
 	preloadImage("missile.gif");
 	preloadImage("img/tank-destroyed.png");
 	preloadImage("img/tank-destroyed-v.png");
