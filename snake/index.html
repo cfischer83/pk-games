@@ -4,9 +4,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Press+Start+2P&family=Sen&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
 <style type="text/css">
 	body {
 		background-color: #222;
+		color: #FFF;
+		font-family: "Press Start 2P", Verdana;
 	}
 	header {
 		text-align: center;
@@ -14,6 +17,10 @@
 	}
 	#snake-grid {
 		position: relative;
+	}
+	#snake-length {
+		margin: 15px 0 0;
+		font-size: 16px;
 	}
 	table {
 		box-sizing: border-box;
@@ -94,22 +101,43 @@ var startRow = 3;
 var direction = "right";
 var boardSize = "35x35";
 var speed = 100; // ms to move snake. Higher is slower.
+var touchstartX = 0;
+var touchstartY = 0;
+var touchendX = 0;
+var touchendY = 0;
+
 
 document.addEventListener("DOMContentLoaded", function(event) {
 	setBoard(35, 35);
+	document.getElementById("snake-len-num").innerHTML = snakeArr.length;
+
+	var gesuredZone = document.getElementById('snake-grid');
+
+	gesuredZone.addEventListener('touchstart', function(event) {
+		event.preventDefault();
+		touchstartX = event.targetTouches[0].clientX;
+		touchstartY = event.targetTouches[0].clientY;
+	}, false);
+
+	gesuredZone.addEventListener('touchend', function(event) {
+		event.preventDefault();
+		touchendX = event.changedTouches[0].clientX;
+		touchendY = event.changedTouches[0].clientY;
+		handleGesure();
+	}, false); 
 });
 
 document.addEventListener("keydown", function(e) {
-	if (e.key == "ArrowLeft" && direction != "right") {
+	if (e.key == "ArrowLeft" && arrowHistory[0] != "right" && direction != "right") {
 		direction = "left";
 		e.preventDefault();
-	} else if (e.key == "ArrowUp" && direction != "down") {
+	} else if (e.key == "ArrowUp" && arrowHistory[0] != "down" && direction != "down") {
 		direction = "up";
 		e.preventDefault();
-	} else if (e.key == "ArrowRight" && direction != "left") {
+	} else if (e.key == "ArrowRight" && arrowHistory[0] != "left" && direction != "left") {
 		direction = "right";
 		e.preventDefault();
-	} else if (e.key == "ArrowDown" && direction != "up") {
+	} else if (e.key == "ArrowDown" && arrowHistory[0] != "up" && direction != "up") {
 		direction = "down";
 		e.preventDefault();
 	} else {
@@ -139,13 +167,6 @@ function setBoard(newrows, newcols) {
 	direction = "right";
 	boardSize = newrows + "x" + newcols;
 
-	var boardButtons = document.getElementsByClassName("board");
-	console.log(boardButtons)
-	for (var i = 0; i < boardButtons.length; i++) {
-		boardButtons[i].classList.remove("selected");
-	}
-	document.getElementById("boardButton" + rows + "x" + cols).classList.add("selected");
-
 	createTable();
 	placeSnakeInCel(startRow, startCol-4, true);
 	placeSnakeInCel(startRow, startCol-3, true);
@@ -164,7 +185,19 @@ function setSpeed(sp) {
 		speedButtons[i].classList.remove("selected");
 	}
 	document.getElementById("speed" + sp).classList.add("selected");
+}
 
+function setBoardDimensions(newrows, newcols) {
+	rows = newrows;
+	cols = newcols;
+	boardSize = newrows + "x" + newcols;
+
+	var boardButtons = document.getElementsByClassName("board");
+	console.log(boardButtons)
+	for (var i = 0; i < boardButtons.length; i++) {
+		boardButtons[i].classList.remove("selected");
+	}
+	document.getElementById("boardButton" + rows + "x" + cols).classList.add("selected");
 }
 
 function moveSnake() {
@@ -211,6 +244,7 @@ function moveSnake() {
 		var newLastRow = lastElementSplit[0];
 		var newLastCol = lastElementSplit[1];
 		placeSnakeInCel(newLastRow, newLastCol, false);
+		document.getElementById("snake-len-num").innerHTML = snakeArr.length;
 	}
 }
 
@@ -373,18 +407,41 @@ function pkAnalytics(action, label) {
 		});
 	}
 }
+
+function handleGesure() {
+	var xDiff = Math.abs(touchstartX - touchendX);
+	var yDiff = Math.abs(touchstartY - touchendY);
+	//console.log("touchstartX = " + touchstartX + " touchendX = " + touchendX + " touchstartY = " + touchstartY + " touchendY = " +touchendY)
+	//console.log("xDiff = " + xDiff + " yDiff = " + yDiff);
+	if (xDiff > yDiff) {
+		if (touchendX < touchstartX) {
+			direction = "left";
+		}
+		else if (touchendX > touchstartX) {
+			direction = "right";
+		}
+	} else {
+		if (touchendY > touchstartY) {
+			direction = "down";
+		}
+		else if (touchendY < touchstartY) {
+			direction = "up";
+		}
+	}
+}
 </script>
 </head>
 <body>
 
 	<header>
-		<button onclick="setBoard(9, 9)" id="boardButton9x9" class="board controls">9x9</button>
-		<button onclick="setBoard(20, 20)" id="boardButton20x20" class="board controls">20x20</button>
-		<button onclick="setBoard(35, 35)" id="boardButton35x35" class="board controls selected">35x35</button>
+		<button onclick="setBoardDimensions(9, 9)" id="boardButton9x9" class="board controls">9x9</button>
+		<button onclick="setBoardDimensions(20, 20)" id="boardButton20x20" class="board controls">20x20</button>
+		<button onclick="setBoardDimensions(35, 35)" id="boardButton35x35" class="board controls selected">35x35</button>
 		<br />
 		<button onclick="setSpeed(150);" id="speed150" class="speed controls">Easy</button>
 		<button onclick="setSpeed(100);" id="speed100" class="speed controls selected">Hard</button>
 		<button onclick="setSpeed(50);" id="speed50" class="speed controls">Impossible</button>
+		<div id="snake-length">Snake size: <span id="snake-len-num"></span></div>
 	</header>
 
 	<div id="snake-grid">
