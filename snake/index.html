@@ -18,31 +18,33 @@
 	#snake-grid {
 		position: relative;
 	}
-	#snake-length {
-		margin: 15px 0 0;
-		font-size: 16px;
+	#snake-stats {
+		margin: 5px auto;
 	}
-	table {
+	#snake-stats td {
+		padding: 5px;
+	}
+	table#snake-table {
 		box-sizing: border-box;
 		margin: 0 auto;
 	}
-	tr {
+	#snake-table tr {
 		/* border-right: 1px solid #000;
 		border-bottom: 1px solid #000; */
 	}
-	table td {
-		background-color: #EEE;
+	table#snake-table td {
+		background-color: #000;
 		width: 10px;
 		height: 10px;
-		border-top: 1px solid #ccc;
-		border-left: 1px solid #ccc;
+		border-top: 1px solid #000;
+		border-left: 1px solid #000;
 		box-sizing: border-box;
 	}
-	.food {
+	table#snake-table .food {
 		background-color: #00F;
 		border-color: #00F;
 	}
-	.snake {
+	table#snake-table .snake {
 		background: #F00;
 		border-color: #F00;
 	}
@@ -110,6 +112,8 @@ var touchendY = 0;
 document.addEventListener("DOMContentLoaded", function(event) {
 	setBoard(35, 35);
 	document.getElementById("snake-len-num").innerHTML = snakeArr.length;
+	checkAndSetHighScore(snakeArr.length);
+	setHighScoreUI();
 
 	var gesuredZone = document.getElementById('snake-grid');
 
@@ -185,6 +189,7 @@ function setSpeed(sp) {
 		speedButtons[i].classList.remove("selected");
 	}
 	document.getElementById("speed" + sp).classList.add("selected");
+	document.getElementById("highscore-num").innerHTML = "";
 }
 
 function setBoardDimensions(newrows, newcols) {
@@ -192,12 +197,16 @@ function setBoardDimensions(newrows, newcols) {
 	cols = newcols;
 	boardSize = newrows + "x" + newcols;
 
+	document.getElementById("reset").style.display = "inline";
+	document.getElementById("start").style.display = "none";
+
 	var boardButtons = document.getElementsByClassName("board");
 	console.log(boardButtons)
 	for (var i = 0; i < boardButtons.length; i++) {
 		boardButtons[i].classList.remove("selected");
 	}
 	document.getElementById("boardButton" + rows + "x" + cols).classList.add("selected");
+	document.getElementById("highscore-num").innerHTML = "";
 }
 
 function moveSnake() {
@@ -244,7 +253,10 @@ function moveSnake() {
 		var newLastRow = lastElementSplit[0];
 		var newLastCol = lastElementSplit[1];
 		placeSnakeInCel(newLastRow, newLastCol, false);
-		document.getElementById("snake-len-num").innerHTML = snakeArr.length;
+		var newscore = snakeArr.length;
+		document.getElementById("snake-len-num").innerHTML = newscore;
+		checkAndSetHighScore(newscore);
+		setHighScoreUI();
 	}
 }
 
@@ -364,6 +376,7 @@ var start_game = false;
 function startGame() {
 	start_game = setInterval('moveSnake()', speed);
 	toggleButtons();
+	setHighScoreUI();
 	document.getElementById("reset").style.display = "inline";
 	document.getElementById("start").style.display = "none";
 }
@@ -381,14 +394,22 @@ function toggleButtons() {
 }
 
 function resetGame() {
-	document.getElementById("boardButton" + boardSize).click();
+	//document.getElementById("boardButton" + boardSize).click();
+	var boardSizeAr = boardSize.split("x");
+	var newrows = boardSizeAr[0];
+	var newcols = boardSizeAr[1];
+	setBoard(newrows, newcols);
+	setHighScoreUI();
 	document.getElementById("reset").style.display = "none";
 	document.getElementById("start").style.display = "inline";
+	document.getElementById("snake-len-num").innerHTML = snakeArr.length;
 }
 
 function loseGame() {
 	clearInterval(start_game);
-	pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + speed);
+	pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + getSpeedLabel(speed));
+	checkAndSetHighScore(snakeArr.length);
+	setHighScoreUI();
 	alert("Your snake is " + snakeArr.length + " segments long!");
 	toggleButtons();
 	document.getElementById("reset").style.display = "inline";
@@ -429,6 +450,39 @@ function handleGesure() {
 		}
 	}
 }
+
+function getSpeedLabel(sp) {
+	switch (sp) {
+		case 50: return "impossible";break;
+		case 100: return "hard";break;
+		case 150: return "easy";break;
+	}
+}
+
+function setHighScoreUI() {
+	var hs = getHighScore();
+	document.getElementById("highscore-num").innerHTML = hs;
+}
+
+function getHighScore() {
+	var highScoreLS = boardSize + "_" + speed + "_highscore";
+	var highscore = parseInt(localStorage.getItem(highScoreLS));
+	if (isNaN(highscore)) {
+		return snakeArr.length;
+	}
+	return highscore;
+}
+
+function checkAndSetHighScore(newScore) {
+	var highScoreLS = boardSize + "_" + speed + "_highscore";
+	var highscore = parseInt(localStorage.getItem(highScoreLS));
+	if (isNaN(highscore)) {
+		highscore = 0;
+	}
+	if (newScore > highscore) {
+		localStorage.setItem(highScoreLS, newScore);
+	}
+}
 </script>
 </head>
 <body>
@@ -441,7 +495,16 @@ function handleGesure() {
 		<button onclick="setSpeed(150);" id="speed150" class="speed controls">Easy</button>
 		<button onclick="setSpeed(100);" id="speed100" class="speed controls selected">Hard</button>
 		<button onclick="setSpeed(50);" id="speed50" class="speed controls">Impossible</button>
-		<div id="snake-length">Snake size: <span id="snake-len-num"></span></div>
+		<table id="snake-stats" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>Score:</td>
+				<td><span id="snake-len-num"></span></td>
+			</tr>
+			<tr>
+				<td>High Score:</td>
+				<td><span id="highscore-num"></span></td>
+			</tr>
+		</table>
 	</header>
 
 	<div id="snake-grid">
