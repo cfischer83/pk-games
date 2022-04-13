@@ -67,7 +67,7 @@ p {
 }
 .game {
 	position: relative;
-	width: 50%;
+	width: 33%;
 	margin: 20px;
 	background: #CCE;
 	padding: 20px;
@@ -75,11 +75,15 @@ p {
 	border: 1px solid #000;
 	box-shadow: 5px 5px 15px 1px rgba(0,0,0,0.5);
 }
+.game.empty {
+	visibility: hidden;
+}
 .game img {
 	border: 2px solid #000;
 }
 .game:hover {
 	background: #FF99FF;
+	cursor: pointer;
 }
 .game:hover p {
 	color: #000;
@@ -135,6 +139,46 @@ p {
 	right: -28px;
 	top: 24px;
 }
+.featured {
+	display: block;
+	position: absolute;
+	width: 70px;
+	height: 0;
+	color: #000;
+	text-align: center;
+	top: 12px;
+	right: -41px;
+	transform: rotate(45deg);
+	border-bottom: 30px solid #FF0;
+	border-left: 30px solid transparent;
+	border-right: 30px solid transparent;
+	line-height: 30px;
+}
+.featured::before {
+	position: absolute;
+	content: " ";
+	display: block;
+	width: 0px;
+	height: 0px;
+	border-bottom: 8px solid #990;
+	border-right: 8px solid transparent;
+	transform: rotate(-45deg);
+	right: 91px;
+	top: 26px;
+}
+.featured::after {
+	position: absolute;
+	content: " ";
+	display: block;
+	width: 0;
+	height: 0;
+	border-bottom: 11px solid #990;
+	border-right: 11px solid transparent;
+	transform: rotate(-45deg);
+	right: -28px;
+	top: 24px;
+}
+
 footer {
 	display: block;
 	margin: 30px 0;
@@ -163,11 +207,19 @@ footer {
 
 	<div class="game-container">
 		<div id="mech" class="game">
-			<a href="mech/index.html?l=3">
-				<span class="new">New</span>
+			<a href="mech/index.html?l=4">
+				<span class="featured">Featured</span>
 				<h2>Mechs On Planet Kodiak</h2>
 				<img src="mech/cover.jpg" alt="Mech's on Planet Kodiak" />
 				<p>Mech's on Planet Kodiak is a desktop + mobile game that combines the best of Mechwarrior & MechCommander</p>
+			</a>
+		</div>
+		<div id="snake" class="game">
+			<a href="snake/">
+				<span class="new">New</span>
+				<h2>Snake!</h2>
+				<img src="snake/cover.jpg" alt="Snake!" />
+				<p>Snakes on a game is a mobile or desktop game. Grow your snake but don't hit the edges or your snake's body!</p>
 			</a>
 		</div>
 		<div id="skydiving" class="game">
@@ -193,6 +245,7 @@ footer {
 				<p>Two player game (on same keyboard). Desktop only. Play tag with someone!</p>
 			</a>
 		</div>
+		<div class="game empty"></div>
 	</div>
 <footer>
 	<p>&copy; Cory Fischer. All games created by Cory Fischer for fun.<br />

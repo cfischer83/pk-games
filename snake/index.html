@@ -90,6 +90,15 @@
 		text-align: center;
 		margin: 15px 0 0;
 	}
+	#gesture-zone {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		opacity: 0;
+		display: none;
+	}
 
 </style>
 <script type="text/javascript">
@@ -115,15 +124,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	checkAndSetHighScore(snakeArr.length);
 	setHighScoreUI();
 
-	var gesuredZone = document.getElementById('snake-grid');
+	var gestureZone = document.getElementById('gesture-zone');
 
-	gesuredZone.addEventListener('touchstart', function(event) {
+	gestureZone.addEventListener('touchstart', function(event) {
 		event.preventDefault();
 		touchstartX = event.targetTouches[0].clientX;
 		touchstartY = event.targetTouches[0].clientY;
 	}, false);
 
-	gesuredZone.addEventListener('touchend', function(event) {
+	gestureZone.addEventListener('touchend', function(event) {
 		event.preventDefault();
 		touchendX = event.changedTouches[0].clientX;
 		touchendY = event.changedTouches[0].clientY;
@@ -374,6 +383,8 @@ function placeSnakeInCel(row, col, start) {
 
 var start_game = false;
 function startGame() {
+	var gestureArea = document.getElementById("gesture-zone");
+		gestureArea.setAttribute("style", "display: block");
 	start_game = setInterval('moveSnake()', speed);
 	toggleButtons();
 	setHighScoreUI();
@@ -406,6 +417,8 @@ function resetGame() {
 }
 
 function loseGame() {
+	gestureArea = document.getElementById("gesture-zone");
+	gestureArea.setAttribute("style", "display: none");
 	clearInterval(start_game);
 	pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + getSpeedLabel(speed));
 	checkAndSetHighScore(snakeArr.length);
@@ -485,7 +498,7 @@ function checkAndSetHighScore(newScore) {
 }
 </script>
 </head>
-<body>
+<body id="body">
 
 	<header>
 		<button onclick="setBoardDimensions(9, 9)" id="boardButton9x9" class="board controls">9x9</button>
@@ -515,6 +528,7 @@ function checkAndSetHighScore(newScore) {
 		<button onclick="resetGame();" id="reset" style="display:none;">Reset</button>
 	</footer>
 
+	<div id="gesture-zone"></div>
 
 <script>(function() {
 	(function (i, s, o, g, r, a, m) {
