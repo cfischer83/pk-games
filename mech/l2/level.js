@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	preloadImage("turret-up-left.png");
 	preloadImage("turret-up-right.png");
 	preloadImage("turret-destroyed.png");
-	preloadImage("pyramid-destroyed.png");
+	preloadImage("l2/pyramid-destroyed.png");
 	preloadImage("missile.gif");
 	preloadImage("img/tank-destroyed.png");
 	preloadImage("img/tank-destroyed-v.png");

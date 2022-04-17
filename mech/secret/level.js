@@ -37,6 +37,10 @@ document.addEventListener("lose", function(event) {
 });
 
 function loseLevelSecret() {
+	var mechs = document.querySelectorAll(".npcmech");
+	for (var i = 0; i < mechs.length; i++) {
+		mechs[i].classList.remove("walk")
+	}
 	var lowerMessage = document.createElement("div");
 		lowerMessage.setAttribute("id", "lowerMessage");
 		cam.insertBefore(lowerMessage, ground);

@@ -51,6 +51,7 @@ var waitForAtlas = setInterval('checkAtlas()', 500);
 function l4CreatAtlas() {
 	var enemy1 = addAtlas(3000, 3000, "left");
 	obstacle9.style.marginLeft = "1111px";
+	obstacle9.setAttribute("data-x", "1111px");
 }
 
 
