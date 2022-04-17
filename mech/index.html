@@ -20,6 +20,7 @@ document.addEventListener("keydown", function(e) {
 		var arMerge = keyArray.join("");
 		if (arMerge.toLowerCase() == "arrowuparrowuparrowdownarrowdownarrowleftarrowrightarrowleftarrowrightba") {
 			document.getElementById("secret").style.visibility = "visible";
+			document.getElementById("logo").setAttribute("src", "img/kodiak-logo.png");
 		}
 	}
 });
