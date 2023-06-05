@@ -212,6 +212,11 @@ function pkAnalytics(action, label) {
 			eventLabel: label
 		});
 	}
+	gtag('event', action, {
+		event_category: 'Game',
+		event_label: label
+	});
+	console.log('send to ga4');
 }
 
 function placeTouchControls() {

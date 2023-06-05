@@ -1,3 +1,4 @@
+// legacy GUA
 (function() {
 	(function (i, s, o, g, r, a, m) {
 		i['GoogleAnalyticsObject'] = r;
@@ -14,3 +15,9 @@
 	ga('create', 'UA-3392560-1', 'auto');
 			ga('send', 'pageview');
 })();
+
+// GA4
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-N8SN5SJEFW');
