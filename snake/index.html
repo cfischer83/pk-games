@@ -420,7 +420,8 @@ function loseGame() {
 	gestureArea = document.getElementById("gesture-zone");
 	gestureArea.setAttribute("style", "display: none");
 	clearInterval(start_game);
-	pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + getSpeedLabel(speed));
+	//pkAnalytics("snake:" + snakeArr.length, boardSize + ":" + getSpeedLabel(speed));
+	pkAnalytics("snake_length:" + snakeArr.length, boardSize, getSpeedLabel(speed));
 	checkAndSetHighScore(snakeArr.length);
 	setHighScoreUI();
 	alert("Your snake is " + snakeArr.length + " segments long!");
@@ -430,11 +431,13 @@ function loseGame() {
 
 }
 
-function pkAnalytics(action, label) {
-	console.log('send to ga4 ' + action + " - " + label);
-	gtag('event', action, {
-		event_category: 'Game',
-		event_label: label
+function pkAnalytics(snakeLen, level, difficulty) {
+	console.log('send to ga4 ' + snakeLen + " - " + level + " - " + difficulty);
+	gtag('event', 'PlaySnake', {
+		'game_action': snakeLen,
+		'game_level': level,
+		'game_difficulty': difficulty,
+		'game_details': level + ":" + difficulty + ":" + snakeLen
 	});
 }
 

@@ -253,11 +253,13 @@ preloadImage("guy-falling.png");
 preloadImage("guy-chuted.png");
 preloadImage("guy-landed.png");
 
-function pkAnalytics(action, label) {
-	console.log("send to ga4: action="+action+" label="+label);
-	gtag('event', action, {
-		event_category: 'Game',
-		event_label: label
+function pkAnalytics(action, mode) {
+	console.log("send to ga4: action="+action+" mode="+mode);
+	gtag('event', 'PlaySkydiving', {
+		'game_action': action,
+		'game_level': "1",
+		'game_difficulty': mode,
+		'game_details': mode + ":" + action
 	});
 }
 
@@ -587,7 +589,7 @@ function startGame() {
 	document.getElementById("restart-btn").style.display = "block";
 	document.getElementById("commands").style.display = "none";
 	gameInterval = setInterval('checkAllObstacles()', 150);
-	pkAnalytics("skydiving:start", getMode());
+	pkAnalytics("start", getMode());
 }
 
 function getMode() {
@@ -611,7 +613,7 @@ function winGame() {
 	parachuted();
 	document.getElementById("commands").style.display = "block";
 	//runConfetti();
-	pkAnalytics("skydiving:win", getMode());
+	pkAnalytics("win", getMode());
 	globalSkydiverMarginTop = window.innerHeight - 190 - 50;
 
 	setTimeout('document.getElementById("skydiver").classList.add("landed");',4000);
@@ -648,7 +650,7 @@ function loseGame() {
     }
     document.getElementById("commands").style.display = "block";
 	setTimeout('alert("You hit an obstacle!");',20);
-	pkAnalytics("skydiving:lose", getMode());
+	pkAnalytics("lose", getMode());
 }
 
 function godMode() {

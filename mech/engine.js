@@ -202,19 +202,21 @@ function kodiakNami() {
 	}
 }
 
-function pkAnalytics(action, label) {
+function pkAnalytics(action, level) {
 	if (ga) {
 		console.log('send to ga');
 		ga('send', {
 			hitType: 'event',
 			eventCategory: 'Game',
 			eventAction: action,
-			eventLabel: label
+			eventLabel: level
 		});
 	}
-	gtag('event', action, {
-		event_category: 'Game',
-		event_label: label
+	gtag('event', 'PlayMechs', {
+		'game_action': action,
+		'game_level': level,
+		'game_difficulty': 'normal',
+		'game_details': level + ":" + action
 	});
 	console.log('send to ga4');
 }
@@ -1441,13 +1443,13 @@ function loseGame() {
 	var event = new CustomEvent("lose", { "detail": "level 1" });
 	console.log(event);
 	document.dispatchEvent(event);
-	pkAnalytics("mech:lose", gameLevel);
+	pkAnalytics("lose", gameLevel);
 }
 
 function winGame() {
 	gamePlay = false;
 	console.log("win!");
-	pkAnalytics("mech:win", gameLevel);
+	pkAnalytics("win", gameLevel);
 }
 
 function promptEnemiesToFire() {

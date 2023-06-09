@@ -145,10 +145,13 @@ var max_rock_x = global_window_size - global_box_size;
 var global_it = 'red';
 var gameInterval = null;
 
-function pkAnalytics(action, label) {
-	gtag('event', action, {
-		event_category: 'Game',
-		event_label: label
+function pkAnalytics(action, mode) {
+	console.log("send to ga4: action="+action+" mode="+mode);
+	gtag('event', 'PlayRacing', {
+		'game_action': action,
+		'game_level': "1",
+		'game_difficulty': mode,
+		'game_details': mode + ":" + action
 	});
 }
 
@@ -436,7 +439,7 @@ function startGame() {
 	document.getElementById("start-btn").style.display = "none";
 	document.getElementById("restart-btn").style.display = "block";
 	gameInterval = setInterval('checkAllRocks()', 200);
-	pkAnalytics("racing:start", getMode());
+	pkAnalytics("start", getMode());
 }
 
 function getMode() {
@@ -446,7 +449,7 @@ function getMode() {
 function winGame() {
 	clearInterval(gameInterval);
 	runConfetti();
-	pkAnalytics("racing:win", getMode());
+	pkAnalytics("win", getMode());
 }
 
 function loseGame() {
@@ -464,7 +467,7 @@ function loseGame() {
         lastKey = 0;
     }
 	setTimeout('alert("You hit a rock!");',20);
-	pkAnalytics("racing:lose", getMode());
+	pkAnalytics("lose", getMode());
 }
 
 function godMode() {
