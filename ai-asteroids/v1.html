@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Asteroids Game</title>
+<style>
+	/* Make the canvas fill the window with a black background */
+	body {
+	margin: 0;
+	overflow: hidden;
+	background: #000;
+	}
+	canvas {
+	display: block;
+	background: #000;
+	}
+</style>
+</head>
+<body>
+<!-- The game will be rendered on this canvas -->
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+	// Get the canvas and its drawing context
+	const canvas = document.getElementById('gameCanvas');
+	const ctx = canvas.getContext('2d');
+
+	const canvasWidth = canvas.width;
+	const canvasHeight = canvas.height;
+
+	// Object to keep track of key states
+	let keys = {};
+	window.addEventListener('keydown', e => {
+	keys[e.code] = true;
+	});
+	window.addEventListener('keyup', e => {
+	keys[e.code] = false;
+	});
+
+	// Utility function: wrap objects around screen edges
+	function wrapPosition(obj) {
+	if (obj.x < 0) obj.x += canvasWidth;
+	if (obj.x > canvasWidth) obj.x -= canvasWidth;
+	if (obj.y < 0) obj.y += canvasHeight;
+	if (obj.y > canvasHeight) obj.y -= canvasHeight;
+	}
+
+	// *********************
+	// ** Ship Class
+	// *********************
+	class Ship {
+	constructor() {
+		this.x = canvasWidth / 2;
+		this.y = canvasHeight / 2;
+		this.radius = 15;
+		this.angle = -Math.PI / 2; // Initially pointing upward
+		this.rotationSpeed = 0.07;
+		this.velocity = { x: 0, y: 0 };
+		this.friction = 0.99; // Slow down over time
+	}
+
+	update() {
+		// Rotate the ship with left/right arrow keys
+		if (keys["ArrowLeft"]) {
+		this.angle -= this.rotationSpeed;
+		}
+		if (keys["ArrowRight"]) {
+		this.angle += this.rotationSpeed;
+		}
+		// Apply thrust when the up arrow is pressed
+		if (keys["ArrowUp"]) {
+		const acceleration = 0.1;
+		this.velocity.x += Math.cos(this.angle) * acceleration;
+		this.velocity.y += Math.sin(this.angle) * acceleration;
+		}
+
+		// Update ship position
+		this.x += this.velocity.x;
+		this.y += this.velocity.y;
+
+		// Apply friction so the ship gradually slows down
+		this.velocity.x *= this.friction;
+		this.velocity.y *= this.friction;
+
+		// Wrap around the screen edges
+		wrapPosition(this);
+	}
+
+	draw() {
+		ctx.strokeStyle = 'white';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		// Draw a triangular ship
+		const tipX = this.x + Math.cos(this.angle) * this.radius;
+		const tipY = this.y + Math.sin(this.angle) * this.radius;
+		const rightX = this.x + Math.cos(this.angle + 2.5) * this.radius;
+		const rightY = this.y + Math.sin(this.angle + 2.5) * this.radius;
+		const leftX = this.x + Math.cos(this.angle - 2.5) * this.radius;
+		const leftY = this.y + Math.sin(this.angle - 2.5) * this.radius;
+		ctx.moveTo(tipX, tipY);
+		ctx.lineTo(rightX, rightY);
+		ctx.lineTo(leftX, leftY);
+		ctx.closePath();
+		ctx.stroke();
+	}
+	}
+
+	// *********************
+	// ** Asteroid Class
+	// *********************
+	class Asteroid {
+	constructor(x, y, radius, level = 1) {
+		this.x = x;
+		this.y = y;
+		this.radius = radius;
+		this.level = level;
+		// Random direction and speed (speed decreases with level)
+		this.angle = Math.random() * Math.PI * 2;
+		const speed = (2 / level) + Math.random();
+		this.velocity = {
+		x: Math.cos(this.angle) * speed,
+		y: Math.sin(this.angle) * speed
+		};
+		// Create a rough, irregular shape using random vertex multipliers
+		this.vertices = [];
+		const numVertices = Math.floor(Math.random() * 5) + 5; // Between 5 and 9 vertices
+		for (let i = 0; i < numVertices; i++) {
+		this.vertices.push(Math.random() * 0.4 + 0.8);
+		}
+	}
+
+	update() {
+		this.x += this.velocity.x;
+		this.y += this.velocity.y;
+		wrapPosition(this);
+	}
+
+	draw() {
+		ctx.strokeStyle = 'white';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		const numVertices = this.vertices.length;
+		for (let i = 0; i < numVertices; i++) {
+		const angle = (i / numVertices) * Math.PI * 2;
+		const r = this.radius * this.vertices[i];
+		const x = this.x + Math.cos(angle) * r;
+		const y = this.y + Math.sin(angle) * r;
+		if (i === 0) {
+			ctx.moveTo(x, y);
+		} else {
+			ctx.lineTo(x, y);
+		}
+		}
+		ctx.closePath();
+		ctx.stroke();
+	}
+	}
+
+	// *********************
+	// ** Bullet Class
+	// *********************
+	class Bullet {
+	constructor(x, y, angle) {
+		this.x = x;
+		this.y = y;
+		this.angle = angle;
+		const speed = 5;
+		// The bullet's velocity adds the ship’s current velocity for a natural feel.
+		this.velocity = {
+		x: Math.cos(angle) * speed + ship.velocity.x,
+		y: Math.sin(angle) * speed + ship.velocity.y
+		};
+		this.radius = 2;
+		this.life = 0;
+		this.maxLife = 60; // Bullet lasts for 60 frames
+	}
+
+	update() {
+		this.x += this.velocity.x;
+		this.y += this.velocity.y;
+		wrapPosition(this);
+		this.life++;
+	}
+
+	draw() {
+		ctx.fillStyle = 'white';
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+		ctx.fill();
+	}
+	}
+
+	// *********************
+	// ** Game Variables
+	// *********************
+	let ship = new Ship();
+	let asteroids = [];
+	let bullets = [];
+	let score = 0;
+	let gameOver = false;
+
+	// Create initial asteroids away from the ship
+	function createAsteroids(num) {
+	for (let i = 0; i < num; i++) {
+		let x, y;
+		do {
+		x = Math.random() * canvasWidth;
+		y = Math.random() * canvasHeight;
+		} while (Math.hypot(x - ship.x, y - ship.y) < 100); // avoid spawning near the ship
+		const radius = Math.random() * 20 + 30;
+		asteroids.push(new Asteroid(x, y, radius, 1));
+	}
+	}
+	createAsteroids(5);
+
+	// *********************
+	// ** Game Loop
+	// *********************
+	function update() {
+	if (gameOver) return;
+
+	ship.update();
+	asteroids.forEach(asteroid => asteroid.update());
+
+	// Update bullets and remove any that have exceeded their lifespan
+	for (let i = bullets.length - 1; i >= 0; i--) {
+		let bullet = bullets[i];
+		bullet.update();
+		if (bullet.life > bullet.maxLife) {
+		bullets.splice(i, 1);
+		}
+	}
+
+	// Check collisions between bullets and asteroids
+	for (let i = asteroids.length - 1; i >= 0; i--) {
+		let asteroid = asteroids[i];
+		for (let j = bullets.length - 1; j >= 0; j--) {
+		let bullet = bullets[j];
+		if (Math.hypot(asteroid.x - bullet.x, asteroid.y - bullet.y) < asteroid.radius) {
+			// Remove the bullet
+			bullets.splice(j, 1);
+			// If the asteroid is large, split it into two smaller ones
+			if (asteroid.radius > 20) {
+			const newRadius = asteroid.radius / 2;
+			asteroids.push(new Asteroid(asteroid.x, asteroid.y, newRadius, asteroid.level + 1));
+			asteroids.push(new Asteroid(asteroid.x, asteroid.y, newRadius, asteroid.level + 1));
+			}
+			// Remove the hit asteroid and add to the score
+			asteroids.splice(i, 1);
+			score += 10;
+			break;
+		}
+		}
+	}
+
+	// Check collision between the ship and any asteroid
+	for (let i = 0; i < asteroids.length; i++) {
+		let asteroid = asteroids[i];
+		if (Math.hypot(ship.x - asteroid.x, ship.y - asteroid.y) < ship.radius + asteroid.radius) {
+		gameOver = true;
+		break;
+		}
+	}
+
+	// If all asteroids are destroyed, spawn more
+	if (asteroids.length === 0) {
+		createAsteroids(5);
+	}
+	}
+
+	function draw() {
+	// Clear the canvas
+	ctx.fillStyle = 'black';
+	ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+	// Draw game elements
+	ship.draw();
+	asteroids.forEach(asteroid => asteroid.draw());
+	bullets.forEach(bullet => bullet.draw());
+
+	// Draw the score
+	ctx.fillStyle = 'white';
+	ctx.font = '20px Arial';
+	ctx.fillText('Score: ' + score, 20, 30);
+
+	// If the game is over, display a message
+	if (gameOver) {
+		ctx.fillStyle = 'red';
+		ctx.font = '40px Arial';
+		ctx.textAlign = 'center';
+		ctx.fillText('Game Over', canvasWidth / 2, canvasHeight / 2);
+	}
+	}
+
+	function gameLoop() {
+	update();
+	draw();
+	if (!gameOver) {
+		requestAnimationFrame(gameLoop);
+	}
+	}
+
+	// *********************
+	// ** Shooting Handler
+	// *********************
+	// To avoid continuous shooting while holding the space bar,
+	// we use a flag "SpacePressed" in our keys object.
+	window.addEventListener('keydown', function(e) {
+	if (e.code === 'Space') {
+		if (!keys["SpacePressed"]) {
+		// Create a new bullet at the ship's tip
+		bullets.push(new Bullet(
+			ship.x + Math.cos(ship.angle) * ship.radius,
+			ship.y + Math.sin(ship.angle) * ship.radius,
+			ship.angle
+		));
+		keys["SpacePressed"] = true;
+		}
+		// Prevent page scrolling
+		e.preventDefault();
+	}
+	});
+	window.addEventListener('keyup', function(e) {
+	if (e.code === 'Space') {
+		keys["SpacePressed"] = false;
+		e.preventDefault();
+	}
+	});
+
+	// Start the game loop
+	gameLoop();
+</script>
+</body>
+</html>

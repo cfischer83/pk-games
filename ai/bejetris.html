@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Tetris-Bejeweled Combo</title>
+	<style>
+		/* Global resets and layout */
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: Arial, sans-serif;
+			background: #333;
+			color: #fff;
+			display: flex;
+			flex-direction: row;
+			height: 100vh;
+		}
+		/* Sidebar instructions */
+		.instructions {
+			flex: 1;
+			padding: 20px;
+			overflow-y: auto;
+			background: #444;
+		}
+		.instructions h1 { margin-top: 0; }
+		/* Game container */
+		.game-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+		}
+		canvas {
+			border: 2px solid #555;
+			background: #eee;
+		}
+		/* Mobile control buttons */
+		.controls {
+			margin-top: 10px;
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+		}
+		.controls button {
+			padding: 10px 15px;
+			font-size: 18px;
+			border: none;
+			border-radius: 5px;
+			background: #888;
+			color: #fff;
+		}
+		.controls button:active {
+			background: #aaa;
+		}
+		/* Responsive for smaller screens */
+		@media (max-width: 768px) {
+			body { flex-direction: column; }
+			.instructions, .game-container { width: 100%; }
+			canvas { max-width: 100%; height: auto; }
+		}
+	</style>
+</head>
+<body>
+	<div class="instructions">
+		<h1>Tetris-Bejeweled Combo</h1>
+		<p><strong>Instructions:</strong></p>
+		<ul>
+			<li><strong>Left / Right</strong>: Move piece horizontally.</li>
+			<li><strong>Up</strong>: Rotate the piece.</li>
+			<li><strong>Down</strong>: Drop the piece faster.</li>
+			<li>Stack tetromino pieces. When <strong>5 or more</strong> same‑colored gems connect (vertically, horizontally, or both), they’ll clear—just like Bejeweled!</li>
+			<li>Create combos for extra points and avoid filling up the grid.</li>
+			<li>If a new piece cannot spawn, it’s Game Over!</li>
+		</ul>
+	</div>
+	<div class="game-container">
+		<canvas id="gameCanvas" width="300" height="600"></canvas>
+		<div class="controls">
+			<button id="leftBtn">&#8592;</button>
+			<button id="rotateBtn">&#8635;</button>
+			<button id="rightBtn">&#8594;</button>
+			<button id="downBtn">&#8595;</button>
+		</div>
+	</div>
+
+	<script>
+		// ----- Canvas and Grid Setup -----
+		const canvas = document.getElementById('gameCanvas');
+		const ctx = canvas.getContext('2d');
+
+		const cols = 10;      // Number of columns
+		const rows = 20;      // Number of rows
+		const cellSize = 30;  // Pixel size of each cell
+
+		// Create a 2D grid (rows x cols) filled with null (empty)
+		let grid = [];
+		for (let y = 0; y < rows; y++) {
+			grid[y] = new Array(cols).fill(null);
+		}
+
+		// ----- Colors & Tetromino Definitions -----
+		const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+		// Tetromino shapes defined as arrays of [x,y] offsets relative to a pivot.
+		const tetrominoes = {
+			I: [[0, -1], [0, 0], [0, 1], [0, 2]],
+			O: [[0, 0], [1, 0], [0, 1], [1, 1]],
+			T: [[-1, 0], [0, 0], [1, 0], [0, 1]],
+			S: [[0, 0], [1, 0], [-1, 1], [0, 1]],
+			Z: [[-1, 0], [0, 0], [0, 1], [1, 1]],
+			J: [[-1, -1], [-1, 0], [0, 0], [1, 0]],
+			L: [[1, -1], [-1, 0], [0, 0], [1, 0]]
+		};
+
+		// ----- Current Piece and Game State -----
+		let currentPiece = null;
+
+		// ----- Piece Spawning, Movement, and Rotation -----
+		function spawnPiece() {
+			const keys = Object.keys(tetrominoes);
+			const randKey = keys[Math.floor(Math.random() * keys.length)];
+			// Clone shape array so the original isn’t modified
+			const shape = tetrominoes[randKey].map(block => [...block]);
+			const color = colors[Math.floor(Math.random() * colors.length)];
+			// Start near the top middle of the board.
+			// Note: y is set so that some blocks can initially be off-screen (y < 0) for smooth rotations.
+			const piece = { shape, x: Math.floor(cols / 2), y: 1, color };
+
+			// If the new piece immediately collides, the board is full.
+			if (!isValidPosition(piece, 0, 0, piece.shape)) {
+				alert("Game Over!");
+				resetGame();
+				return;
+			}
+			currentPiece = piece;
+		}
+
+		function resetGame() {
+			grid = [];
+			for (let y = 0; y < rows; y++) {
+				grid[y] = new Array(cols).fill(null);
+			}
+			spawnPiece();
+		}
+
+		// Check if a piece's blocks (offset by dx, dy) would be in a legal spot.
+		// Allow blocks with newY < 0 (above the board) for smoother spawning/rotation.
+		function isValidPosition(piece, dx, dy, shape) {
+			for (let block of shape) {
+				const newX = piece.x + block[0] + dx;
+				const newY = piece.y + block[1] + dy;
+				if (newX < 0 || newX >= cols || newY >= rows) return false;
+				if (newY >= 0 && grid[newY][newX] !== null) return false;
+			}
+			return true;
+		}
+
+		// Rotate a shape 90° clockwise: (x, y) becomes (-y, x)
+		function rotateShape(shape) {
+			return shape.map(block => [-block[1], block[0]]);
+		}
+
+		// Move (or rotate) the current piece if possible.
+		function movePiece(dx, dy, rotated = false) {
+			if (!currentPiece) return false;
+			let newShape = currentPiece.shape;
+			if (rotated) {
+				newShape = rotateShape(currentPiece.shape);
+			}
+			if (isValidPosition(currentPiece, dx, dy, newShape)) {
+				currentPiece.x += dx;
+				currentPiece.y += dy;
+				if (rotated) {
+					currentPiece.shape = newShape;
+				}
+				draw();
+				return true;
+			}
+			return false;
+		}
+
+		// ----- Dropping and Locking Pieces -----
+		function dropPiece() {
+			// Try to move the piece down by one cell.
+			if (!movePiece(0, 1)) {
+				// Cannot move down – lock the piece.
+				lockPiece();
+				// Check for gem matches and apply gravity.
+				clearMatchesAndGravity();
+				// Spawn a new piece.
+				spawnPiece();
+			}
+		}
+
+		// Lock the current piece into the grid.
+		function lockPiece() {
+			for (let block of currentPiece.shape) {
+				const x = currentPiece.x + block[0];
+				const y = currentPiece.y + block[1];
+				// Only lock blocks that are within the visible grid.
+				if (y >= 0 && y < rows && x >= 0 && x < cols) {
+					grid[y][x] = currentPiece.color;
+				}
+			}
+			currentPiece = null; // Clear the falling piece.
+		}
+
+		// ----- Matching and Gravity (Bejeweled-Style) -----
+		// After locking a piece, look for connected groups of 5+ same-colored gems.
+		function clearMatchesAndGravity() {
+			let matchesFound;
+			do {
+				matchesFound = clearMatches();
+				if (matchesFound) {
+					applyGravity();
+				}
+			} while (matchesFound);
+		}
+
+		// Find and clear connected groups (using 4‑directional flood fill) that meet the threshold.
+		function clearMatches() {
+			let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+			let toClear = [];
+			for (let y = 0; y < rows; y++) {
+				for (let x = 0; x < cols; x++) {
+					if (grid[y][x] && !visited[y][x]) {
+						let cells = [];
+						floodFill(x, y, grid[y][x], visited, cells);
+						if (cells.length >= 5) {  // Only clear groups of 5 or more.
+							toClear = toClear.concat(cells);
+						}
+					}
+				}
+			}
+			if (toClear.length > 0) {
+				for (let cell of toClear) {
+					grid[cell.y][cell.x] = null;
+				}
+				return true;
+			}
+			return false;
+		}
+
+		// Flood fill (4-directional) to collect connected cells of the same color.
+		function floodFill(x, y, color, visited, cells) {
+			if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+			if (visited[y][x]) return;
+			if (grid[y][x] !== color) return;
+			visited[y][x] = true;
+			cells.push({ x, y });
+			floodFill(x + 1, y, color, visited, cells);
+			floodFill(x - 1, y, color, visited, cells);
+			floodFill(x, y + 1, color, visited, cells);
+			floodFill(x, y - 1, color, visited, cells);
+		}
+
+		// Apply gravity so that blocks fall down into empty spaces.
+		function applyGravity() {
+			for (let x = 0; x < cols; x++) {
+				for (let y = rows - 1; y >= 0; y--) {
+					if (grid[y][x] === null) {
+						for (let k = y - 1; k >= 0; k--) {
+							if (grid[k][x] !== null) {
+								grid[y][x] = grid[k][x];
+								grid[k][x] = null;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// ----- Drawing the Game -----
+		function draw() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			// Draw locked blocks.
+			for (let y = 0; y < rows; y++) {
+				for (let x = 0; x < cols; x++) {
+					if (grid[y][x]) {
+						drawCell(x, y, grid[y][x]);
+					}
+				}
+			}
+
+			// Draw the falling tetromino.
+			if (currentPiece) {
+				for (let block of currentPiece.shape) {
+					const x = currentPiece.x + block[0];
+					const y = currentPiece.y + block[1];
+					// Only draw blocks that are visible.
+					if (y >= 0) {
+						drawCell(x, y, currentPiece.color);
+					}
+				}
+			}
+
+			// Optional: Draw grid lines.
+			ctx.strokeStyle = 'white';
+			for (let x = 0; x <= cols; x++) {
+				ctx.beginPath();
+				ctx.moveTo(x * cellSize, 0);
+				ctx.lineTo(x * cellSize, rows * cellSize);
+				ctx.stroke();
+			}
+			for (let y = 0; y <= rows; y++) {
+				ctx.beginPath();
+				ctx.moveTo(0, y * cellSize);
+				ctx.lineTo(cols * cellSize, y * cellSize);
+				ctx.stroke();
+			}
+		}
+
+		// Draw a single cell (gem) at grid coordinates (x, y).
+		function drawCell(x, y, color) {
+			ctx.fillStyle = color;
+			ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+			ctx.strokeStyle = 'black';
+			ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+		}
+
+		// ----- Game Loop -----
+		let dropInterval = 500; // Drop every 500 ms
+		let lastDropTime = 0;
+
+		function gameLoop(timestamp) {
+			if (!lastDropTime) lastDropTime = timestamp;
+			const delta = timestamp - lastDropTime;
+			if (delta > dropInterval) {
+				dropPiece();
+				lastDropTime = timestamp;
+			}
+			draw();
+			requestAnimationFrame(gameLoop);
+		}
+
+		// ----- User Controls (Keyboard) -----
+		document.addEventListener('keydown', event => {
+			if (!currentPiece) return;
+			switch (event.key) {
+				case 'ArrowLeft':
+					movePiece(-1, 0);
+					break;
+				case 'ArrowRight':
+					movePiece(1, 0);
+					break;
+				case 'ArrowDown':
+					dropPiece();
+					break;
+				case 'ArrowUp':
+					movePiece(0, 0, true); // rotate the piece
+					break;
+			}
+		});
+
+		// ----- Mobile Controls (Touch and Click) -----
+		document.getElementById('leftBtn').addEventListener('touchstart', e => {
+			e.preventDefault();
+			movePiece(-1, 0);
+		});
+		document.getElementById('rightBtn').addEventListener('touchstart', e => {
+			e.preventDefault();
+			movePiece(1, 0);
+		});
+		document.getElementById('rotateBtn').addEventListener('touchstart', e => {
+			e.preventDefault();
+			movePiece(0, 0, true);
+		});
+		document.getElementById('downBtn').addEventListener('touchstart', e => {
+			e.preventDefault();
+			dropPiece();
+		});
+		// Also support click events.
+		document.getElementById('leftBtn').addEventListener('click', () => movePiece(-1, 0));
+		document.getElementById('rightBtn').addEventListener('click', () => movePiece(1, 0));
+		document.getElementById('rotateBtn').addEventListener('click', () => movePiece(0, 0, true));
+		document.getElementById('downBtn').addEventListener('click', () => dropPiece());
+
+		// ----- Start the Game -----
+		spawnPiece();
+		requestAnimationFrame(gameLoop);
+	</script>
+</body>
+</html>

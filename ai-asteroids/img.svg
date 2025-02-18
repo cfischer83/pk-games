@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="700" height="500" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="700" height="500" fill="black" />
+
+  <!-- Starry sky -->
+  <g id="stars">
+    <circle cx="50"  cy="80"  r="1.5" fill="white"/>
+    <circle cx="200" cy="40"  r="2"   fill="white"/>
+    <circle cx="650" cy="60"  r="1"   fill="white"/>
+    <circle cx="400" cy="100" r="1.5" fill="white"/>
+    <circle cx="100" cy="200" r="1.2" fill="white"/>
+    <circle cx="300" cy="50"  r="1"   fill="white"/>
+    <circle cx="500" cy="80"  r="1.8" fill="white"/>
+    <circle cx="600" cy="120" r="1"   fill="white"/>
+    <circle cx="550" cy="30"  r="1.5" fill="white"/>
+    <circle cx="350" cy="20"  r="1"   fill="white"/>
+    <circle cx="620" cy="220" r="1.5" fill="white"/>
+    <circle cx="100" cy="350" r="1"   fill="white"/>
+    <circle cx="650" cy="400" r="2"   fill="white"/>
+    <circle cx="500" cy="300" r="1"   fill="white"/>
+    <circle cx="250" cy="420" r="1.5" fill="white"/>
+    <circle cx="150" cy="100" r="1"   fill="white"/>
+    <circle cx="50"  cy="250" r="1.5" fill="white"/>
+    <circle cx="300" cy="350" r="1"   fill="white"/>
+    <circle cx="400" cy="450" r="1.5" fill="white"/>
+    <circle cx="600" cy="350" r="1"   fill="white"/>
+  </g>
+
+  <!-- Asteroid 1 -->
+  <polygon fill="#666" stroke="#999" stroke-width="2" points="
+    150,100
+    170,90
+    190,100
+    180,120
+    160,130
+    140,120
+    130,105" />
+
+  <!-- Asteroid 2 -->
+  <polygon fill="#555" stroke="#888" stroke-width="2" points="
+    550,150
+    565,140
+    580,150
+    575,165
+    555,170
+    540,160
+    535,145" />
+
+  <!-- Asteroid 3 -->
+  <polygon fill="#777" stroke="#aaa" stroke-width="2" points="
+    100,300
+    130,290
+    150,310
+    140,330
+    120,345
+    90,335
+    80,315" />
+
+  <!-- Spaceship and flame -->
+  <g id="spaceship">
+    <!-- Flame -->
+    <polygon fill="orange" opacity="0.8" points="
+      350,420
+      345,440
+      350,445
+      355,440" />
+    <!-- Ship body (a playful triangle) -->
+    <polygon fill="cyan" stroke="white" stroke-width="2" points="
+      350,370
+      335,410
+      365,410" />
+  </g>
+
+  <!-- Title Text -->
+  <text x="350" y="80" text-anchor="middle" fill="white" font-family="Comic Sans MS, cursive, sans-serif" font-size="48">
+    Asteroids
+  </text>
+</svg>
