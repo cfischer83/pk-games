@@ -61,13 +61,34 @@ p {
 	margin: 0 auto;
 }
 .game-container {
-	max-width: 1200px;
+	/* max-width: 1200px;
 	margin: 0 auto;
-	display: flex;
+	display: flex; */
+	display: block;
+	margin: 0 auto;
+	display: grid;
+	grid-auto-rows: 1fr;
+	grid-template-columns: 1fr 1fr 1fr;
+	max-width: 1200px;
+}
+@media (max-width:1024px) {
+    .game-container {
+        display: grid;
+        grid-auto-rows: 1fr;
+        grid-template-columns: 1fr 1fr;
+		max-width: 1200px;
+    }
+}
+@media (max-width:768px) {
+    .game-container {
+        display: grid;
+        grid-auto-rows: 1fr;
+        grid-template-columns: 1fr;
+    }
 }
 .game {
 	position: relative;
-	width: 33%;
+	/* width: 33%; */
 	margin: 20px;
 	background: #CCE;
 	padding: 20px;
@@ -187,16 +208,90 @@ footer {
 	#logo {
 		max-width: 100%;
 	}
-	.game-container {
+	/* .game-container {
 		display: block;
 	}
 	.game {
 		width: 90%;
 		box-sizing: border-box;
 		margin: 20px 5%;
-	}
+	} */
+}
+
+nav {
+	width: 100%;
+	margin: 0 auto;
+	display: block;
+	padding: 30px 10px;
+	text-align: center;
+}
+nav a {
+	display: inline-block;
+	color: #FFF;
+	padding: 3px 20px;
+	text-decoration: none;
+}
+nav a.active {
+	border-bottom: 2px solid #FF99FF;
+}
+nav a:hover {
+	color: #FF99FF;
+}
+.hide {
+	display:none;
 }
 </style>
+<script type="text/javascript">
+	function showAll() {
+		var actives = document.querySelectorAll("nav a.active");
+		[].forEach.call(actives, function(el) {
+			el.classList.remove("active");
+		});
+
+		var games = document.querySelectorAll(".game");
+		[].forEach.call(games, function(el) {
+			el.classList.remove("hide");
+		});
+		document.getElementById("navAllGames").classList.add("active");
+		return false;
+	}
+
+	function showNonAI() {
+		var actives = document.querySelectorAll("nav a.active");
+		[].forEach.call(actives, function(el) {
+			el.classList.remove("active");
+		});
+
+		var games = document.querySelectorAll(".game");
+		[].forEach.call(games, function(el) {
+			if (el.classList.contains("ai")) {
+				el.classList.add("hide");
+			} else {
+				el.classList.remove("hide");
+			}
+		});
+		document.getElementById("navManMade").classList.add("active");
+		return false;
+	}
+
+	function showAI() {
+		var actives = document.querySelectorAll("nav a.active");
+		[].forEach.call(actives, function(el) {
+			el.classList.remove("active");
+		});
+
+		var games = document.querySelectorAll(".game");
+		[].forEach.call(games, function(el) {
+			if (el.classList.contains("ai")) {
+				el.classList.remove("hide");
+			} else {
+				el.classList.add("hide");
+			}
+		});
+		document.getElementById("navAIMade").classList.add("active");
+		return false;
+	}
+</script>
 
 </head>
 <body>
@@ -204,6 +299,12 @@ footer {
 		<img src="logo2.png" id="logo" alt="Logo" />
 	</header>
 	<h1>Planet <span>Kodiak</span> Games</h1>
+
+	<nav>
+		<a href="#" onclick="return showAll();" class="active" id="navAllGames">All games</a> 
+		<a href="#man" onclick="return showNonAI();" id="navManMade">Hand-crafted games</a> 
+		<a href="#ai" onclick="return showAI();" id="navAIMade">AI-generated games</a>
+	</nav>
 
 	<div class="game-container">
 		<div id="mech" class="game">
@@ -214,7 +315,15 @@ footer {
 				<p>Mech's on Planet Kodiak is a desktop + mobile game that combines the best of Mechwarrior & MechCommander</p>
 			</a>
 		</div>
-		<div id="asteroids" class="game">
+		<div id="bejeweledtetris" class="game ai">
+			<a href="ai/bejetris/index.html">
+				<span class="new">New</span>
+				<h2>AI BejeTris</h2>
+				<img src="ai/bejetris/cover.jpg" alt="AI-generated Bejeweled/Tetris hybrid" />
+				<p>Tetris with a Bejeweled twist.</p>
+			</a>
+		</div>
+		<div id="asteroids" class="game ai">
 			<a href="ai-asteroids/index.html">
 				<span class="new">New</span>
 				<h2>AI Asteroids</h2>
@@ -229,8 +338,6 @@ footer {
 				<p>Snakes on a game is a mobile or desktop game. Grow your snake but don't hit the edges or your snake's body!</p>
 			</a>
 		</div>
-	</div>
-	<div class="game-container">
 		<div id="skydiving" class="game">
 			<a href="skydiving/">
 				<h2>Skydiving</h2>

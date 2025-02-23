@@ -15,40 +15,33 @@
 			background: #333;
 			color: #fff;
 			display: flex;
-			flex-direction: row;
+			flex-direction: column;
 			height: 100vh;
 			overflow: hidden;
-			-webkit-user-select: none;
-			-ms-user-select: none;
 			user-select: none;
 			position: relative;
 		}
-		/* Sidebar (instructions) */
-		.instructions {
-			flex: 1;
-			padding: 20px;
-			overflow-y: auto;
-			background: #444;
-		}
-		.instructions h1 { margin-top: 0; }
-		.instructions select, .instructions button {
-			font-size: 16px;
-			padding: 5px;
-			margin-top: 10px;
-		}
-		/* Game container */
+		/* Game container is centered */
 		.game-container {
 			flex: 1;
 			position: relative;
+			padding: 20px;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			padding: 20px;
+			transition: transform 0.3s ease;
+		}
+		/* Container for playfield and preview side-by-side */
+		#mainContainer {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-start;
+			gap: 20px;
 		}
 		canvas {
 			border: 2px solid #555;
-			background: #111; /* Dark playfield */
+			background: #111;
 		}
 		/* Scoreboard */
 		#scoreboard {
@@ -58,6 +51,10 @@
 			font-size: 18px;
 			color: #fff;
 			z-index: 10;
+		}
+		/* Next-piece preview */
+		#previewContainer {
+			text-align: center;
 		}
 		/* Mobile control buttons */
 		.controls {
@@ -73,15 +70,16 @@
 			border-radius: 5px;
 			background: #888;
 			color: #fff;
-			-webkit-user-select: none;
-			-ms-user-select: none;
 			user-select: none;
 			touch-action: manipulation;
 		}
 		.controls button:active {
 			background: #aaa;
 		}
-		/* Overlay for start/game over */
+		.controls #pauseBtn {
+			background: #555;
+		}
+		/* Start Overlay (includes instructions) */
 		#overlay {
 			position: absolute;
 			top: 0;
@@ -94,6 +92,8 @@
 			align-items: center;
 			justify-content: center;
 			z-index: 100;
+			text-align: center;
+			padding: 20px;
 		}
 		#overlay.hidden { display: none; }
 		#overlay select, #overlay button {
@@ -101,51 +101,63 @@
 			padding: 10px;
 			margin: 10px;
 		}
-		/* Responsive for smaller screens */
-		@media (max-width: 768px) {
-			body { flex-direction: column; }
-			.instructions, .game-container { width: 100%; }
-			canvas { max-width: 100%; height: auto; }
+		#startInstructions {
+			font-size: 16px;
+			margin-bottom: 20px;
+			line-height: 1.4;
+		}
+		/* Pause Overlay (shows instructions again) */
+		#pauseOverlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,0.9);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			z-index: 50;
+			text-align: center;
+			padding: 20px;
+		}
+		#pauseOverlay.hidden { display: none; }
+		#pauseOverlay h1 {
+			font-size: 48px;
+			margin: 10px 0;
+		}
+		#pauseInstructions {
+			font-size: 16px;
+			margin: 20px 0;
+			line-height: 1.4;
+		}
+		/* Responsive: scale down game on small screens */
+		@media (max-width: 480px) {
+			.game-container {
+				transform: scale(0.8);
+				transform-origin: top center;
+			}
 		}
 	</style>
 </head>
 <body>
-	<!-- Sidebar instructions -->
-	<div class="instructions">
-		<h1>Tetris-Bejeweled Combo</h1>
-		<p><strong>Instructions:</strong></p>
-		<ul>
-			<li><strong>Left / Right</strong>: Move piece horizontally.</li>
-			<li><strong>Rotate</strong>: Rotate the piece.</li>
-			<li><strong>Down</strong>: Drop the piece faster.</li>
-			<li>
-				Each tetromino is split into two color groups – two cells of one color and two of another.
-				(Cells in the same group are grouped together when possible.) When matching, only squares of the same color clear.
-			</li>
-			<li>
-				In <strong>Easy</strong> mode you need 5 connected squares to clear,
-				<strong>Hard</strong> needs 6 and <strong>Impossible</strong> needs 7.
-			</li>
-			<li>If a new piece cannot spawn, it's Game Over!</li>
-		</ul>
-	</div>
-
-	<!-- Game container -->
-	<div class="game-container">
-		<div id="scoreboard"></div>
-		<canvas id="gameCanvas" width="300" height="600"></canvas>
-		<div class="controls">
-			<button id="leftBtn">←</button>
-			<button id="rotateBtn">⟳</button>
-			<button id="rightBtn">→</button>
-			<button id="downBtn">↓</button>
-		</div>
-	</div>
-
-	<!-- Overlay for start and game over screens -->
+	<!-- Start/Game Over Overlay -->
 	<div id="overlay">
 		<div id="overlayContent">
 			<h2>Tetris-Bejeweled Combo</h2>
+			<div id="startInstructions">
+				<p><strong>Instructions:</strong></p>
+				<ul style="list-style: none; padding: 0;">
+					<li>← / → : Move piece horizontally</li>
+					<li>↑ : Rotate the piece</li>
+					<li>↓ : Drop the piece faster</li>
+					<li>Each tetromino is split into two color groups – only matching squares of the same color clear</li>
+					<li>Easy: 5 connected squares; Hard: 6; Impossible: 7</li>
+					<li>If a new piece cannot spawn, it's Game Over!</li>
+					<li>Press <strong>P</strong> or click Pause to toggle pause</li>
+				</ul>
+			</div>
 			<div id="overlayOptions">
 				<label for="modeSelect">Select Difficulty:</label>
 				<select id="modeSelect">
@@ -163,25 +175,86 @@
 		</div>
 	</div>
 
+	<!-- Game container (instructions hidden while playing) -->
+	<div class="game-container">
+		<div id="scoreboard"></div>
+		<div id="mainContainer">
+			<canvas id="gameCanvas" width="300" height="600"></canvas>
+			<div id="previewContainer">
+				<p>Next:</p>
+				<canvas id="previewCanvas" width="100" height="100"></canvas>
+			</div>
+		</div>
+		<div class="controls">
+			<button id="leftBtn">←</button>
+			<button id="rotateBtn">⟳</button>
+			<button id="rightBtn">→</button>
+			<button id="downBtn">↓</button>
+			<button id="pauseBtn">Pause</button>
+		</div>
+	</div>
+
+	<!-- Pause Overlay -->
+	<div id="pauseOverlay" class="hidden">
+		<h1>Paused</h1>
+		<div id="pauseInstructions">
+			<p><strong>Controls:</strong></p>
+			<ul style="list-style: none; padding: 0;">
+				<li>← / → : Move piece horizontally</li>
+				<li>↑ : Rotate the piece</li>
+				<li>↓ : Drop the piece faster</li>
+				<li>Press <strong>P</strong> or click Pause to resume</li>
+			</ul>
+		</div>
+		<button id="resumeBtn" style="font-size:24px; padding:10px 20px;">Resume</button>
+	</div>
+
 	<script>
 		// ========= Global Variables and State =========
 		const canvas = document.getElementById('gameCanvas');
 		const ctx = canvas.getContext('2d');
 		const cols = 10, rows = 20, cellSize = 30;
+		const previewCanvas = document.getElementById("previewCanvas");
+		const pctx = previewCanvas.getContext("2d");
+		const previewCellSize = 20;
+
 		let grid = [];
 		for (let y = 0; y < rows; y++) {
 			grid[y] = new Array(cols).fill(null);
 		}
 
-		// Game state: "start", "running", "animating", "gameover"
-		let gameState = "start";
-		let currentMode = null; // Object: { threshold: number, name: string }
-		let score = 0;
-		let animation = null; // { type, startTime, duration, ... }
-		const fadeDuration = 500; // ms for fade-out
-		const fallDuration = 300; // ms for falling animation
+		// Define colorOptions for generating pieces.
+		const colorOptions = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
 
-		// ========= Score History in localStorage =========
+		// Game states: "start", "running", "animating", "paused", "gameover"
+		let gameState = "start";
+		let currentMode = null; // { threshold: number, name: string }
+		let score = 0;
+		let animation = null; // { type, startTime, duration, fallingCells, newGrid, cells }
+		const fadeDuration = 500;	// ms for fade-out (dissolve)
+		const fallDuration = 300;	// ms for falling animation
+
+		// ========= Next-Piece Preview Support =========
+		let currentPiece = null;
+		let nextPiece = null;	// Pre-generated next tetromino
+
+		// ========= Gem Images =========
+		const gemImages = {
+			purple: new Image(),
+			red: new Image(),
+			green: new Image(),
+			yellow: new Image(),
+			blue: new Image(),
+			orange: new Image()
+		};
+		gemImages.purple.src = "./img/purple.png";
+		gemImages.red.src = "./img/red.png";
+		gemImages.green.src = "./img/green.png";
+		gemImages.yellow.src = "./img/yellow.png";
+		gemImages.blue.src = "./img/blue.png";
+		gemImages.orange.src = "./img/orange.png";
+
+		// ========= Score History =========
 		function recordScore() {
 			const historyKey = "scoreHistory";
 			let history = JSON.parse(localStorage.getItem(historyKey) || "[]");
@@ -203,7 +276,6 @@
 		}
 
 		// ========= Tetromino Definitions (Two-tone) =========
-		// Each tetromino has 4 blocks with assigned group (0 or 1); exactly two of each.
 		const tetrominoes = {
 			I: { blocks: [ { x:0, y:-1, group:0 }, { x:0, y:0, group:0 }, { x:0, y:1, group:1 }, { x:0, y:2, group:1 } ] },
 			O: { blocks: [ { x:0, y:0, group:0 }, { x:1, y:0, group:0 }, { x:0, y:1, group:1 }, { x:1, y:1, group:1 } ] },
@@ -214,17 +286,13 @@
 			L: { blocks: [ { x:1, y:-1, group:0 }, { x:1, y:0, group:0 }, { x:-1, y:0, group:1 }, { x:0, y:0, group:1 } ] }
 		};
 
-		// ========= Current Piece =========
-		let currentPiece = null;
-		// Deep-clone blocks array
+		// ========= Piece Generation =========
 		function cloneBlocks(blocks) {
 			return blocks.map(b => ({ x: b.x, y: b.y, group: b.group }));
 		}
-		// Rotate blocks 90° clockwise: (x,y) => (-y,x)
 		function rotateBlocks(blocks) {
 			return blocks.map(b => ({ x: -b.y, y: b.x, group: b.group }));
 		}
-		// Check if piece (with given offset and blocks) is in valid position.
 		function isValidPosition(piece, dx, dy, blocks) {
 			for (let block of blocks) {
 				const newX = piece.x + block.x + dx;
@@ -234,31 +302,35 @@
 			}
 			return true;
 		}
-		// Spawn a new piece.
-		function spawnPiece() {
+		function generatePiece() {
 			const keys = Object.keys(tetrominoes);
 			const randKey = keys[Math.floor(Math.random() * keys.length)];
 			const tetro = tetrominoes[randKey];
 			const blocks = cloneBlocks(tetro.blocks);
-			// Pick two different colors.
-			const colorOptions = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
 			const color0 = colorOptions[Math.floor(Math.random() * colorOptions.length)];
 			let color1;
-			do { color1 = colorOptions[Math.floor(Math.random() * colorOptions.length)]; } while (color1 === color0);
-			const piece = { blocks, x: Math.floor(cols/2), y: 1, color0, color1 };
-			if (!isValidPosition(piece, 0, 0, piece.blocks)) {
+			do { color1 = colorOptions[Math.floor(Math.random() * colorOptions.length)]; }
+			while(color1 === color0);
+			return { blocks, x: Math.floor(cols/2), y: 1, color0, color1 };
+		}
+		function spawnPiece() {
+			if (!nextPiece) {
+				nextPiece = generatePiece();
+			}
+			currentPiece = nextPiece;
+			nextPiece = generatePiece();
+			if (!isValidPosition(currentPiece, 0, 0, currentPiece.blocks)) {
 				endGame();
 				return;
 			}
-			currentPiece = piece;
 		}
 		function resetGame() {
-			// Reset grid and score.
 			for (let y = 0; y < rows; y++) {
 				grid[y] = new Array(cols).fill(null);
 			}
 			score = 0;
 			updateScoreboard();
+			nextPiece = generatePiece();
 			spawnPiece();
 		}
 
@@ -282,7 +354,6 @@
 			if (!movePiece(0, 1)) {
 				lockPiece();
 				checkAndAnimateMatches();
-				// If no animation started (i.e. no matches) spawn a new piece.
 				if (gameState === "running" && !currentPiece) spawnPiece();
 			}
 		}
@@ -327,19 +398,14 @@
 		}
 
 		// ========= Gravity Animation =========
-		// Instead of our previous computeFallingCells/finalizeFalling,
-		// we now compute the new grid after gravity and record, for each cell that moves,
-		// its original row (fromY) and final row (toY).
 		function computeGravity() {
 			let newGrid = [];
 			for (let r = 0; r < rows; r++) {
 				newGrid[r] = new Array(cols).fill(null);
 			}
 			let fallingCells = [];
-			// Process each column separately.
 			for (let x = 0; x < cols; x++) {
 				let writeRow = rows - 1;
-				// From bottom to top, copy non-null cells to newGrid.
 				for (let r = rows - 1; r >= 0; r--) {
 					if (grid[r][x] !== null) {
 						newGrid[writeRow][x] = grid[r][x];
@@ -351,6 +417,26 @@
 				}
 			}
 			return { newGrid, fallingCells };
+		}
+
+		// ========= Helper: Draw Static Grid Excluding Cells in a Set =========
+		function drawStaticGridExcluding(excludeSet) {
+			for (let y = 0; y < rows; y++) {
+				for (let x = 0; x < cols; x++) {
+					if (grid[y][x] && !excludeSet.has(`${x},${y}`)) {
+						drawGem(ctx, x, y, grid[y][x], cellSize);
+					}
+				}
+			}
+		}
+		function drawStaticGridFrom(gridToDraw) {
+			for (let y = 0; y < rows; y++) {
+				for (let x = 0; x < cols; x++) {
+					if (gridToDraw[y][x]) {
+						drawGem(ctx, x, y, gridToDraw[y][x], cellSize);
+					}
+				}
+			}
 		}
 
 		// ========= Animation Control =========
@@ -366,89 +452,108 @@
 			gameState = "animating";
 			animation = { type: "fade", startTime: performance.now(), duration: fadeDuration, cells };
 		}
-		// In updateAnimation, once fade is complete, we compute gravity
-		// and start a fall animation using the computed fallingCells and newGrid.
+		function easeOutQuad(t) {
+			return 1 - (1 - t) * (1 - t);
+		}
 		function updateAnimation(timestamp) {
 			if (!animation) return;
 			let progress = (timestamp - animation.startTime) / animation.duration;
 			if (progress > 1) progress = 1;
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			if (animation.type === "fade") {
-				// During fade, draw the matched cells with decreasing opacity.
+				// Draw static grid excluding fading cells.
+				let fadeSet = new Set();
+				animation.cells.forEach(cell => {
+					fadeSet.add(`${cell.x},${cell.y}`);
+				});
+				drawStaticGridExcluding(fadeSet);
 				ctx.save();
 				ctx.globalAlpha = 1 - progress;
 				for (let cell of animation.cells) {
-					if (grid[cell.y] && grid[cell.y][cell.x]) {
-						drawCell(cell.x, cell.y, grid[cell.y][cell.x]);
-					}
+					drawGem(ctx, cell.x, cell.y, grid[cell.y][cell.x], cellSize);
 				}
 				ctx.restore();
 				if (progress === 1) {
-					// Clear the matched cells.
-					for (let cell of animation.cells) {
+					// Remove fading cells from grid.
+					animation.cells.forEach(cell => {
 						grid[cell.y][cell.x] = null;
-					}
-					// Compute gravity.
+					});
 					const { newGrid, fallingCells } = computeGravity();
+					// Remove original positions of falling cells from grid so static grid won't draw them.
+					fallingCells.forEach(fc => {
+						grid[fc.fromY][fc.x] = null;
+					});
 					animation = { type: "fall", startTime: performance.now(), duration: fallDuration, fallingCells, newGrid };
 				}
 			} else if (animation.type === "fall") {
-				// Animate falling cells.
-				const fallProgress = (timestamp - animation.startTime) / animation.duration;
-				let p = fallProgress > 1 ? 1 : fallProgress;
+				// Draw static grid (which now has no falling pieces).
+				drawStaticGrid();
+				let t = (timestamp - animation.startTime) / animation.duration;
+				if (t > 1) t = 1;
+				let p = easeOutQuad(t);
 				for (let fc of animation.fallingCells) {
 					const interpY = fc.fromY + (fc.toY - fc.fromY) * p;
-					drawCell(fc.x, interpY, fc.color);
+					drawGem(ctx, fc.x, interpY, fc.color, cellSize);
 				}
-				if (p === 1) {
-					// When fall animation finishes, update the grid.
+				if (t === 1) {
 					grid = animation.newGrid;
 					animation = null;
-					// Check for any subsequent matches.
 					const newMatches = findMatches();
 					if (newMatches.length > 0) {
 						startFadeAnimation(newMatches);
 					} else {
-						// Spawn new piece if none exists.
-						if (!currentPiece) {
-							spawnPiece();
-						}
+						if (!currentPiece) spawnPiece();
 						gameState = "running";
 					}
 				}
 			}
 		}
 
-		// ========= Drawing =========
+		// ========= Gem Drawing Functions Using PNG Images =========
+		function drawGem(ctx, gridX, gridY, color, cellSize) {
+			let img = gemImages[color.toLowerCase()];
+			ctx.drawImage(img, gridX * cellSize, gridY * cellSize, cellSize, cellSize);
+		}
+		function drawGemPreview(pctx, x, y, color, cellSize) {
+			let img = gemImages[color.toLowerCase()];
+			pctx.drawImage(img, x, y, cellSize, cellSize);
+		}
+		function drawPreview() {
+			pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+			if (!nextPiece) return;
+			let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+			for (const block of nextPiece.blocks) {
+				if (block.x < minX) minX = block.x;
+				if (block.x > maxX) maxX = block.x;
+				if (block.y < minY) minY = block.y;
+				if (block.y > maxY) maxY = block.y;
+			}
+			const pieceWidth = (maxX - minX + 1) * previewCellSize;
+			const pieceHeight = (maxY - minY + 1) * previewCellSize;
+			const offsetX = (previewCanvas.width - pieceWidth) / 2;
+			const offsetY = (previewCanvas.height - pieceHeight) / 2;
+			for (const block of nextPiece.blocks) {
+				const x = offsetX + (block.x - minX) * previewCellSize;
+				const y = offsetY + (block.y - minY) * previewCellSize;
+				const color = (block.group === 0) ? nextPiece.color0 : nextPiece.color1;
+				drawGemPreview(pctx, x, y, color, previewCellSize);
+			}
+		}
+
+		// ========= Main Draw Function =========
 		function draw() {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			// Draw static grid cells.
-			for (let y = 0; y < rows; y++) {
-				for (let x = 0; x < cols; x++) {
-					if (grid[y][x]) {
-						drawCell(x, y, grid[y][x]);
-					}
-				}
-			}
-			// Draw the falling piece (if game running).
+			drawStaticGrid();
 			if (currentPiece && gameState === "running") {
 				for (let block of currentPiece.blocks) {
 					const x = currentPiece.x + block.x;
 					const y = currentPiece.y + block.y;
 					if (y >= 0) {
 						const col = (block.group === 0) ? currentPiece.color0 : currentPiece.color1;
-						drawCell(x, y, col);
+						drawGem(ctx, x, y, col, cellSize);
 					}
 				}
 			}
-			// Draw animation overlays.
-			if (animation) {
-				if (animation.type === "fade") {
-					// Fade overlay is drawn in updateAnimation.
-				} else if (animation.type === "fall") {
-					// Fall overlay is drawn in updateAnimation.
-				}
-			}
-			// Draw subtle grid lines.
 			ctx.strokeStyle = "#222";
 			for (let x = 0; x <= cols; x++) {
 				ctx.beginPath();
@@ -463,11 +568,14 @@
 				ctx.stroke();
 			}
 		}
-		function drawCell(x, y, color) {
-			ctx.fillStyle = color;
-			ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-			ctx.strokeStyle = "#000";
-			ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+		function drawStaticGrid() {
+			for (let y = 0; y < rows; y++) {
+				for (let x = 0; x < cols; x++) {
+					if (grid[y][x]) {
+						drawGem(ctx, x, y, grid[y][x], cellSize);
+					}
+				}
+			}
 		}
 
 		// ========= Game Loop =========
@@ -480,16 +588,48 @@
 					dropPiece();
 					lastDropTime = timestamp;
 				}
+				draw();
 			} else if (gameState === "animating") {
-				updateAnimation(timestamp);
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				if (animation.type === "fade") {
+					// For fade, static grid excluding fading cells then overlay fading.
+					let fadeSet = new Set();
+					animation.cells.forEach(cell => fadeSet.add(`${cell.x},${cell.y}`));
+					drawStaticGridExcluding(fadeSet);
+					updateAnimation(timestamp);
+				} else if (animation.type === "fall") {
+					// Draw static grid (without falling pieces) then animate falling pieces.
+					drawStaticGrid();
+					updateAnimation(timestamp);
+				}
+			} else if (gameState === "paused" || gameState === "gameover") {
+				draw();
 			}
-			draw();
 			updateScoreboard();
+			drawPreview();
 			requestAnimationFrame(gameLoop);
 		}
 
+		// ========= Pause Feature =========
+		function togglePause() {
+			if (gameState === "running") {
+				gameState = "paused";
+				document.getElementById("pauseOverlay").classList.remove("hidden");
+			} else if (gameState === "paused") {
+				gameState = "running";
+				document.getElementById("pauseOverlay").classList.add("hidden");
+				lastDropTime = performance.now();
+			}
+		}
+		document.addEventListener('keydown', event => {
+			if (event.key.toLowerCase() === 'p') togglePause();
+		});
+		document.getElementById("pauseBtn").addEventListener('click', togglePause);
+		document.getElementById("resumeBtn").addEventListener('click', togglePause);
+
 		// ========= End Game =========
 		function endGame() {
+			pkAnalytics("end", currentMode.name);
 			gameState = "gameover";
 			recordScore();
 			const overlay = document.getElementById("overlay");
@@ -530,6 +670,7 @@
 			const modeVal = parseInt(document.getElementById("modeSelect").value, 10);
 			let modeName = (modeVal === 5) ? "Easy" : (modeVal === 6) ? "Hard" : "Impossible";
 			currentMode = { threshold: modeVal, name: modeName };
+			pkAnalytics("start", currentMode.name);
 			overlay.classList.add("hidden");
 			gameState = "running";
 			resetGame();
@@ -541,8 +682,27 @@
 			overlay.classList.remove("hidden");
 		});
 
-		// ========= Start Game Loop =========
+		// ========= Start the Game Loop =========
 		requestAnimationFrame(gameLoop);
 	</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N8SN5SJEFW"></script>
+<script type="text/javascript">
+	function pkAnalytics(action, mode) {
+		console.log("send to ga4: action="+action+" mode="+mode+" score="+score);
+		gtag('event', 'BejeTris', {
+			'game_action': action,
+			'game_level': "1",
+			'game_score': score,
+			'game_difficulty': mode,
+			'game_details': mode + ":" + action + ":score="+score
+		});
+	}
+
+	// GA STUFF
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-N8SN5SJEFW');
+</script>
 </body>
 </html>
