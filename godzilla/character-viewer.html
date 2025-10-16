@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Character Viewer</title>
+<link rel="stylesheet" href="character-viewer.css">
+</head>
+<body>
+<div id="test-container">
+    <div id="info-panel">
+        <h1>Dragon Character Viewer</h1>
+        <div class="character-section">
+            <h2>Dragon 1 (Player) - Left Side</h2>
+            <div class="controls">
+                <p><strong>Controls:</strong></p>
+                <p>Arrow Keys: Move/Jump/Duck</p>
+                <p>Z: Punch</p>
+                <p>X: Kick</p>
+                <p>Space: Fire Beam</p>
+            </div>
+            <div class="status">
+                <p>State: <span id="d1-state">stand</span></p>
+                <p>Frame: <span id="d1-frame">0</span></p>
+                <p>Facing: <span id="d1-facing">right</span></p>
+                <p>Size: <span id="d1-size">0x0</span></p>
+                <p>Attack: <span id="d1-attack">none</span></p>
+            </div>
+        </div>
+        
+        <div class="character-section">
+            <h2>Dragon 2 (Boss) - Right Side</h2>
+            <div class="controls">
+                <p><strong>Controls:</strong></p>
+                <p>WASD: Move</p>
+                <p>Q: Hurt State</p>
+                <p>E: Lightning Attack</p>
+            </div>
+            <div class="status">
+                <p>State: <span id="d2-state">fly</span></p>
+                <p>Frame: <span id="d2-frame">0</span></p>
+                <p>Facing: <span id="d2-facing">left</span></p>
+                <p>Size: <span id="d2-size">0x0</span></p>
+            </div>
+        </div>
+        
+        <div class="debug-section">
+            <button onclick="toggleDebug()">Toggle Debug Boxes</button>
+            <button onclick="resetPositions()">Reset Positions</button>
+        </div>
+    </div>
+    
+    <div id="stage">
+        <div id="ground"></div>
+        <div id="dragon1" class="sprite character"></div>
+        <div id="dragon2" class="sprite character"></div>
+        <div id="debug-info"></div>
+    </div>
+</div>
+
+<script src="dragon-sprites.js"></script>
+<script src="character-viewer.js"></script>
+</body>
+</html>

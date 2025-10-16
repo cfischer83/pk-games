@@ -334,6 +334,7 @@ body {
     <div id="debug"></div>
 </div>
 
+<script src="dragon-sprites.js"></script>
 <script>
 // Configuration
 const GAME_CONFIG = {
@@ -404,136 +405,7 @@ const GAME_CONFIG = {
     }
 };
 
-// Anchors JSON
-const ANCHORS_JSON = {
-    "scale": 1,
-    "dragon1": {
-        "spriteSheet": { "w": 1128, "h": 670, "src": "dragon1.png" },
-        "baseFrameSize": { "w": 142, "h": 128 },
-        "fire": {
-            "beamSize": { "w": 216, "h": 102 },
-            "tickMs": 300
-        },
-        "tail": { "risePx": 70 },
-        "states": {
-            "stand": {
-                "frameSize": { "w": 142, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "walk": {
-                "frameSize": { "w": 142, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 164, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 324, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 480, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 8, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 158, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 314, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 468, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "punch": {
-                "frameSize": { "w": 142, "h": 156 },
-                "frames": [
-                    { "spriteOffset": { "x": 643, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 755, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 874, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 986, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "kick": {
-                "frameSize": { "w": 142, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "duck": {
-                "frameSize": { "w": 180, "h": 98 },
-                "frames": [
-                    { "frameSize": { "w": 180, "h": 98 }, "spriteOffset": { "x": 0, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 140, "h": 98 }, "spriteOffset": { "x": 180, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 110, "h": 98 }, "spriteOffset": { "x": 320, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 80, "h": 98 }, "spriteOffset": { "x": 430, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "jump": {
-                "frameSize": { "w": 142, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 0, "y": 638 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
-                ]
-            },
-            "hurt": {
-                "frameSize": { "w": 142, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 0, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 148, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 284, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                ]
-            },
-            "fire_windup": {
-                "frameSize": { "w": 130, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 589, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
-                    { "spriteOffset": { "x": 731, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
-                    { "spriteOffset": { "x": 871, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
-                    { "spriteOffset": { "x": 1003, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
-                ]
-            },
-            "fire_beam": {
-                "frameSize": { "w": 154, "h": 128 },
-                "frames": [
-                    { "spriteOffset": { "x": 5, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
-                    { "spriteOffset": { "x": 165, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
-                ]
-            }
-        }
-    },
-    "dragon2": {
-        "spriteSheet": { "w": 758, "h": 1336, "src": "dragon2.png" },
-        "baseFrameSize": { "w": 240, "h": 220 },
-        "lightning": {
-            "boltSize": { "w": 160, "h": 48 },
-            "mouth": { "fromTop": 32, "fromRight": 8 },
-            "cooldownMs": 3000
-        },
-        "states": {
-            "fly": {
-                "frameSize": { "w": 240, "h": 220 },
-                "frames": [
-                    { "spriteOffset": { "x": 0, "y": 0 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 240, "y": 0 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 480, "y": 0 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 0, "y": 220 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 240, "y": 220 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 480, "y": 220 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 0, "y": 440 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 240, "y": 440 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 480, "y": 440 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 0, "y": 660 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 240, "y": 660 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
-                    { "spriteOffset": { "x": 480, "y": 660 }, "mouth": { "fromTop": 34, "fromRight": 8 } }
-                ]
-            },
-            "hurt": {
-                "frameSize": { "w": 240, "h": 220 },
-                "frames": [
-                    { "spriteOffset": { "x": 0, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
-                ]
-            },
-            "dead": {
-                "frameSize": { "w": 240, "h": 220 },
-                "frames": [
-                    { "spriteOffset": { "x": 240, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
-                ]
-            }
-        }
-    }
-};
+// Sprite data (ANCHORS_JSON, getFrameInfo, applySpriteFrame) loaded from dragon-sprites.js
 
 // Game state
 let game = {
@@ -726,56 +598,7 @@ function sweptAABB(box, vel, obstacle, dt) {
     return { hit: true, time: tmin, normal };
 }
 
-// Get current frame info
-function getFrameInfo(actor, state, frameIndex) {
-    const actorData = ANCHORS_JSON[actor];
-    if (!actorData || !actorData.states[state]) return null;
-    
-    const stateData = actorData.states[state];
-    const frames = stateData.frames || [];
-    const frameIdx = Math.min(frameIndex, frames.length - 1);
-    const frame = frames[frameIdx] || frames[frames.length - 1] || {};
-    
-    // Determine frame size
-    let frameSize = frame.frameSize || stateData.frameSize || actorData.baseFrameSize;
-    
-    return {
-        width: frameSize.w * ANCHORS_JSON.scale,
-        height: frameSize.h * ANCHORS_JSON.scale,
-        spriteOffset: frame.spriteOffset || { x: 0, y: 0 },
-        mouth: frame.mouth || (frames[0] && frames[0].mouth),
-        tail: frame.tail || (frames[0] && frames[0].tail)
-    };
-}
-
-// Apply sprite background position
-function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
-    const frameInfo = getFrameInfo(actor, state, frameIndex);
-    if (!frameInfo) return;
-    
-    const actorData = ANCHORS_JSON[actor];
-    const scale = ANCHORS_JSON.scale;
-    
-    // Set element size
-    element.style.width = frameInfo.width + 'px';
-    element.style.height = frameInfo.height + 'px';
-    
-    // Set background image
-    element.style.backgroundImage = `url('${actorData.spriteSheet.src}')`;
-    
-    // Calculate background size (scale the entire sprite sheet)
-    const bgWidth = actorData.spriteSheet.w * scale;
-    const bgHeight = actorData.spriteSheet.h * scale;
-    element.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-    
-    // Calculate background position
-    const offsetX = frameInfo.spriteOffset.x * scale;
-    const offsetY = frameInfo.spriteOffset.y * scale;
-    element.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
-    
-    // Handle flipping
-    element.style.transform = facing === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
-}
+// Sprite functions (getFrameInfo, applySpriteFrame) loaded from dragon-sprites.js
 
 // Update player
 function updatePlayer(dt) {
@@ -789,17 +612,15 @@ function updatePlayer(dt) {
     if (p.invulnerable > 0) p.invulnerable -= dt;
     if (p.fireCooldown > 0) p.fireCooldown -= dt;
     
-    // Movement
+    // Movement - can move while attacking or firing
     p.vx = 0;
-    if (!p.attacking && !p.fireState) {
-        if (game.keys.left && !game.keys.right) {
-            p.vx = -speed;
-            p.facing = 'left';
-        }
-        if (game.keys.right && !game.keys.left) {
-            p.vx = speed;
-            p.facing = 'right';
-        }
+    if (game.keys.left && !game.keys.right) {
+        p.vx = -speed;
+        p.facing = 'left';
+    }
+    if (game.keys.right && !game.keys.left) {
+        p.vx = speed;
+        p.facing = 'right';
     }
     
     // Gravity
@@ -961,7 +782,8 @@ function updatePlayer(dt) {
     
     p.x = Math.max(0, finalX);
     
-    // State determination
+    // State determination - prioritize actions over movement
+    // Jump state removed - use current action while in air
     let newState = 'stand';
     if (p.hurtTime > 0) {
         newState = 'hurt';
@@ -971,13 +793,12 @@ function updatePlayer(dt) {
         newState = 'fire_beam';
     } else if (p.attacking) {
         newState = p.attackType;
-    } else if (!p.grounded) {
-        newState = 'jump';
     } else if (isDucking) {
         newState = 'duck';
     } else if (Math.abs(p.vx) > 0) {
         newState = 'walk';
     }
+    // Note: No separate jump state - actions (punch, kick, etc) continue while airborne
     
     // Frame animation
     if (newState !== p.state) {
@@ -1521,10 +1342,31 @@ function render() {
         }
     }
     
-    // Update fire beam position if active
+    // Update fire beam position if active - follows player movement
     const fireBeam = document.getElementById('player-fire-beam');
-    if (fireBeam && fireBeam._worldX !== undefined) {
-        fireBeam.style.left = (fireBeam._worldX - cam.x) + 'px';
+    if (fireBeam) {
+        // Recalculate position based on current player position
+        const beamWidth = 216;
+        const beamHeight = 102;
+        const mouthY = p.y + GAME_CONFIG.fire.mouthOffset.fromTop;
+        const mouthXOffset = GAME_CONFIG.fire.mouthOffset.fromRight;
+        
+        let mouthX;
+        if (p.facing === 'right') {
+            mouthX = p.x + p.width + mouthXOffset;
+            fireBeam.style.left = (mouthX - cam.x) + 'px';
+            fireBeam.style.transform = 'scaleX(1)';
+        } else {
+            mouthX = p.x - mouthXOffset;
+            fireBeam.style.left = (mouthX - beamWidth - cam.x) + 'px';
+            fireBeam.style.transform = 'scaleX(-1)';
+        }
+        
+        fireBeam.style.bottom = (window.innerHeight * 0.9 - mouthY - beamHeight/2) + 'px';
+        
+        // Update world position for collision detection
+        fireBeam._worldX = p.facing === 'right' ? mouthX : mouthX - beamWidth;
+        fireBeam._worldY = mouthY - beamHeight/2;
         
         // Animate fire beam frames
         const dt = game.fixedDeltaMs / 1000;
