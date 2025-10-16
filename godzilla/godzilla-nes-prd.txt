@@ -1,0 +1,223 @@
+Build a DOM-based 2D side-scroller (NES style) using vanilla HTML/CSS/JS. Use DOM elements for sprites (no Canvas) so I can read data-attributes to drive my own sprites.
+
+PRIMARY GOALS: floaty, variable-height jump with coyote (120ms) and jump buffer (120ms), swept AABB collisions, capped enemies (≤5 on screen; obstacles excluded), and a boss triggered by a DISTANCE GATE (not time). Typical play reaches the gate in ~2:00 at defaults.
+
+SPRITES & SCALE
+- dragon1.png (player): standing frame 71×64 px, displayed at 2× scale (142×128). Frames vary (punch upper +14 px; crouch tail-swipe ranges 90×49 → 40×49). Fire frames included.
+- dragon2.png (boss): flight frames 120×110 → 120×50; lightning sprites included.
+- Use `image-rendering: pixelated`.
+
+DOM & DATA-ATTRIBUTES (UPDATE EVERY FRAME)
+- #dragon1: data-upper, data-lower, data-facing, data-frame, data-attack, data-can-fire.
+- #dragon2: data-state, data-frame, data-attack.
+- Each enemy/projectile/obstacle: data-type, data-frame, data-active.
+- Provide an upper-body overlay for Dragon1 so punching swaps torso while legs keep walking.
+
+CONTROLS
+- Arrows: left/right move, up = jump (single, variable height), down = duck.
+- Z = punch; X = kick; Space = (ducking) tail spin, else fire (0.5s windup, 1.5s active, 7s cooldown).
+- Actions can STACK (jump+punch/kick/fire); don’t cancel each other.
+
+PHYSICS (FLOATY)
+- Compute gravity/jumpVel from: target jump apex = 0.75 × current on-screen Dragon1 height (default 128 px → apex ≈ 96 px), timeToApexMs = 450.
+- Variable jump (release to cut), coyote=120ms, jumpBuffer=120ms, terminal fall clamp, mid-air direction change OK.
+- Fixed-step 60Hz simulation via rAF accumulator. World units in px.
+
+COLLISIONS & ATTACKS
+- Use SWEPT AABB for terrain/enemies/projectiles.
+- Distinct hurtbox for Dragon1 (shrinks while ducking).
+- Attack hitboxes:
+  - Punch: frames 2–3/4, reach ≈0.6× body length, damage 1 blow.
+  - Kick: frames 2–4/4, reach ≈0.8× body length, damage 2 blows.
+  - Tail spin: ~500ms active, two side hitboxes, NO i-frames, damage 3 blows total (spread across active frames).
+  - Fire beam (Dragon1): unscaled 108×51 px (scaled 2× → 216×102). Origin (right-facing): start 12 px from TOP-RIGHT of sprite (scaled 2× → 24 px); extend beam forward. Mirror when facing left. Apply continuous ticks every 300ms up to 5 blows total per activation.
+- **Contact priority**: If the player is in an ACTIVE attack frame (punch/kick/tail/fire), enemy contact does NOT damage the player; otherwise, contact damages the player per enemy rules.
+
+ENEMIES, DAMAGE & HP
+- Player HP=50; Boss HP=50.
+- Birds HP=1 (contact deals 1 dmg), Tanks HP=2 (bullets deal 2 dmg).
+- Rocks: ANY attack (punch/kick/tail/fire) destroys; they cause no damage but block movement.
+- Boss: body push deals 1 dmg + knockback; lightning cooldown ≥3.0s, deals 4 dmg.
+- Fire settings configurable: windup 500ms, active 1500ms, cooldown 7000ms, tick 300ms, 5 blows max/use.
+
+SPAWN/PACING
+- Max non-boss enemies on screen: 5 (obstacles excluded).
+- Minimum horizontal gap between enemies ≥ current Dragon1 width (dynamic by state).
+- Use schedule tuned for ~2:00 to reach gate: 
+  - 0–20s: Rocks 5–6s; Birds 6–7s; max 3 enemies.
+  - 20–80s: Rocks 5–6s; Birds 5–6s; Tanks 9–10s; max 4.
+  - 80–110s: Rocks 6s; Birds 4–5s; Tanks 7–8s; max 5.
+  - Stop standard spawns once the boss gate is visible.
+- Spawn just off-screen ahead, respecting spacing and non-overlap.
+
+BOSS GATE (DISTANCE TRIGGER)
+- Level length: set `gateX ≈ 15500 px`. The boss triggers ONLY when Dragon1’s x ≥ gateX. Time alone doesn’t trigger.
+
+CAMERA & LEVEL
+- Start with player at far-left; once player reaches mid-screen, keep centered with slight look-ahead.
+- Parallax: far mountains 0.3×, near 0.6×; stars/moon static; ground band ≤10% height.
+
+HUD & MENUS
+- Start/Restart screen with Start + Controls.
+- Top-left: Player life and Fire cooldown bars.
+- Top-right: Boss life bar (boss phase only).
+- Win: boss falls + “You win!”; Lose: “You lose! Retry?”
+
+CONFIG SURFACE (EXPOSED OBJECT)
+- Provide a `GAME_CONFIG` with:
+  - level: { gateX: 15500, groundBandPct: 0.10 }
+  - speed: { min:110, base:130, max:150, ramp:{ enabled:true, early:+0, mid:+10, late:+20 } }
+  - physics: { targetApexFactor:0.75, timeToApexMs:450, coyoteMs:120, jumpBufferMs:120, terminalVy:1400 }
+  - fire: { windupMs:500, activeMs:1500, cooldownMs:7000, tickMs:300, beamSize:{w:108,h:51}, mouthOffset:{fromTop:12, fromRight:0}, scale:2 }
+  - tail: { risePx:35, scale:2, activeMs:500 }
+  - hp: { player:50, boss:50, bird:1, tank:2, rock:1 }
+  - damage: { punch:1, kick:2, tail:3, fire:5, birdContact:1, tankBullet:2, bossBody:1, bossLightning:4 }
+  - spawn: { maxEnemies:5, minSpacingRule:'dragonWidth', schedule:[…] }
+  - camera: { lookAheadPx:80 }
+- Derive gravity/jumpVel from the target apex and time-to-apex given current scaled height.
+- Implement a debug overlay to toggle hitboxes/anchors/cooldowns and log acceptance checks (apex, spacing, enemy count, lightning interval).
+
+ANCHORS_JSON (strict JSON; engine must parse and use):
+{
+  "scale": 2,
+  "dragon1": {
+    "baseFrameSize": { "w": 71, "h": 64 },
+    "fire": {
+      "beamSize": { "w": 108, "h": 51 },
+      "tickMs": 300
+    },
+    "tail": { "risePx": 35 },
+    "states": {
+      "stand": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "walk": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "punch": {
+        "frameSize": { "w": 71, "h": 78 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "kick": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "duck": {
+        "frameSize": { "w": 90, "h": 49 },
+        "frames": [
+          { "frameSize": { "w": 90, "h": 49 }, "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "frameSize": { "w": 70, "h": 49 }, "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "frameSize": { "w": 55, "h": 49 }, "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+          { "frameSize": { "w": 40, "h": 49 }, "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "jump": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "hurt": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+        ]
+      },
+      "fire_windup": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 } }
+        ]
+      },
+      "fire_beam": {
+        "frameSize": { "w": 71, "h": 64 },
+        "frames": [
+          { "mouth": { "fromTop": 12, "fromRight": 0 } },
+          { "mouth": { "fromTop": 12, "fromRight": 0 } }
+        ]
+      }
+    }
+  },
+  "dragon2": {
+    "baseFrameSize": { "w": 120, "h": 110 },
+    "lightning": {
+      "boltSize": { "w": 80, "h": 24 },
+      "mouth": { "fromTop": 16, "fromRight": 4 },
+      "cooldownMs": 3000
+    },
+    "states": {
+      "fly": {
+        "frameSize": { "w": 120, "h": 110 },
+        "frames": [
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 17, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 17, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 17, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 16, "fromRight": 4 } },
+          { "mouth": { "fromTop": 17, "fromRight": 4 } }
+        ]
+      },
+      "hurt": {
+        "frameSize": { "w": 120, "h": 110 },
+        "frames": [
+          { "mouth": { "fromTop": 16, "fromRight": 4 } }
+        ]
+      },
+      "dead": {
+        "frameSize": { "w": 120, "h": 110 },
+        "frames": [
+          { "mouth": { "fromTop": 16, "fromRight": 4 } }
+        ]
+      }
+    }
+  }
+}
+
+- Parse ANCHORS_JSON as a configuration object. All coordinates are unscaled sprite pixels; multiply by scale to get on-screen pixels.
+- When facing='right', fromRight means x = frameWidth - fromRight. When facing='left', mirror horizontally: treat fromRight as distance from the left edge (i.e., x = fromRight). Use fromTop/fromBottom similarly for y.
+- Frame sizing: use frameSize on the frame if present; else fall back to the state’s frameSize; else the actor’s baseFrameSize.
+- Anchor resolution order per point (mouth, tail): frame override → state default (frame 0) → actor defaults (if any).
+- Fire beam rect (dragon1): use dragon1.fire.beamSize for the beam’s width/height; position its origin at the mouth anchor; multiply by scale.
+- Tail sweep (dragon1): use the tail anchor as base and give the sweep a vertical reach of tail.risePx × scale.
+- If a state plays more frames than listed, repeat the last frame’s anchors.
+- All values are integers in JSON; engine can round after scaling.
+
+
+ACCEPTANCE TESTS (IN CODE / DEBUG)
+1) Variable-height jump works; apex ≈ 0.75×height ±5px; coyote and buffer ≈120±10ms.
+2) Swept AABB prevents tunneling ≥400 px/s; all attacks/projectiles register hits.
+3) Contact priority works: active attack negates contact damage; otherwise contact applies per enemy.
+4) ≤5 enemies on screen; inter-enemy spacing ≥ current Dragon1 width; no new spawns after gate; boss lightning ≥3.0s.
+5) Fire/tail anchors respect offsets and 2× scale; fire ticks continuously (max 5 blows).

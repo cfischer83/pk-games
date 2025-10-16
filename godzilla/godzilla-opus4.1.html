@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Side-Scroller</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    font-family: monospace;
+    background: #000;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(to bottom, #001122 0%, #112244 70%, #223355 100%);
+}
+
+#viewport {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.parallax-layer {
+    position: absolute;
+    width: 300%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+#stars {
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQIHWNgYGD4z8DAwMAAAAAA//8DABuFAnoAAAAASUVORK5CYII=') repeat;
+    opacity: 0.7;
+}
+
+#far-mountains {
+    bottom: 10%;
+    height: 40%;
+    background: linear-gradient(to bottom, transparent 0%, #334455 100%);
+}
+
+#near-mountains {
+    bottom: 10%;
+    height: 30%;
+    background: linear-gradient(to bottom, transparent 0%, #445566 100%);
+}
+
+#ground {
+    position: absolute;
+    bottom: 0;
+    width: 300%;
+    height: 10%;
+    background: linear-gradient(to bottom, #332211 0%, #221100 100%);
+    border-top: 2px solid #443322;
+}
+
+#world {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.sprite {
+    position: absolute;
+    image-rendering: pixelated;
+    transform-origin: center bottom;
+    background-repeat: no-repeat;
+}
+
+#dragon1 {
+    z-index: 10;
+}
+
+#dragon1-upper {
+    position: absolute;
+    z-index: 11;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+#dragon2 {
+    z-index: 15;
+}
+
+.enemy {
+    z-index: 8;
+}
+
+.projectile {
+    z-index: 9;
+}
+
+.obstacle {
+    z-index: 7;
+}
+
+.fire-beam {
+    z-index: 12;
+}
+
+.lightning-bolt {
+    z-index: 13;
+    background: linear-gradient(90deg,
+        rgba(200, 200, 255, 0.9) 0%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(200, 200, 255, 0.9) 100%);
+    box-shadow: 0 0 30px #8888ff, 0 0 60px #6666ff;
+    animation: lightning-flash 0.3s infinite;
+}
+
+@keyframes fire-pulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+}
+
+@keyframes lightning-flash {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+.bird {
+    width: 40px;
+    height: 30px;
+    background: #884422;
+    border-radius: 40% 10% 40% 10%;
+}
+
+.tank {
+    width: 60px;
+    height: 40px;
+    background: #556677;
+    border-radius: 10%;
+}
+
+.rock {
+    width: 50px;
+    height: 50px;
+    background: #665544;
+    border-radius: 30%;
+}
+
+.bullet {
+    width: 12px;
+    height: 6px;
+    background: #ffff00;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ffff00;
+}
+
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.health-bar {
+    display: inline-block;
+    width: 200px;
+    height: 20px;
+    background: #222;
+    border: 2px solid #fff;
+    position: relative;
+}
+
+.health-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #ff0000 0%, #ffff00 100%);
+    transition: width 0.3s;
+}
+
+.cooldown-bar {
+    display: inline-block;
+    width: 150px;
+    height: 15px;
+    background: #222;
+    border: 2px solid #fff;
+    margin-left: 10px;
+    position: relative;
+}
+
+.cooldown-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #0088ff 0%, #00ffff 100%);
+    transition: width 0.1s;
+}
+
+#boss-health {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: none;
+}
+
+#menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 3px solid #fff;
+    padding: 40px;
+    text-align: center;
+    color: #fff;
+    z-index: 200;
+    font-size: 18px;
+}
+
+#menu h1 {
+    font-size: 36px;
+    margin-bottom: 30px;
+    color: #ffcc00;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#menu button {
+    font-size: 24px;
+    padding: 15px 40px;
+    margin: 20px 0;
+    background: linear-gradient(135deg, #ff6600 0%, #ff9900 100%);
+    border: 2px solid #fff;
+    color: #fff;
+    cursor: pointer;
+    font-family: monospace;
+    text-shadow: 1px 1px 2px #000;
+    transition: transform 0.2s;
+}
+
+#menu button:hover {
+    transform: scale(1.1);
+}
+
+.controls {
+    margin-top: 30px;
+    text-align: left;
+    font-size: 14px;
+}
+
+#debug {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    color: #0f0;
+    font-size: 12px;
+    z-index: 150;
+    display: none;
+}
+
+.hitbox {
+    position: absolute;
+    border: 2px solid rgba(255, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 50;
+}
+
+.hurtbox {
+    position: absolute;
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    pointer-events: none;
+    z-index: 50;
+}
+</style>
+</head>
+<body>
+<div id="game-container">
+    <div id="viewport">
+        <div class="parallax-layer" id="stars"></div>
+        <div class="parallax-layer" id="far-mountains"></div>
+        <div class="parallax-layer" id="near-mountains"></div>
+        <div id="ground"></div>
+        <div id="world">
+            <div id="dragon1" class="sprite" 
+                data-upper="stand" 
+                data-lower="stand" 
+                data-facing="right" 
+                data-frame="0" 
+                data-attack="none"
+                data-can-fire="true"></div>
+            <div id="dragon1-upper" class="sprite"></div>
+        </div>
+    </div>
+    
+    <div id="hud">
+        <div>
+            <span style="color: #fff;">HP: </span>
+            <div class="health-bar">
+                <div class="health-fill" id="player-health"></div>
+            </div>
+            <span style="color: #fff; margin-left: 10px;">Fire: </span>
+            <div class="cooldown-bar">
+                <div class="cooldown-fill" id="fire-cooldown"></div>
+            </div>
+        </div>
+        <div id="boss-health">
+            <span style="color: #fff;">BOSS: </span>
+            <div class="health-bar">
+                <div class="health-fill" id="boss-health-fill"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="menu">
+        <h1>DRAGON FIGHTER</h1>
+        <button onclick="startGame()">START GAME</button>
+        <div class="controls">
+            <strong>CONTROLS:</strong><br>
+            Arrow Keys - Move/Jump/Duck<br>
+            Z - Punch<br>
+            X - Kick<br>
+            Space - Fire/Tail Spin<br><br>
+            <strong>TIP:</strong> Jump attacks deal more damage!
+        </div>
+    </div>
+    
+    <div id="debug"></div>
+</div>
+
+<script>
+// Configuration
+const GAME_CONFIG = {
+    level: { 
+        gateX: 15500, 
+        groundBandPct: 0.10 
+    },
+    speed: { 
+        min: 110, 
+        base: 130, 
+        max: 150, 
+        ramp: { 
+            enabled: true, 
+            early: 0, 
+            mid: 10, 
+            late: 20 
+        } 
+    },
+    physics: { 
+        targetApexFactor: 0.75, 
+        timeToApexMs: 450, 
+        coyoteMs: 120, 
+        jumpBufferMs: 120, 
+        terminalVy: 1400 
+    },
+    fire: { 
+        windupMs: 500, 
+        activeMs: 1500, 
+        cooldownMs: 7000, 
+        tickMs: 300, 
+        beamSize: { w: 216, h: 102 }, 
+        mouthOffset: { fromTop: 55, fromRight: 20 }, 
+        scale: 1 
+    },
+    tail: { 
+        risePx: 70, 
+        scale: 1, 
+        activeMs: 500 
+    },
+    hp: { 
+        player: 50, 
+        boss: 50, 
+        bird: 1, 
+        tank: 2, 
+        rock: 1 
+    },
+    damage: { 
+        punch: 1, 
+        kick: 2, 
+        tail: 3, 
+        fire: 5, 
+        birdContact: 1, 
+        tankBullet: 2, 
+        bossBody: 1, 
+        bossLightning: 4 
+    },
+    spawn: { 
+        maxEnemies: 5, 
+        minSpacingRule: 'dragonWidth',
+        schedule: [
+            { start: 0, end: 20, enemies: ['rock', 'bird'], intervals: [6000, 7000], max: 3 },
+            { start: 20, end: 80, enemies: ['rock', 'bird', 'tank'], intervals: [5500, 6000, 9500], max: 4 },
+            { start: 80, end: 110, enemies: ['rock', 'bird', 'tank'], intervals: [6000, 4500, 7500], max: 5 }
+        ]
+    },
+    camera: { 
+        lookAheadPx: 80 
+    }
+};
+
+// Anchors JSON
+const ANCHORS_JSON = {
+    "scale": 1,
+    "dragon1": {
+        "spriteSheet": { "w": 1128, "h": 670, "src": "dragon1.png" },
+        "baseFrameSize": { "w": 142, "h": 128 },
+        "fire": {
+            "beamSize": { "w": 216, "h": 102 },
+            "tickMs": 300
+        },
+        "tail": { "risePx": 70 },
+        "states": {
+            "stand": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "walk": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 164, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 324, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 480, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 8, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 158, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 314, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 468, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "punch": {
+                "frameSize": { "w": 142, "h": 156 },
+                "frames": [
+                    { "spriteOffset": { "x": 643, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 755, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 874, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 986, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "kick": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "duck": {
+                "frameSize": { "w": 180, "h": 98 },
+                "frames": [
+                    { "frameSize": { "w": 180, "h": 98 }, "spriteOffset": { "x": 0, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "frameSize": { "w": 140, "h": 98 }, "spriteOffset": { "x": 180, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "frameSize": { "w": 110, "h": 98 }, "spriteOffset": { "x": 320, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "frameSize": { "w": 80, "h": 98 }, "spriteOffset": { "x": 430, "y": 540 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "jump": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 638 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "hurt": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 148, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 284, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                ]
+            },
+            "fire_windup": {
+                "frameSize": { "w": 130, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 589, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 731, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 871, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 1003, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            },
+            "fire_beam": {
+                "frameSize": { "w": 154, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 5, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 165, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            }
+        }
+    },
+    "dragon2": {
+        "spriteSheet": { "w": 758, "h": 1336, "src": "dragon2.png" },
+        "baseFrameSize": { "w": 240, "h": 220 },
+        "lightning": {
+            "boltSize": { "w": 160, "h": 48 },
+            "mouth": { "fromTop": 32, "fromRight": 8 },
+            "cooldownMs": 3000
+        },
+        "states": {
+            "fly": {
+                "frameSize": { "w": 240, "h": 220 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 0 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 240, "y": 0 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 480, "y": 0 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 0, "y": 220 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 240, "y": 220 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 480, "y": 220 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 0, "y": 440 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 240, "y": 440 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 480, "y": 440 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 0, "y": 660 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 240, "y": 660 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 480, "y": 660 }, "mouth": { "fromTop": 34, "fromRight": 8 } }
+                ]
+            },
+            "hurt": {
+                "frameSize": { "w": 240, "h": 220 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                ]
+            },
+            "dead": {
+                "frameSize": { "w": 240, "h": 220 },
+                "frames": [
+                    { "spriteOffset": { "x": 240, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                ]
+            }
+        }
+    }
+};
+
+// Game state
+let game = {
+    running: false,
+    won: false,
+    lost: false,
+    time: 0,
+    lastTime: 0,
+    accumulator: 0,
+    fixedDeltaMs: 1000 / 60,
+    
+    player: {
+        x: 100,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        width: 142,
+        height: 128,
+        facing: 'right',
+        grounded: false,
+        hp: GAME_CONFIG.hp.player,
+        maxHp: GAME_CONFIG.hp.player,
+        
+        state: 'stand',
+        stateTime: 0,
+        frame: 0,
+        frameTime: 0,
+        
+        jumping: false,
+        jumpHeld: false,
+        coyoteTime: 0,
+        jumpBufferTime: 0,
+        
+        attacking: false,
+        attackType: null,
+        attackFrame: 0,
+        attackTime: 0,
+        
+        fireState: null,
+        fireTime: 0,
+        fireCooldown: 0,
+        fireTickTime: 0,
+        fireDamageCount: 0,
+        
+        tailActive: false,
+        tailTime: 0,
+        
+        hurtTime: 0,
+        invulnerable: 0
+    },
+    
+    boss: null,
+    enemies: [],
+    projectiles: [],
+    obstacles: [],
+    
+    camera: {
+        x: 0,
+        y: 0
+    },
+    
+    spawn: {
+        timers: {},
+        gateReached: false
+    },
+    
+    keys: {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        z: false,
+        x: false,
+        space: false
+    },
+    
+    debug: true
+};
+
+// Physics calculations
+function calculatePhysics() {
+    const scale = ANCHORS_JSON.scale;
+    const playerHeight = 128 * scale; // Base height (already scaled in sprite sheet)
+    const targetApex = playerHeight * GAME_CONFIG.physics.targetApexFactor;
+    const timeToApex = GAME_CONFIG.physics.timeToApexMs / 1000;
+    
+    // v = u + at, at apex v = 0, so u = -at = gt
+    // s = ut + 0.5at^2, so apex = gt^2 - 0.5gt^2 = 0.5gt^2
+    // Therefore g = 2*apex/t^2
+    const gravity = (2 * targetApex) / (timeToApex * timeToApex);
+    const jumpVel = gravity * timeToApex;
+    
+    return { gravity, jumpVel, targetApex };
+}
+
+const physics = calculatePhysics();
+
+// Input handling
+document.addEventListener('keydown', (e) => {
+    switch(e.key.toLowerCase()) {
+        case 'arrowleft': game.keys.left = true; e.preventDefault(); break;
+        case 'arrowright': game.keys.right = true; e.preventDefault(); break;
+        case 'arrowup': game.keys.up = true; e.preventDefault(); break;
+        case 'arrowdown': game.keys.down = true; e.preventDefault(); break;
+        case 'z': game.keys.z = true; e.preventDefault(); break;
+        case 'x': game.keys.x = true; e.preventDefault(); break;
+        case ' ': game.keys.space = true; e.preventDefault(); break;
+        case 'd': game.debug = !game.debug; toggleDebug(); break;
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    switch(e.key.toLowerCase()) {
+        case 'arrowleft': game.keys.left = false; break;
+        case 'arrowright': game.keys.right = false; break;
+        case 'arrowup': game.keys.up = false; break;
+        case 'arrowdown': game.keys.down = false; break;
+        case 'z': game.keys.z = false; break;
+        case 'x': game.keys.x = false; break;
+        case ' ': game.keys.space = false; break;
+    }
+});
+
+// AABB collision
+function aabbIntersects(a, b) {
+    return a.x < b.x + b.width &&
+           a.x + a.width > b.x &&
+           a.y < b.y + b.height &&
+           a.y + a.height > b.y;
+}
+
+// Swept AABB
+function sweptAABB(box, vel, obstacle, dt) {
+    if (vel.x === 0 && vel.y === 0) {
+        return { hit: false, time: 1, normal: { x: 0, y: 0 } };
+    }
+    
+    const expandedBox = {
+        x: obstacle.x - box.width / 2,
+        y: obstacle.y - box.height / 2,
+        width: obstacle.width + box.width,
+        height: obstacle.height + box.height
+    };
+    
+    const ray = {
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+        dx: vel.x * dt,
+        dy: vel.y * dt
+    };
+    
+    let tmin = 0;
+    let tmax = 1;
+    let normal = { x: 0, y: 0 };
+    
+    // X axis
+    if (ray.dx !== 0) {
+        const t1 = (expandedBox.x - ray.x) / ray.dx;
+        const t2 = (expandedBox.x + expandedBox.width - ray.x) / ray.dx;
+        
+        const txmin = Math.min(t1, t2);
+        const txmax = Math.max(t1, t2);
+        
+        if (txmin > tmin) {
+            tmin = txmin;
+            normal = { x: ray.dx > 0 ? -1 : 1, y: 0 };
+        }
+        tmax = Math.min(tmax, txmax);
+    }
+    
+    // Y axis
+    if (ray.dy !== 0) {
+        const t1 = (expandedBox.y - ray.y) / ray.dy;
+        const t2 = (expandedBox.y + expandedBox.height - ray.y) / ray.dy;
+        
+        const tymin = Math.min(t1, t2);
+        const tymax = Math.max(t1, t2);
+        
+        if (tymin > tmin) {
+            tmin = tymin;
+            normal = { x: 0, y: ray.dy > 0 ? -1 : 1 };
+        }
+        tmax = Math.min(tmax, tymax);
+    }
+    
+    if (tmax < tmin || tmin < 0 || tmin > 1) {
+        return { hit: false, time: 1, normal: { x: 0, y: 0 } };
+    }
+    
+    return { hit: true, time: tmin, normal };
+}
+
+// Get current frame info
+function getFrameInfo(actor, state, frameIndex) {
+    const actorData = ANCHORS_JSON[actor];
+    if (!actorData || !actorData.states[state]) return null;
+    
+    const stateData = actorData.states[state];
+    const frames = stateData.frames || [];
+    const frameIdx = Math.min(frameIndex, frames.length - 1);
+    const frame = frames[frameIdx] || frames[frames.length - 1] || {};
+    
+    // Determine frame size
+    let frameSize = frame.frameSize || stateData.frameSize || actorData.baseFrameSize;
+    
+    return {
+        width: frameSize.w * ANCHORS_JSON.scale,
+        height: frameSize.h * ANCHORS_JSON.scale,
+        spriteOffset: frame.spriteOffset || { x: 0, y: 0 },
+        mouth: frame.mouth || (frames[0] && frames[0].mouth),
+        tail: frame.tail || (frames[0] && frames[0].tail)
+    };
+}
+
+// Apply sprite background position
+function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
+    const frameInfo = getFrameInfo(actor, state, frameIndex);
+    if (!frameInfo) return;
+    
+    const actorData = ANCHORS_JSON[actor];
+    const scale = ANCHORS_JSON.scale;
+    
+    // Set element size
+    element.style.width = frameInfo.width + 'px';
+    element.style.height = frameInfo.height + 'px';
+    
+    // Set background image
+    element.style.backgroundImage = `url('${actorData.spriteSheet.src}')`;
+    
+    // Calculate background size (scale the entire sprite sheet)
+    const bgWidth = actorData.spriteSheet.w * scale;
+    const bgHeight = actorData.spriteSheet.h * scale;
+    element.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    
+    // Calculate background position
+    const offsetX = frameInfo.spriteOffset.x * scale;
+    const offsetY = frameInfo.spriteOffset.y * scale;
+    element.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
+    
+    // Handle flipping
+    element.style.transform = facing === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
+}
+
+// Update player
+function updatePlayer(dt) {
+    const p = game.player;
+    const speed = GAME_CONFIG.speed.base;
+    
+    // Update timers
+    p.stateTime += dt;
+    p.frameTime += dt;
+    if (p.hurtTime > 0) p.hurtTime -= dt;
+    if (p.invulnerable > 0) p.invulnerable -= dt;
+    if (p.fireCooldown > 0) p.fireCooldown -= dt;
+    
+    // Movement
+    p.vx = 0;
+    if (!p.attacking && !p.fireState) {
+        if (game.keys.left && !game.keys.right) {
+            p.vx = -speed;
+            p.facing = 'left';
+        }
+        if (game.keys.right && !game.keys.left) {
+            p.vx = speed;
+            p.facing = 'right';
+        }
+    }
+    
+    // Gravity
+    p.vy += physics.gravity * dt;
+    p.vy = Math.min(p.vy, GAME_CONFIG.physics.terminalVy);
+    
+    // Jump with coyote time and buffer
+    if (p.grounded) {
+        p.coyoteTime = GAME_CONFIG.physics.coyoteMs / 1000;
+        p.jumping = false;
+    } else if (p.coyoteTime > 0) {
+        p.coyoteTime -= dt;
+    }
+    
+    if (game.keys.up) {
+        if (!p.jumpHeld) {
+            p.jumpBufferTime = GAME_CONFIG.physics.jumpBufferMs / 1000;
+        }
+        p.jumpHeld = true;
+    } else {
+        p.jumpHeld = false;
+        if (p.jumping && p.vy < 0) {
+            p.vy *= 0.5; // Cut jump when released
+        }
+    }
+    
+    if (p.jumpBufferTime > 0) {
+        p.jumpBufferTime -= dt;
+        if (p.coyoteTime > 0 && !p.jumping) {
+            p.vy = -physics.jumpVel;
+            p.jumping = true;
+            p.jumpBufferTime = 0;
+        }
+    }
+    
+    // Ducking
+    const wasDucking = p.state === 'duck';
+    const isDucking = game.keys.down && p.grounded && !p.attacking;
+    
+    // Attack handling
+    if (!p.attacking && !p.fireState && !p.tailActive) {
+        if (game.keys.z) {
+            p.attacking = true;
+            p.attackType = 'punch';
+            p.attackFrame = 0;
+            p.attackTime = 0;
+        } else if (game.keys.x) {
+            p.attacking = true;
+            p.attackType = 'kick';
+            p.attackFrame = 0;
+            p.attackTime = 0;
+        } else if (game.keys.space) {
+            if (isDucking) {
+                p.tailActive = true;
+                p.tailTime = 0;
+            } else if (p.fireCooldown <= 0) {
+                p.fireState = 'windup';
+                p.fireTime = 0;
+                p.fireTickTime = 0;
+                p.fireDamageCount = 0;
+            }
+        }
+    }
+    
+    // Update attack states
+    if (p.attacking) {
+        p.attackTime += dt;
+        const frameDuration = 0.1;
+        p.attackFrame = Math.floor(p.attackTime / frameDuration);
+        
+        if (p.attackFrame >= 4) {
+            p.attacking = false;
+            p.attackType = null;
+        }
+    }
+    
+    if (p.tailActive) {
+        p.tailTime += dt;
+        if (p.tailTime >= GAME_CONFIG.tail.activeMs / 1000) {
+            p.tailActive = false;
+        }
+    }
+    
+    if (p.fireState) {
+        p.fireTime += dt;
+        
+        if (p.fireState === 'windup') {
+            if (p.fireTime >= GAME_CONFIG.fire.windupMs / 1000) {
+                p.fireState = 'beam';
+                p.fireTime = 0;
+                createFireBeam();
+            }
+        } else if (p.fireState === 'beam') {
+            p.fireTickTime += dt;
+            
+            if (p.fireTickTime >= GAME_CONFIG.fire.tickMs / 1000) {
+                p.fireTickTime = 0;
+                if (p.fireDamageCount < 5) {
+                    applyFireDamage();
+                    p.fireDamageCount++;
+                }
+            }
+            
+            if (p.fireTime >= GAME_CONFIG.fire.activeMs / 1000) {
+                p.fireState = null;
+                p.fireCooldown = GAME_CONFIG.fire.cooldownMs / 1000;
+                removeFireBeam();
+            }
+        }
+    }
+    
+    // Movement with swept AABB
+    const groundY = window.innerHeight * 0.9;
+    const nextX = p.x + p.vx * dt;
+    const nextY = p.y + p.vy * dt;
+    
+    // Get current size
+    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+    if (frameInfo) {
+        p.width = frameInfo.width;
+        p.height = frameInfo.height;
+    }
+    
+    // Ground collision
+    if (nextY + p.height >= groundY) {
+        p.y = groundY - p.height;
+        p.vy = 0;
+        p.grounded = true;
+    } else {
+        p.y = nextY;
+        p.grounded = false;
+    }
+    
+    // Check rock collisions for movement blocking
+    let finalX = nextX;
+    const nextPlayerBox = {
+        x: nextX,
+        y: p.y,
+        width: p.width,
+        height: p.height
+    };
+    
+    for (let enemy of game.enemies) {
+        if (enemy.type === 'rock') {
+            const rockBox = {
+                x: enemy.x,
+                y: enemy.y,
+                width: enemy.width,
+                height: enemy.height
+            };
+            
+            if (aabbIntersects(nextPlayerBox, rockBox)) {
+                // Block movement - keep player at current position
+                finalX = p.x;
+                break;
+            }
+        }
+    }
+    
+    p.x = Math.max(0, finalX);
+    
+    // State determination
+    let newState = 'stand';
+    if (p.hurtTime > 0) {
+        newState = 'hurt';
+    } else if (p.fireState === 'windup') {
+        newState = 'fire_windup';
+    } else if (p.fireState === 'beam') {
+        newState = 'fire_beam';
+    } else if (p.attacking) {
+        newState = p.attackType;
+    } else if (!p.grounded) {
+        newState = 'jump';
+    } else if (isDucking) {
+        newState = 'duck';
+    } else if (Math.abs(p.vx) > 0) {
+        newState = 'walk';
+    }
+    
+    // Frame animation
+    if (newState !== p.state) {
+        p.state = newState;
+        p.frame = 0;
+        p.frameTime = 0;
+    } else if (p.frameTime > 0.1) {
+        p.frameTime = 0;
+        
+        // Get the number of frames for this state
+        const actorData = ANCHORS_JSON['dragon1'];
+        const stateData = actorData?.states[p.state];
+        const frameCount = stateData?.frames?.length || 1;
+        
+        // Loop back to frame 0 after the last frame
+        p.frame = (p.frame + 1) % frameCount;
+    }
+    
+    // Update data attributes
+    const dragon1El = document.getElementById('dragon1');
+    dragon1El.setAttribute('data-upper', p.attacking ? p.attackType : p.state);
+    dragon1El.setAttribute('data-lower', p.state);
+    dragon1El.setAttribute('data-facing', p.facing);
+    dragon1El.setAttribute('data-frame', p.frame);
+    dragon1El.setAttribute('data-attack', p.attackType || 'none');
+    dragon1El.setAttribute('data-can-fire', p.fireCooldown <= 0 ? 'true' : 'false');
+}
+
+// Create fire beam
+function createFireBeam() {
+    const p = game.player;
+    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+    if (!frameInfo || !frameInfo.mouth) return;
+    
+    const scale = ANCHORS_JSON.scale;
+    const actorData = ANCHORS_JSON.dragon1;
+    const beam = document.createElement('div');
+    beam.className = 'fire-beam projectile sprite';
+    beam.id = 'player-fire-beam';
+    
+    const beamWidth = actorData.fire.beamSize.w * scale;
+    const beamHeight = actorData.fire.beamSize.h * scale;
+    
+    beam.style.width = beamWidth + 'px';
+    beam.style.height = beamHeight + 'px';
+    
+    // Apply sprite from dragon1.png
+    beam.style.backgroundImage = `url('${actorData.spriteSheet.src}')`;
+    const bgWidth = actorData.spriteSheet.w * scale;
+    const bgHeight = actorData.spriteSheet.h * scale;
+    beam.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    beam.style.imageRendering = 'pixelated';
+    
+    // Initialize beam animation
+    beam._frame = 0;
+    beam._frameTime = 0;
+    beam._totalFrames = 4; // Fire beam has 4 frames
+    
+    // Position based on mouth anchor
+    const mouthY = p.y + GAME_CONFIG.fire.mouthOffset.fromTop;
+    let mouthX;
+	let mouthXOffset = GAME_CONFIG.fire.mouthOffset.fromRight;
+    
+    if (p.facing === 'right') {
+        // Mouth is fromTop from top, fromRight from right edge
+        mouthX = p.x + p.width + mouthXOffset - (frameInfo.mouth.fromRight * scale);
+        beam.style.left = (mouthX - game.camera.x) + 'px';
+        beam.style.transform = 'scaleX(1)';
+    } else {
+        // When facing left, mouth position is mirrored
+        mouthX = p.x + (frameInfo.mouth.fromRight * scale);
+        beam.style.left = (mouthX - beamWidth - game.camera.x) + 'px';
+        beam.style.transform = 'scaleX(-1)';
+    }
+    
+    beam.style.bottom = (window.innerHeight * 0.9 - mouthY - beamHeight/2) + 'px';
+    
+    beam.setAttribute('data-type', 'fire');
+    beam.setAttribute('data-frame', '0');
+    beam.setAttribute('data-active', 'true');
+    
+    document.getElementById('world').appendChild(beam);
+    
+    // Store the beam's world position for collision detection
+    beam._worldX = p.facing === 'right' ? mouthX : mouthX - beamWidth;
+    beam._worldY = mouthY - beamHeight/2;
+    
+    // Set initial frame
+    updateFireBeamFrame(beam);
+}
+
+function removeFireBeam() {
+    const beam = document.getElementById('player-fire-beam');
+    if (beam) beam.remove();
+}
+
+function updateFireBeamFrame(beam) {
+    if (!beam) return;
+    
+    // Fire beam sprite offsets - 4 frames at Y=566, spaced 216px apart horizontally
+    const frameOffsets = [
+        { x: 468, y: 566 },  // Frame 0
+        { x: 688, y: 566 },  // Frame 1 (468 + 216)
+        { x: 468, y: 566 },  // Frame 2 (684 + 216)
+        { x: 688, y: 566 }   // Frame 3 (loop back to frame 0)
+    ];
+    
+    const currentFrame = beam._frame % 4;
+    const offset = frameOffsets[currentFrame];
+    
+    beam.style.backgroundPosition = `-${offset.x}px -${offset.y}px`;
+    beam.setAttribute('data-frame', currentFrame);
+}
+
+function applyFireDamage() {
+    const beam = document.getElementById('player-fire-beam');
+    if (!beam) return;
+    
+    const beamRect = beam.getBoundingClientRect();
+    const beamBox = {
+        x: beamRect.left,
+        y: beamRect.top,
+        width: beamRect.width,
+        height: beamRect.height
+    };
+    
+    // Check enemies
+    game.enemies.forEach(enemy => {
+        const enemyRect = enemy.element.getBoundingClientRect();
+        const enemyBox = {
+            x: enemyRect.left,
+            y: enemyRect.top,
+            width: enemyRect.width,
+            height: enemyRect.height
+        };
+        
+        if (aabbIntersects(beamBox, enemyBox)) {
+            enemy.hp -= 1;
+            if (enemy.hp <= 0) {
+                enemy.dead = true;
+            }
+        }
+    });
+    
+    // Check boss
+    if (game.boss && !game.boss.dead) {
+        const bossRect = document.getElementById('dragon2').getBoundingClientRect();
+        const bossBox = {
+            x: bossRect.left,
+            y: bossRect.top,
+            width: bossRect.width,
+            height: bossRect.height
+        };
+        
+        if (aabbIntersects(beamBox, bossBox)) {
+            game.boss.hp -= 1;
+            game.boss.hurtTime = 0.3;
+        }
+    }
+}
+
+// Spawn enemies
+function spawnEnemy(type) {
+    if (game.enemies.length >= GAME_CONFIG.spawn.maxEnemies) return;
+    if (game.spawn.gateReached) return;
+    
+    const spawnX = game.camera.x + window.innerWidth + 50;
+    const minSpacing = game.player.width;
+    
+    // Check spacing
+    for (let enemy of game.enemies) {
+        if (Math.abs(enemy.x - spawnX) < minSpacing) return;
+    }
+    
+    const enemy = {
+        type: type,
+        x: spawnX,
+        y: window.innerHeight * 0.9 - 60,
+        vx: -50,
+        vy: 0,
+        width: 50,
+        height: 50,
+        hp: GAME_CONFIG.hp[type] || 1,
+        dead: false,
+        element: null
+    };
+    
+    if (type === 'bird') {
+        enemy.width = 40;
+        enemy.height = 30;
+        enemy.y = window.innerHeight * 0.5 + Math.random() * 100;
+        enemy.vx = -80;
+    } else if (type === 'tank') {
+        enemy.width = 60;
+        enemy.height = 40;
+        enemy.shootCooldown = 2;
+    } else if (type === 'rock') {
+        enemy.width = 50;
+        enemy.height = 50;
+        enemy.vx = 0; // Rocks don't move
+        enemy.y = window.innerHeight * 0.9 - 50; // On the ground
+    }
+    
+    // Create element
+    const el = document.createElement('div');
+    el.className = `enemy ${type} sprite`;
+    el.style.width = enemy.width + 'px';
+    el.style.height = enemy.height + 'px';
+    el.setAttribute('data-type', type);
+    el.setAttribute('data-frame', '0');
+    el.setAttribute('data-active', 'true');
+    
+    enemy.element = el;
+    document.getElementById('world').appendChild(el);
+    game.enemies.push(enemy);
+}
+
+// Update enemies
+function updateEnemies(dt) {
+    game.enemies = game.enemies.filter(enemy => {
+        if (enemy.dead) {
+            enemy.element.remove();
+            return false;
+        }
+        
+        // Movement (rocks don't move)
+        if (enemy.type !== 'rock') {
+            enemy.x += enemy.vx * dt;
+        }
+        
+        if (enemy.type === 'bird') {
+            enemy.y += Math.sin(game.time * 3) * 50 * dt;
+        } else if (enemy.type === 'tank') {
+            enemy.shootCooldown -= dt;
+            if (enemy.shootCooldown <= 0) {
+                shootBullet(enemy);
+                enemy.shootCooldown = 2;
+            }
+        }
+        
+        // Check if off-screen
+        if (enemy.x < game.camera.x - 100) {
+            enemy.element.remove();
+            return false;
+        }
+        
+        // Update position
+        enemy.element.style.left = (enemy.x - game.camera.x) + 'px';
+        enemy.element.style.bottom = (window.innerHeight - enemy.y - enemy.height) + 'px';
+        
+        return true;
+    });
+}
+
+function shootBullet(tank) {
+    const bullet = {
+        x: tank.x - 20,
+        y: tank.y + tank.height/2,
+        vx: -200,
+        vy: 0,
+        width: 12,
+        height: 6,
+        element: null
+    };
+    
+    const el = document.createElement('div');
+    el.className = 'bullet projectile sprite';
+    el.setAttribute('data-type', 'bullet');
+    el.setAttribute('data-frame', '0');
+    el.setAttribute('data-active', 'true');
+    
+    bullet.element = el;
+    document.getElementById('world').appendChild(el);
+    game.projectiles.push(bullet);
+}
+
+// Update projectiles
+function updateProjectiles(dt) {
+    game.projectiles = game.projectiles.filter(proj => {
+        proj.x += proj.vx * dt;
+        proj.y += proj.vy * dt;
+        
+        if (proj.x < game.camera.x - 100 || proj.x > game.camera.x + window.innerWidth + 100) {
+            proj.element.remove();
+            return false;
+        }
+        
+        proj.element.style.left = (proj.x - game.camera.x) + 'px';
+        proj.element.style.bottom = (window.innerHeight - proj.y - proj.height) + 'px';
+        
+        return true;
+    });
+}
+
+// Boss logic
+function spawnBoss() {
+    game.boss = {
+        x: game.camera.x + window.innerWidth - 200,
+        y: window.innerHeight * 0.4,
+        vx: 0,
+        vy: 0,
+        width: 240,
+        height: 220,
+        hp: GAME_CONFIG.hp.boss,
+        maxHp: GAME_CONFIG.hp.boss,
+        state: 'fly',
+        frame: 0,
+        frameTime: 0,
+        lightningCooldown: 0,
+        hurtTime: 0,
+        dead: false,
+        pattern: 'hover'
+    };
+    
+    const el = document.createElement('div');
+    el.id = 'dragon2';
+    el.className = 'sprite';
+    el.style.width = game.boss.width + 'px';
+    el.style.height = game.boss.height + 'px';
+    el.setAttribute('data-state', 'fly');
+    el.setAttribute('data-frame', '0');
+    el.setAttribute('data-attack', 'none');
+    
+    document.getElementById('world').appendChild(el);
+    document.getElementById('boss-health').style.display = 'block';
+}
+
+function updateBoss(dt) {
+    if (!game.boss || game.boss.dead) return;
+    
+    const b = game.boss;
+    b.frameTime += dt;
+    
+    if (b.hurtTime > 0) {
+        b.hurtTime -= dt;
+        b.state = 'hurt';
+    } else {
+        b.state = 'fly';
+    }
+    
+    // Movement pattern
+    b.y += Math.sin(game.time * 2) * 30 * dt;
+    b.x += Math.cos(game.time * 1.5) * 20 * dt;
+    
+    // Lightning attack
+    b.lightningCooldown -= dt;
+    if (b.lightningCooldown <= 0) {
+        shootLightning();
+        b.lightningCooldown = ANCHORS_JSON.dragon2.lightning.cooldownMs / 1000;
+    }
+    
+    // Animation
+    if (b.frameTime > 0.1) {
+        b.frameTime = 0;
+        b.frame = (b.frame + 1) % 12;
+    }
+    
+    // Check death
+    if (b.hp <= 0) {
+        b.dead = true;
+        b.state = 'dead';
+        b.vy = 300;
+        gameWin();
+    }
+    
+    // Update element
+    const el = document.getElementById('dragon2');
+    if (el) {
+        applySpriteFrame(el, 'dragon2', b.state, b.frame, 'left');
+        el.style.left = (b.x - game.camera.x) + 'px';
+        el.style.bottom = (window.innerHeight - b.y - b.height) + 'px';
+        el.setAttribute('data-state', b.state);
+        el.setAttribute('data-frame', b.frame);
+    }
+    
+    // Update health bar
+    const healthPct = Math.max(0, b.hp / b.maxHp * 100);
+    document.getElementById('boss-health-fill').style.width = healthPct + '%';
+}
+
+function shootLightning() {
+    const b = game.boss;
+    const bolt = {
+        x: b.x + 50,
+        y: b.y + b.height - 50,
+        vx: game.player.x > b.x ? 300 : -300,
+        vy: 100,
+        width: 160,
+        height: 48,
+        element: null
+    };
+    
+    const el = document.createElement('div');
+    el.className = 'lightning-bolt projectile sprite';
+    el.setAttribute('data-type', 'lightning');
+    el.setAttribute('data-frame', '0');
+    el.setAttribute('data-active', 'true');
+    
+    bolt.element = el;
+    document.getElementById('world').appendChild(el);
+    game.projectiles.push(bolt);
+}
+
+// Collision detection
+function checkCollisions() {
+    const p = game.player;
+    
+    // Get player hitbox/hurtbox
+    const playerBox = {
+        x: p.x,
+        y: p.y,
+        width: p.width,
+        height: p.height
+    };
+    
+    if (p.state === 'duck') {
+        playerBox.height *= 0.75;
+        playerBox.y += p.height * 0.25;
+    }
+    
+    // Check if player is attacking
+    const isAttacking = p.attacking || p.tailActive || p.fireState === 'beam';
+    
+    // Enemy collisions
+    game.enemies.forEach(enemy => {
+        const enemyBox = {
+            x: enemy.x,
+            y: enemy.y,
+            width: enemy.width,
+            height: enemy.height
+        };
+        
+        if (aabbIntersects(playerBox, enemyBox)) {
+            if (enemy.type === 'rock') {
+                // Rocks can be destroyed by any attack, but don't damage player
+                if (isAttacking) {
+                    enemy.dead = true;
+                }
+                // Rocks block movement - this is handled in updatePlayer
+            } else if (isAttacking) {
+                // Attack takes priority - damage enemy
+                if (p.attacking) {
+                    const damage = p.attackType === 'kick' ? 2 : 1;
+                    enemy.hp -= damage;
+                    if (enemy.hp <= 0) enemy.dead = true;
+                } else if (p.tailActive) {
+                    enemy.hp -= 1;
+                    if (enemy.hp <= 0) enemy.dead = true;
+                }
+            } else if (p.invulnerable <= 0) {
+                // Contact damage to player (not rocks)
+                const damage = enemy.type === 'bird' ? 1 : 2;
+                p.hp -= damage;
+                p.hurtTime = 0.5;
+                p.invulnerable = 1;
+            }
+        }
+    });
+    
+    // Projectile collisions
+    game.projectiles.forEach(proj => {
+        const projBox = {
+            x: proj.x,
+            y: proj.y,
+            width: proj.width,
+            height: proj.height
+        };
+        
+        if (aabbIntersects(playerBox, projBox) && p.invulnerable <= 0) {
+            const damage = proj.element.classList.contains('lightning-bolt') ? 4 : 2;
+            p.hp -= damage;
+            p.hurtTime = 0.5;
+            p.invulnerable = 1;
+            proj.element.remove();
+            game.projectiles = game.projectiles.filter(pr => pr !== proj);
+        }
+    });
+    
+    // Boss collision
+    if (game.boss && !game.boss.dead) {
+        const bossBox = {
+            x: game.boss.x,
+            y: game.boss.y,
+            width: game.boss.width,
+            height: game.boss.height
+        };
+        
+        if (aabbIntersects(playerBox, bossBox)) {
+            if (isAttacking && p.attacking) {
+                const damage = p.attackType === 'kick' ? 2 : 1;
+                game.boss.hp -= damage;
+                game.boss.hurtTime = 0.3;
+            } else if (p.invulnerable <= 0) {
+                p.hp -= 1;
+                p.hurtTime = 0.5;
+                p.invulnerable = 1;
+                p.vx = p.x < game.boss.x ? -200 : 200;
+            }
+        }
+    }
+    
+    // Check player death
+    if (p.hp <= 0 && !game.lost) {
+        gameLose();
+    }
+}
+
+// Camera update
+function updateCamera() {
+    const p = game.player;
+    const targetX = Math.max(0, p.x - window.innerWidth/2 + GAME_CONFIG.camera.lookAheadPx);
+    
+    game.camera.x = targetX;
+}
+
+// Render
+function render() {
+    const p = game.player;
+    const cam = game.camera;
+    
+    // Update parallax
+    document.getElementById('far-mountains').style.transform = `translateX(${-cam.x * 0.3}px)`;
+    document.getElementById('near-mountains').style.transform = `translateX(${-cam.x * 0.6}px)`;
+    document.getElementById('ground').style.transform = `translateX(${-cam.x}px)`;
+    
+    // Update player sprite with frame offsets
+    const dragon1 = document.getElementById('dragon1');
+    applySpriteFrame(dragon1, 'dragon1', p.state, p.frame, p.facing);
+    
+    // Position the player
+    dragon1.style.left = (p.x - cam.x) + 'px';
+    dragon1.style.bottom = (window.innerHeight * 0.9 - p.y - p.height) + 'px';
+    
+    // Update boss sprite if exists
+    if (game.boss) {
+        const dragon2 = document.getElementById('dragon2');
+        if (dragon2) {
+            applySpriteFrame(dragon2, 'dragon2', game.boss.state, game.boss.frame, 'left');
+            dragon2.style.left = (game.boss.x - cam.x) + 'px';
+            dragon2.style.bottom = (window.innerHeight - game.boss.y - game.boss.height) + 'px';
+        }
+    }
+    
+    // Update fire beam position if active
+    const fireBeam = document.getElementById('player-fire-beam');
+    if (fireBeam && fireBeam._worldX !== undefined) {
+        fireBeam.style.left = (fireBeam._worldX - cam.x) + 'px';
+        
+        // Animate fire beam frames
+        const dt = game.fixedDeltaMs / 1000;
+        fireBeam._frameTime += dt;
+        if (fireBeam._frameTime >= 0.1) { // Change frame every 100ms
+            fireBeam._frameTime = 0;
+            fireBeam._frame = (fireBeam._frame + 1) % fireBeam._totalFrames;
+            updateFireBeamFrame(fireBeam);
+        }
+    }
+    
+    // Update HUD
+    const healthPct = Math.max(0, p.hp / p.maxHp * 100);
+    document.getElementById('player-health').style.width = healthPct + '%';
+    
+    const cooldownPct = Math.max(0, (1 - p.fireCooldown / (GAME_CONFIG.fire.cooldownMs/1000)) * 100);
+    document.getElementById('fire-cooldown').style.width = cooldownPct + '%';
+}
+
+// Spawn scheduler
+function updateSpawner(dt) {
+    if (game.spawn.gateReached) return;
+    
+    const elapsed = game.time;
+    const schedule = GAME_CONFIG.spawn.schedule;
+    
+    // Find current phase
+    let phase = null;
+    for (let p of schedule) {
+        if (elapsed >= p.start && elapsed < p.end) {
+            phase = p;
+            break;
+        }
+    }
+    
+    if (!phase) return;
+    
+    // Update spawn timers
+    phase.enemies.forEach((type, i) => {
+        const key = `${type}_${i}`;
+        if (!game.spawn.timers[key]) {
+            game.spawn.timers[key] = 0;
+        }
+        
+        game.spawn.timers[key] += dt;
+        
+        const interval = phase.intervals[i] / 1000;
+        if (game.spawn.timers[key] >= interval) {
+            if (game.enemies.length < phase.max) {
+                spawnEnemy(type);
+                game.spawn.timers[key] = 0;
+            }
+        }
+    });
+}
+
+// Main game loop
+function gameLoop(timestamp) {
+    if (!game.running) return;
+    
+    const deltaTime = timestamp - game.lastTime;
+    game.lastTime = timestamp;
+    game.accumulator += deltaTime;
+    
+    // Fixed timestep
+    while (game.accumulator >= game.fixedDeltaMs) {
+        const dt = game.fixedDeltaMs / 1000;
+        game.time += dt;
+        
+        updatePlayer(dt);
+        updateEnemies(dt);
+        updateProjectiles(dt);
+        updateSpawner(dt);
+        
+        // Check boss spawn
+        if (game.player.x >= GAME_CONFIG.level.gateX && !game.boss && !game.spawn.gateReached) {
+            game.spawn.gateReached = true;
+            spawnBoss();
+        }
+        
+        if (game.boss) {
+            updateBoss(dt);
+        }
+        
+        checkCollisions();
+        updateCamera();
+        
+        game.accumulator -= game.fixedDeltaMs;
+    }
+    
+    render();
+    
+    if (game.debug) {
+        updateDebug();
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+    document.getElementById('menu').style.display = 'none';
+    
+    // Reset game state
+    game.running = true;
+    game.won = false;
+    game.lost = false;
+    game.time = 0;
+    game.lastTime = performance.now();
+    game.accumulator = 0;
+    
+    game.player.hp = GAME_CONFIG.hp.player;
+    game.player.x = 100;
+    game.player.y = 0;
+    game.player.vx = 0;
+    game.player.vy = 0;
+    game.player.fireCooldown = 0;
+    
+    game.enemies = [];
+    game.projectiles = [];
+    game.boss = null;
+    game.spawn.gateReached = false;
+    game.spawn.timers = {};
+    
+    // Clear world
+    const world = document.getElementById('world');
+    world.innerHTML = '<div id="dragon1" class="sprite" data-upper="stand" data-lower="stand" data-facing="right" data-frame="0" data-attack="none" data-can-fire="true"></div><div id="dragon1-upper" class="sprite"></div>';
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function gameWin() {
+    game.won = true;
+    game.running = false;
+    
+    const menu = document.getElementById('menu');
+    menu.innerHTML = '<h1>YOU WIN!</h1><button onclick="startGame()">PLAY AGAIN</button>';
+    menu.style.display = 'block';
+}
+
+function gameLose() {
+    game.lost = true;
+    game.running = false;
+    
+    const menu = document.getElementById('menu');
+    menu.innerHTML = '<h1>YOU LOSE!</h1><button onclick="startGame()">RETRY?</button>';
+    menu.style.display = 'block';
+}
+
+function toggleDebug() {
+    document.getElementById('debug').style.display = game.debug ? 'block' : 'none';
+}
+
+function updateDebug() {
+    const p = game.player;
+    const debugEl = document.getElementById('debug');
+    debugEl.innerHTML = `
+        Player: x=${Math.round(p.x)} y=${Math.round(p.y)}<br>
+        Velocity: vx=${Math.round(p.vx)} vy=${Math.round(p.vy)}<br>
+        State: ${p.state} Frame: ${p.frame}<br>
+        HP: ${p.hp}/${p.maxHp}<br>
+        Grounded: ${p.grounded}<br>
+        Coyote: ${(p.coyoteTime * 1000).toFixed(0)}ms<br>
+        Jump Buffer: ${(p.jumpBufferTime * 1000).toFixed(0)}ms<br>
+        Fire CD: ${(p.fireCooldown * 1000).toFixed(0)}ms<br>
+        Enemies: ${game.enemies.length}/${GAME_CONFIG.spawn.maxEnemies}<br>
+        Time: ${game.time.toFixed(1)}s<br>
+        Distance: ${Math.round(p.x)}/${GAME_CONFIG.level.gateX}<br>
+        Target Apex: ${Math.round(physics.targetApex)}px
+    `;
+}
+
+// Initialize
+console.log('Dragon Side-Scroller initialized');
+console.log('Physics:', physics);
+console.log('Config:', GAME_CONFIG);
+</script>
+</body>
+</html>
