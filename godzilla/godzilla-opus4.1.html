@@ -21,7 +21,7 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(to bottom, #001122 0%, #112244 70%, #223355 100%);
+	background: url(img/planet.png) top right no-repeat, url(img/stars.png) top repeat-x #000;
 }
 
 #viewport {
@@ -33,7 +33,7 @@ body {
 
 .parallax-layer {
     position: absolute;
-    width: 300%;
+    width: 500%;
     height: 100%;
     image-rendering: pixelated;
 }
@@ -46,22 +46,22 @@ body {
 #far-mountains {
     bottom: 10%;
     height: 40%;
-    background: linear-gradient(to bottom, transparent 0%, #334455 100%);
+    background: url(img/mountains.png) bottom left repeat-x;
 }
 
 #near-mountains {
     bottom: 10%;
     height: 30%;
-    background: linear-gradient(to bottom, transparent 0%, #445566 100%);
+	min-height: 134px;
+	background: url(img/midlands.png) bottom left repeat-x;
 }
 
 #ground {
     position: absolute;
     bottom: 0;
-    width: 300%;
+    width: 1000%;
     height: 10%;
-    background: linear-gradient(to bottom, #332211 0%, #221100 100%);
-    border-top: 2px solid #443322;
+    background: url(img/ground.png) top left repeat;
 }
 
 #world {
@@ -857,24 +857,19 @@ function createFireBeam() {
     beam._frameTime = 0;
     beam._totalFrames = 4; // Fire beam has 4 frames
     
-    // Position based on mouth anchor
-    const mouthY = p.y + GAME_CONFIG.fire.mouthOffset.fromTop;
-    let mouthX;
-	let mouthXOffset = GAME_CONFIG.fire.mouthOffset.fromRight;
+    // Position based on mouth anchor using shared logic
+    const groundY = window.innerHeight * 0.9;
+    const position = calculateFireBeamPosition(
+        p,
+        beamWidth,
+        beamHeight,
+        game.camera.x,
+        groundY
+    );
     
-    if (p.facing === 'right') {
-        // Mouth is fromTop from top, fromRight from right edge
-        mouthX = p.x + p.width + mouthXOffset - (frameInfo.mouth.fromRight * scale);
-        beam.style.left = (mouthX - game.camera.x) + 'px';
-        beam.style.transform = 'scaleX(1)';
-    } else {
-        // When facing left, mouth position is mirrored
-        mouthX = p.x + (frameInfo.mouth.fromRight * scale);
-        beam.style.left = (mouthX - beamWidth - game.camera.x) + 'px';
-        beam.style.transform = 'scaleX(-1)';
-    }
-    
-    beam.style.bottom = (window.innerHeight * 0.9 - mouthY - beamHeight/2) + 'px';
+    beam.style.left = position.left;
+    beam.style.bottom = position.bottom;
+    beam.style.transform = position.transform;
     
     beam.setAttribute('data-type', 'fire');
     beam.setAttribute('data-frame', '0');
@@ -883,6 +878,13 @@ function createFireBeam() {
     document.getElementById('world').appendChild(beam);
     
     // Store the beam's world position for collision detection
+    const mouthY = p.y + 55; // mouthOffsetFromTop
+    let mouthX;
+    if (p.facing === 'right') {
+        mouthX = p.x + p.width + 20; // mouthOffsetFromRight
+    } else {
+        mouthX = p.x;
+    }
     beam._worldX = p.facing === 'right' ? mouthX : mouthX - beamWidth;
     beam._worldY = mouthY - beamHeight/2;
     
@@ -1345,26 +1347,32 @@ function render() {
     // Update fire beam position if active - follows player movement
     const fireBeam = document.getElementById('player-fire-beam');
     if (fireBeam) {
-        // Recalculate position based on current player position
+        // Recalculate position based on current player position using shared logic
         const beamWidth = 216;
         const beamHeight = 102;
-        const mouthY = p.y + GAME_CONFIG.fire.mouthOffset.fromTop;
-        const mouthXOffset = GAME_CONFIG.fire.mouthOffset.fromRight;
+        const groundY = window.innerHeight * 0.9;
         
-        let mouthX;
-        if (p.facing === 'right') {
-            mouthX = p.x + p.width + mouthXOffset;
-            fireBeam.style.left = (mouthX - cam.x) + 'px';
-            fireBeam.style.transform = 'scaleX(1)';
-        } else {
-            mouthX = p.x - mouthXOffset;
-            fireBeam.style.left = (mouthX - beamWidth - cam.x) + 'px';
-            fireBeam.style.transform = 'scaleX(-1)';
-        }
+        const position = calculateFireBeamPosition(
+            p,
+            beamWidth,
+            beamHeight,
+            cam.x,
+            groundY
+        );
         
-        fireBeam.style.bottom = (window.innerHeight * 0.9 - mouthY - beamHeight/2) + 'px';
+        fireBeam.style.left = position.left;
+        fireBeam.style.bottom = position.bottom;
+        fireBeam.style.transform = position.transform;
         
         // Update world position for collision detection
+        // Calculate mouth position for collision
+        const mouthY = p.y + 55; // mouthOffsetFromTop
+        let mouthX;
+        if (p.facing === 'right') {
+            mouthX = p.x + p.width + 20; // mouthOffsetFromRight
+        } else {
+            mouthX = p.x;
+        }
         fireBeam._worldX = p.facing === 'right' ? mouthX : mouthX - beamWidth;
         fireBeam._worldY = mouthY - beamHeight/2;
         

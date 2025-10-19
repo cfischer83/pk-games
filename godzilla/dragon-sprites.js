@@ -244,3 +244,51 @@ function getAvailableStates(actor) {
     
     return Object.keys(actorData.states);
 }
+
+/**
+ * Calculate fire beam position based on dragon's mouth position
+ * @param {Object} dragonState - Dragon state object with x, y, width, height, facing, state, frame
+ * @param {number} beamWidth - Width of the fire beam
+ * @param {number} beamHeight - Height of the fire beam
+ * @param {number} cameraX - Camera X position (0 for character viewer)
+ * @param {number} groundY - Ground Y position (window.innerHeight * 0.9 for game, window.innerHeight * 0.9 for viewer)
+ * @param {number} windowHeight - Full window height
+ * @returns {Object} Object with left, bottom, transform properties for CSS
+ */
+function calculateFireBeamPosition(dragonState, beamWidth, beamHeight, cameraX = 0, groundY = 0, windowHeight = 0) {
+    const scale = ANCHORS_JSON.scale;
+    const frameInfo = getFrameInfo('dragon1', dragonState.state, dragonState.frame);
+    
+    // Use sprite mouth data and configuration offsets
+    const mouthOffsetFromTop = 60; // Configurable offset from dragon's Y position
+    const mouthOffsetFromRight = 0; // Configurable horizontal offset
+    
+    const mouthY = dragonState.y + mouthOffsetFromTop;
+    let mouthX;
+    
+    if (dragonState.facing === 'right') {
+        // Mouth is fromRight pixels from the right edge, adjusted by sprite data
+        mouthX = dragonState.x + dragonState.width + mouthOffsetFromRight;
+        if (frameInfo && frameInfo.mouth) {
+            mouthX -= frameInfo.mouth.fromRight * scale;
+        }
+        
+        return {
+            left: (mouthX - cameraX) + 'px',
+            bottom: (groundY - mouthY - beamHeight / 2) + 'px',
+            transform: 'scaleX(1)'
+        };
+    } else {
+        // When facing left, mouth position is mirrored
+        mouthX = dragonState.x;
+        if (frameInfo && frameInfo.mouth) {
+            mouthX += frameInfo.mouth.fromRight * scale;
+        }
+        
+        return {
+            left: (mouthX - beamWidth - cameraX) + 'px',
+            bottom: (groundY - mouthY - beamHeight / 2) + 'px',
+            transform: 'scaleX(-1)'
+        };
+    }
+}

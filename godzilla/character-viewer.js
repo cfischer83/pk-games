@@ -261,28 +261,30 @@ function createFireBeam() {
 }
 
 function updateFireBeamPosition(beam) {
-    const d = dragon1State;
     const beamWidth = 216;
     const beamHeight = 102;
-    const mouthY = d.y + 24;
+    const groundY = window.innerHeight * 0.9;
     
-    if (d.facing === 'right') {
-        beam.style.left = (d.x + d.width) + 'px';
-        beam.style.transform = 'scaleX(1)';
-    } else {
-        beam.style.left = (d.x - beamWidth) + 'px';
-        beam.style.transform = 'scaleX(-1)';
-    }
+    // Use shared positioning logic from dragon-sprites.js
+    const position = calculateFireBeamPosition(
+        dragon1State,
+        beamWidth,
+        beamHeight,
+        0, // No camera offset in character viewer
+        groundY
+    );
     
-    beam.style.bottom = (window.innerHeight - mouthY - beamHeight/2) + 'px';
+    beam.style.left = position.left;
+    beam.style.bottom = position.bottom;
+    beam.style.transform = position.transform;
 }
 
 function updateFireBeamFrame(beam) {
     const frameOffsets = [
         { x: 468, y: 566 },
-        { x: 684, y: 566 },
-        { x: 900, y: 566 },
-        { x: 468, y: 566 }
+        { x: 688, y: 566 },
+        { x: 468, y: 566 },
+        { x: 688, y: 566 }
     ];
     
     const currentFrame = beam._frame % 4;
@@ -330,8 +332,9 @@ function render() {
         dragon1State.width = frameInfo1.width;
         dragon1State.height = frameInfo1.height;
     }
+    const groundY = window.innerHeight * 0.9;
     d1.style.left = dragon1State.x + 'px';
-    d1.style.bottom = (window.innerHeight - dragon1State.y - dragon1State.height) + 'px';
+    d1.style.bottom = (groundY - dragon1State.y - dragon1State.height) + 'px';
     
     // Update Dragon 2
     const d2 = document.getElementById('dragon2');
@@ -341,7 +344,7 @@ function render() {
         dragon2State.height = frameInfo2.height;
     }
     d2.style.left = dragon2State.x + 'px';
-    d2.style.bottom = (window.innerHeight - dragon2State.y - dragon2State.height) + 'px';
+    d2.style.bottom = (groundY - dragon2State.y - dragon2State.height) + 'px';
     
     // Update fire beam
     if (dragon1State.fireBeam) {
