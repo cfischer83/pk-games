@@ -252,7 +252,7 @@ function getAvailableStates(actor) {
  * @param {number} beamWidth - Width of the fire beam
  * @param {number} beamHeight - Height of the fire beam
  * @param {number} cameraX - Camera X position (0 for character viewer)
- * @param {number} groundY - Ground Y position (window.innerHeight * 0.9 for game, window.innerHeight * 0.9 for viewer)
+ * @param {number} groundY - Ground Y position (window.innerHeight * 0.9 for game)
  * @param {number} windowHeight - Full window height
  * @returns {Object} Object with left, bottom, transform properties for CSS
  */
@@ -267,6 +267,10 @@ function calculateFireBeamPosition(dragonState, beamWidth, beamHeight, cameraX =
     const mouthY = dragonState.y + mouthOffsetFromTop;
     let mouthX;
     
+    // Calculate bottom position: groundHeight + (groundY - mouthY - beamHeight/2)
+    const groundHeight = windowHeight * 0.1;
+    const beamBottom = groundHeight + groundY - mouthY - beamHeight / 2;
+    
     if (dragonState.facing === 'right') {
         // Mouth is fromRight pixels from the right edge, adjusted by sprite data
         mouthX = dragonState.x + dragonState.width + mouthOffsetFromRight;
@@ -276,7 +280,7 @@ function calculateFireBeamPosition(dragonState, beamWidth, beamHeight, cameraX =
         
         return {
             left: (mouthX - cameraX) + 'px',
-            bottom: (groundY - mouthY - beamHeight / 2) + 'px',
+            bottom: beamBottom + 'px',
             transform: 'scaleX(1)'
         };
     } else {
@@ -288,7 +292,7 @@ function calculateFireBeamPosition(dragonState, beamWidth, beamHeight, cameraX =
         
         return {
             left: (mouthX - beamWidth - cameraX) + 'px',
-            bottom: (groundY - mouthY - beamHeight / 2) + 'px',
+            bottom: beamBottom + 'px',
             transform: 'scaleX(-1)'
         };
     }

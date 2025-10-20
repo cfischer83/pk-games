@@ -143,10 +143,9 @@ body {
 }
 
 .rock {
-    width: 50px;
-    height: 50px;
-    background: #665544;
-    border-radius: 30%;
+    width: 65px;
+    height: 96px;
+    background: url(img/rocks.png) bottom left no-repeat;
 }
 
 .bullet {
@@ -801,7 +800,7 @@ function updatePlayer(dt) {
         p.state = newState;
         p.frame = 0;
         p.frameTime = 0;
-    } else if (p.frameTime > 0.1) {
+    } else if (p.frameTime > 1.1) {
         p.frameTime = 0;
         
         // Get the number of frames for this state
@@ -867,7 +866,8 @@ function createFireBeam() {
         beamWidth,
         beamHeight,
         game.camera.x,
-        groundY
+        groundY,
+        window.innerHeight
     );
     
     beam.style.left = position.left;
@@ -1001,10 +1001,10 @@ function spawnEnemy(type) {
         enemy.height = 40;
         enemy.shootCooldown = 2;
     } else if (type === 'rock') {
-        enemy.width = 50;
-        enemy.height = 50;
+        enemy.width = 65;
+        enemy.height = 96;
         enemy.vx = 0; // Rocks don't move
-        enemy.y = window.innerHeight * 0.9 - 50; // On the ground
+        enemy.y = window.innerHeight * 0.9 - enemy.height; // On the ground
     }
     
     // Create element
@@ -1051,8 +1051,10 @@ function updateEnemies(dt) {
         }
         
         // Update position
+        const groundY = window.innerHeight * 0.9;
+        const groundHeight = window.innerHeight * 0.1;
         enemy.element.style.left = (enemy.x - game.camera.x) + 'px';
-        enemy.element.style.bottom = (window.innerHeight - enemy.y - enemy.height) + 'px';
+        enemy.element.style.bottom = (groundHeight + groundY - enemy.y - enemy.height) + 'px';
         
         return true;
     });
@@ -1091,8 +1093,11 @@ function updateProjectiles(dt) {
             return false;
         }
         
+        // Position projectiles
+        const groundY = window.innerHeight * 0.9;
+        const groundHeight = window.innerHeight * 0.1;
         proj.element.style.left = (proj.x - game.camera.x) + 'px';
-        proj.element.style.bottom = (window.innerHeight - proj.y - proj.height) + 'px';
+        proj.element.style.bottom = (groundHeight + groundY - proj.y - proj.height) + 'px';
         
         return true;
     });
@@ -1338,8 +1343,12 @@ function render() {
     const leftOffset = (p.state === 'duck' && frameInfo) ? frameInfo.duckOffset : 0;
     
     // Position the player
+    // groundY is at 90% of window height. Ground div is bottom 10%.
+    // CSS bottom is measured from viewport bottom, so: bottom = groundHeight + (groundY - p.y - p.height)
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
     dragon1.style.left = (p.x - cam.x + leftOffset) + 'px';
-    dragon1.style.bottom = (window.innerHeight * 0.9 - p.y - p.height) + 'px';
+    dragon1.style.bottom = (groundHeight + groundY - p.y - p.height) + 'px';
     
     // Update boss sprite if exists
     if (game.boss) {
@@ -1347,7 +1356,9 @@ function render() {
         if (dragon2) {
             applySpriteFrame(dragon2, 'dragon2', game.boss.state, game.boss.frame, 'left');
             dragon2.style.left = (game.boss.x - cam.x) + 'px';
-            dragon2.style.bottom = (window.innerHeight - game.boss.y - game.boss.height) + 'px';
+            // Boss uses same coordinate system as other entities
+            const groundHeight = window.innerHeight * 0.1;
+            dragon2.style.bottom = (groundHeight + game.boss.y) + 'px';
         }
     }
     
@@ -1364,7 +1375,8 @@ function render() {
             beamWidth,
             beamHeight,
             cam.x,
-            groundY
+            groundY,
+            window.innerHeight
         );
         
         fireBeam.style.left = position.left;
