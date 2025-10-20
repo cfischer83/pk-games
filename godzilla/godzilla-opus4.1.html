@@ -85,7 +85,9 @@ body {
     position: absolute;
     z-index: 11;
     background-repeat: no-repeat;
+    image-rendering: pixelated;
     pointer-events: none;
+    display: none;
 }
 
 #dragon2 {
@@ -800,7 +802,7 @@ function updatePlayer(dt) {
         p.state = newState;
         p.frame = 0;
         p.frameTime = 0;
-    } else if (p.frameTime > 1.1) {
+    } else if (p.frameTime > 0.1) {
         p.frameTime = 0;
         
         // Get the number of frames for this state
@@ -813,10 +815,16 @@ function updatePlayer(dt) {
     }
     
     // Update size based on current state and frame (AFTER state is determined)
-    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+    // When punching, use the lower body dimensions (walking or stand state)
+    let sizeState = p.state;
+    if (p.attacking && p.attackType === 'punch') {
+        sizeState = Math.abs(p.vx) > 0 ? 'walk' : 'stand';
+    }
+    
+    const frameInfo = getFrameInfo('dragon1', sizeState, p.frame);
     if (frameInfo) {
         p.width = frameInfo.width;
-        p.height = frameInfo.height;
+        p.height = frameInfo.height; // This will be 128px (base height) when punching
     }
     
     // Update data attributes
@@ -1231,6 +1239,23 @@ function checkCollisions() {
     
     // Check if player is attacking
     const isAttacking = p.attacking || p.tailActive || p.fireState === 'beam';
+    const isPunching = p.attacking && p.attackType === 'punch';
+    
+    // Create punch hitbox if punching (upper body area)
+    let punchHitbox = null;
+    if (isPunching) {
+        // Upper body punch hitbox - positioned at the upper 64px of the player
+        const punchWidth = 142;
+        const punchHeight = 64;
+        const punchReach = p.facing === 'right' ? 30 : -30; // Extend hitbox in facing direction
+        
+        punchHitbox = {
+            x: p.facing === 'right' ? p.x + punchReach : p.x - punchWidth + punchReach,
+            y: p.y, // Upper portion of sprite
+            width: punchWidth,
+            height: punchHeight
+        };
+    }
     
     // Enemy collisions
     game.enemies.forEach(enemy => {
@@ -1241,29 +1266,43 @@ function checkCollisions() {
             height: enemy.height
         };
         
-        if (aabbIntersects(playerBox, enemyBox)) {
+        // Check punch hitbox first
+        let punchHit = false;
+        if (punchHitbox && aabbIntersects(punchHitbox, enemyBox)) {
+            punchHit = true;
             if (enemy.type === 'rock') {
-                // Rocks can be destroyed by any attack, but don't damage player
-                if (isAttacking) {
+                enemy.dead = true;
+            } else {
+                enemy.hp -= GAME_CONFIG.damage.punch;
+                if (enemy.hp <= 0) enemy.dead = true;
+            }
+        }
+        
+        // Regular body collision (only if not already hit by punch)
+        if (!punchHit && aabbIntersects(playerBox, enemyBox)) {
+            // Check if player is doing any damaging action
+            const isDucking = p.state === 'duck';
+            if ((isAttacking && !isPunching) || isDucking) {
+                // Any attack or duck damages enemies (including rocks)
+                if (enemy.type === 'rock') {
                     enemy.dead = true;
-                }
-                // Rocks block movement - this is handled in updatePlayer
-            } else if (isAttacking) {
-                // Attack takes priority - damage enemy
-                if (p.attacking) {
+                } else if (p.tailActive || isDucking) {
+                    enemy.hp -= GAME_CONFIG.damage.tail;
+                    if (enemy.hp <= 0) enemy.dead = true;
+                } else if (p.attacking) {
                     const damage = p.attackType === 'kick' ? 2 : 1;
                     enemy.hp -= damage;
                     if (enemy.hp <= 0) enemy.dead = true;
-                } else if (p.tailActive) {
-                    enemy.hp -= 1;
-                    if (enemy.hp <= 0) enemy.dead = true;
                 }
-            } else if (p.invulnerable <= 0) {
+            } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
                 // Contact damage to player (not rocks)
-                const damage = enemy.type === 'bird' ? 1 : 2;
-                p.hp -= damage;
-                p.hurtTime = 0.5;
-                p.invulnerable = 1;
+                if (enemy.type !== 'rock') {
+                    const damage = enemy.type === 'bird' ? 1 : 2;
+                    p.hp -= damage;
+                    p.hurtTime = 0.5;
+                    p.invulnerable = 1;
+                }
+                // Rocks block movement - this is handled in updatePlayer
             }
         }
     });
@@ -1296,12 +1335,28 @@ function checkCollisions() {
             height: game.boss.height
         };
         
-        if (aabbIntersects(playerBox, bossBox)) {
-            if (isAttacking && p.attacking) {
-                const damage = p.attackType === 'kick' ? 2 : 1;
-                game.boss.hp -= damage;
-                game.boss.hurtTime = 0.3;
-            } else if (p.invulnerable <= 0) {
+        // Check punch hitbox first
+        let punchHitBoss = false;
+        if (punchHitbox && aabbIntersects(punchHitbox, bossBox)) {
+            punchHitBoss = true;
+            game.boss.hp -= GAME_CONFIG.damage.punch;
+            game.boss.hurtTime = 0.3;
+        }
+        
+        // Regular body collision (only if not already hit by punch)
+        if (!punchHitBoss && aabbIntersects(playerBox, bossBox)) {
+            const isDucking = p.state === 'duck';
+            if ((isAttacking && !isPunching) || isDucking) {
+                // Attack or duck damages boss
+                if (p.tailActive || isDucking) {
+                    game.boss.hp -= GAME_CONFIG.damage.tail;
+                    game.boss.hurtTime = 0.3;
+                } else if (p.attacking) {
+                    const damage = p.attackType === 'kick' ? 2 : 1;
+                    game.boss.hp -= damage;
+                    game.boss.hurtTime = 0.3;
+                }
+            } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
                 p.hp -= 1;
                 p.hurtTime = 0.5;
                 p.invulnerable = 1;
@@ -1336,7 +1391,52 @@ function render() {
     
     // Update player sprite with frame offsets
     const dragon1 = document.getElementById('dragon1');
-    applySpriteFrame(dragon1, 'dragon1', p.state, p.frame, p.facing);
+    const dragon1Upper = document.getElementById('dragon1-upper');
+    
+    // Check if we're punching - if so, render split upper/lower body
+    const isPunching = p.attacking && p.attackType === 'punch';
+    
+    if (isPunching) {
+        // Render lower body (walking state or stand)
+        const lowerState = Math.abs(p.vx) > 0 ? 'walk' : 'stand';
+        applySpriteFrame(dragon1, 'dragon1', lowerState, p.frame, p.facing);
+        
+        // Clip the top 64px of dragon1 to only show lower body
+        dragon1.style.height = '64px';
+        dragon1.style.overflow = 'hidden';
+        
+        // Get the current background position and adjust it to shift the sprite up by 64px
+        // This makes the bottom 64px of the sprite visible in the 64px tall div
+        const currentBgPos = dragon1.style.backgroundPosition;
+        const bgPosMatch = currentBgPos.match(/-?[\d.]+px/g);
+        if (bgPosMatch && bgPosMatch.length >= 2) {
+            const bgX = bgPosMatch[0];
+            const bgY = parseFloat(bgPosMatch[1]);
+            dragon1.style.backgroundPosition = `${bgX} ${bgY - 64}px`;
+        }
+        
+        // Render upper body (punch)
+        applySpriteFrame(dragon1Upper, 'dragon1', 'punch_upper', p.attackFrame, p.facing);
+        
+        // Make upper body visible and position it
+        dragon1Upper.style.display = 'block';
+        dragon1Upper.style.width = '108px';
+        dragon1Upper.style.height = '64px';
+    } else {
+        // Normal single-sprite rendering
+        applySpriteFrame(dragon1, 'dragon1', p.state, p.frame, p.facing);
+        
+        // Reset dragon1 to full size based on current state
+        const currentFrameInfo = getFrameInfo('dragon1', p.state, p.frame);
+        if (currentFrameInfo) {
+            dragon1.style.height = currentFrameInfo.height + 'px';
+            dragon1.style.width = currentFrameInfo.width + 'px';
+        }
+        dragon1.style.overflow = 'visible';
+        
+        // Hide upper body
+        dragon1Upper.style.display = 'none';
+    }
     
     // Get duck offset from frame info if in duck state
     const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
@@ -1349,6 +1449,16 @@ function render() {
     const groundHeight = window.innerHeight * 0.1;
     dragon1.style.left = (p.x - cam.x + leftOffset) + 'px';
     dragon1.style.bottom = (groundHeight + groundY - p.y - p.height) + 'px';
+    
+    // Position upper body if punching (on top of lower body)
+    if (isPunching) {
+		let upperBodyLeftOffset = -24;
+		if (p.facing == "right") {
+			upperBodyLeftOffset = 58; // Push upper to the right because tail isn't a part of it.
+		}
+        dragon1Upper.style.left = (p.x - cam.x + leftOffset) + upperBodyLeftOffset + 'px';
+        dragon1Upper.style.bottom = (groundHeight + groundY - p.y - 64) + 'px'; // 64px from bottom of sprite
+    }
     
     // Update boss sprite if exists
     if (game.boss) {

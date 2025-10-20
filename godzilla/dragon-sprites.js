@@ -41,6 +41,24 @@ const ANCHORS_JSON = {
                     { "spriteOffset": { "x": 986, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
                 ]
             },
+            "punch_upper": {
+                "frameSize": { "w": 108, "h": 64 },
+                "frames": [
+                    { "spriteOffset": { "x": 644, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 756, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 875, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 987, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            },
+            "punch_lower": {
+                "frameSize": { "w": 142, "h": 64 },
+                "frames": [
+                    { "spriteOffset": { "x": 643, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 755, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 874, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 986, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
             "kick": {
                 "frameSize": { "w": 155, "h": 128 },
                 "frames": [
