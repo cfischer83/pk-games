@@ -612,15 +612,18 @@ function updatePlayer(dt) {
     if (p.invulnerable > 0) p.invulnerable -= dt;
     if (p.fireCooldown > 0) p.fireCooldown -= dt;
     
-    // Movement - can move while attacking or firing
+    // Movement - can move while attacking or firing, but not while ducking
     p.vx = 0;
-    if (game.keys.left && !game.keys.right) {
-        p.vx = -speed;
-        p.facing = 'left';
-    }
-    if (game.keys.right && !game.keys.left) {
-        p.vx = speed;
-        p.facing = 'right';
+    const isDuckingNow = game.keys.down && p.grounded;
+    if (!isDuckingNow) {
+        if (game.keys.left && !game.keys.right) {
+            p.vx = -speed;
+            p.facing = 'left';
+        }
+        if (game.keys.right && !game.keys.left) {
+            p.vx = speed;
+            p.facing = 'right';
+        }
     }
     
     // Gravity
@@ -658,7 +661,7 @@ function updatePlayer(dt) {
     
     // Ducking
     const wasDucking = p.state === 'duck';
-    const isDucking = game.keys.down && p.grounded && !p.attacking;
+    const isDucking = game.keys.down && p.grounded && !p.attacking && !p.fireState && !p.tailActive;
     
     // Attack handling
     if (!p.attacking && !p.fireState && !p.tailActive) {
@@ -737,14 +740,7 @@ function updatePlayer(dt) {
     const nextX = p.x + p.vx * dt;
     const nextY = p.y + p.vy * dt;
     
-    // Get current size
-    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
-    if (frameInfo) {
-        p.width = frameInfo.width;
-        p.height = frameInfo.height;
-    }
-    
-    // Ground collision
+    // Ground collision (use current height before frame update)
     if (nextY + p.height >= groundY) {
         p.y = groundY - p.height;
         p.vy = 0;
@@ -793,7 +789,7 @@ function updatePlayer(dt) {
         newState = 'fire_beam';
     } else if (p.attacking) {
         newState = p.attackType;
-    } else if (isDucking) {
+    } else if (game.keys.down) {
         newState = 'duck';
     } else if (Math.abs(p.vx) > 0) {
         newState = 'walk';
@@ -815,6 +811,13 @@ function updatePlayer(dt) {
         
         // Loop back to frame 0 after the last frame
         p.frame = (p.frame + 1) % frameCount;
+    }
+    
+    // Update size based on current state and frame (AFTER state is determined)
+    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+    if (frameInfo) {
+        p.width = frameInfo.width;
+        p.height = frameInfo.height;
     }
     
     // Update data attributes
@@ -1330,8 +1333,12 @@ function render() {
     const dragon1 = document.getElementById('dragon1');
     applySpriteFrame(dragon1, 'dragon1', p.state, p.frame, p.facing);
     
+    // Get duck offset from frame info if in duck state
+    const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+    const leftOffset = (p.state === 'duck' && frameInfo) ? frameInfo.duckOffset : 0;
+    
     // Position the player
-    dragon1.style.left = (p.x - cam.x) + 'px';
+    dragon1.style.left = (p.x - cam.x + leftOffset) + 'px';
     dragon1.style.bottom = (window.innerHeight * 0.9 - p.y - p.height) + 'px';
     
     // Update boss sprite if exists

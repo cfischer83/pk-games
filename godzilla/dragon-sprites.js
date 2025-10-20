@@ -42,7 +42,7 @@ const ANCHORS_JSON = {
                 ]
             },
             "kick": {
-                "frameSize": { "w": 142, "h": 128 },
+                "frameSize": { "w": 155, "h": 128 },
                 "frames": [
                     { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
                     { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
@@ -52,12 +52,12 @@ const ANCHORS_JSON = {
             "duck": {
                 "frameSize": { "w": 176, "h": 96 },
                 "frames": [
-                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72 },
+                    { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 60 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46 },
                 ]
             },
             "hurt": {
@@ -164,7 +164,8 @@ function getFrameInfo(actor, state, frameIndex) {
         height: frameSize.h * ANCHORS_JSON.scale,
         spriteOffset: frame.spriteOffset || { x: 0, y: 0 },
         mouth: frame.mouth || (frames[0] && frames[0].mouth),
-        tail: frame.tail || (frames[0] && frames[0].tail)
+        tail: frame.tail || (frames[0] && frames[0].tail),
+        duckOffset: frame.duckOffset || 0
     };
 }
 
