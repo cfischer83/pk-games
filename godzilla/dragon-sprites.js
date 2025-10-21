@@ -68,14 +68,20 @@ const ANCHORS_JSON = {
                 ]
             },
             "duck": {
+                "frameSize": { "w": 146, "h": 96 },
+                "frames": [
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4, "duckOffsetLeft": 4 }
+                ]
+            },
+            "duck_spin": {
                 "frameSize": { "w": 176, "h": 96 },
                 "frames": [
-                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4, "duckOffsetLeft": 4 },
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 0, "duckOffsetLeft": 4 },
                     { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 },
                     { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
                     { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 60, "duckOffsetLeft": -72 },
                     { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 }
                 ]
             },
             "hurt": {

@@ -148,9 +148,14 @@ body {
 }
 
 .rock {
-    width: 65px;
+    width: 64px;
     height: 96px;
     background: url(img/rocks.png) bottom left no-repeat;
+}
+.rock.broken {
+    width: 64px;
+    height: 96px;
+    background: url(img/rocks.png) bottom right no-repeat;
 }
 
 .bullet {
@@ -259,6 +264,9 @@ body {
 	font-weight: 100;
 	font-family:'Courier New', Courier, monospace;
 }
+.controls .uni {
+	font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+}
 
 #debug {
     position: absolute;
@@ -341,19 +349,21 @@ body.debug-mode #dragon2 {
             </div>
         </div>
     </div>
-    
+
     <div id="menu">
         <img src="img/menu.png" width="427"><br />
         <button onclick="startGame()">START GAME</button>
         <div class="controls">
             CONTROLS:<br>
-            Arrow Keys - Move/Jump/Duck<br>
+            <span class="uni"> &#x21e6; &#x21e8;</span> Arrow keys to walk<br>
+			<span class="uni"> &#x21e7;</span> - Jump<br>
+            <span class="uni"> &#x21e9;</span> or C - Duck<br>
             Z - Punch<br>
             X - Kick<br>
-            Space - Fire<br><br>
+            [Space] - Fire (or Tail Spin while ducking)<br><br>
         </div>
     </div>
-    
+
     <div id="debug"></div>
 </div>
 
@@ -384,7 +394,7 @@ const GAME_CONFIG = {
         terminalVy: 1400 
     },
     animation: {
-        frameDuration: 0.1  // Duration per frame in seconds (0.1 = 10 FPS, 0.05 = 20 FPS, etc.)
+        frameDuration: .1  // Duration per frame in seconds (0.1 = 10 FPS, 0.05 = 20 FPS, etc.)
     },
     fire: { 
         windupMs: 500, 
@@ -398,14 +408,14 @@ const GAME_CONFIG = {
     tail: { 
         risePx: 70, 
         scale: 1, 
-        activeMs: 500 
+        activeMs: 600  // 6 frames × 100ms per frame
     },
     hp: { 
         player: 50, 
         boss: 50, 
         bird: 1, 
         tank: 2, 
-        rock: 1 
+        rock: 6
     },
     damage: { 
         punch: 1, 
@@ -418,12 +428,18 @@ const GAME_CONFIG = {
         bossLightning: 4 
     },
     spawn: { 
-        maxEnemies: 5, 
+        maxEnemies: 5,
+        maxObstacles: 15,  // Allow more obstacles (rocks) than enemies
         minSpacingRule: 'dragonWidth',
         schedule: [
-            { start: 0, end: 20, enemies: ['rock', 'bird'], intervals: [6000, 7000], max: 3 },
-            { start: 20, end: 80, enemies: ['rock', 'bird', 'tank'], intervals: [5500, 6000, 9500], max: 4 },
-            { start: 80, end: 110, enemies: ['rock', 'bird', 'tank'], intervals: [6000, 4500, 7500], max: 5 }
+            { start: 0, end: 20, enemies: ['bird'], intervals: [7000], max: 2 },
+            { start: 20, end: 80, enemies: ['bird', 'tank'], intervals: [6000, 9500], max: 3 },
+            { start: 80, end: 110, enemies: ['bird', 'tank'], intervals: [4500, 7500], max: 4 }
+        ],
+        obstacleSchedule: [
+            { start: 0, end: 20, interval: 2000 },   // Rock every 2 seconds early game
+            { start: 20, end: 80, interval: 1500 },  // More frequent mid game
+            { start: 80, end: 110, interval: 1200 }  // Even more frequent late game
         ]
     },
     camera: { 
@@ -469,6 +485,7 @@ let game = {
         attackType: null,
         attackFrame: 0,
         attackTime: 0,
+        attackHits: [], // Track enemies hit by current attack
         
         fireState: null,
         fireTime: 0,
@@ -495,7 +512,11 @@ let game = {
     
     spawn: {
         timers: {},
-        gateReached: false
+        obstacleTimer: 0,
+        gateReached: false,
+        enemiesFinished: false,
+        obstaclesFinished: false,
+        lastEnemyClearedX: 0  // Track where player was when last enemy left screen
     },
     
     keys: {
@@ -505,7 +526,8 @@ let game = {
         down: false,
         z: false,
         x: false,
-        space: false
+        space: false,
+        spacePressed: false  // Track if space was just pressed (not held)
     },
     
     debug: false
@@ -543,9 +565,16 @@ document.addEventListener('keydown', (e) => {
         case 'arrowright': game.keys.right = true; e.preventDefault(); break;
         case 'arrowup': game.keys.up = true; e.preventDefault(); break;
         case 'arrowdown': game.keys.down = true; e.preventDefault(); break;
+        case 'c': game.keys.down = true; e.preventDefault(); break; // 'c' also ducks
         case 'z': game.keys.z = true; e.preventDefault(); break;
         case 'x': game.keys.x = true; e.preventDefault(); break;
-        case ' ': game.keys.space = true; e.preventDefault(); break;
+        case ' ': 
+            if (!game.keys.space) {  // Only set spacePressed on initial press
+                game.keys.spacePressed = true;
+            }
+            game.keys.space = true; 
+            e.preventDefault(); 
+            break;
         case 'd': game.debug = !game.debug; toggleDebug(); break;
     }
 });
@@ -556,9 +585,13 @@ document.addEventListener('keyup', (e) => {
         case 'arrowright': game.keys.right = false; break;
         case 'arrowup': game.keys.up = false; break;
         case 'arrowdown': game.keys.down = false; break;
+        case 'c': game.keys.down = false; break; // Release duck when 'c' is released
         case 'z': game.keys.z = false; break;
         case 'x': game.keys.x = false; break;
-        case ' ': game.keys.space = false; break;
+        case ' ': 
+            game.keys.space = false; 
+            game.keys.spacePressed = false;
+            break;
     }
 });
 
@@ -645,7 +678,7 @@ function updatePlayer(dt) {
     if (p.invulnerable > 0) p.invulnerable -= dt;
     if (p.fireCooldown > 0) p.fireCooldown -= dt;
     
-    // Movement - can move while attacking or firing, but not while ducking
+    // Movement - can move while attacking or firing, but not while ducking on ground
     p.vx = 0;
     const isDuckingNow = game.keys.down && p.grounded;
     if (!isDuckingNow) {
@@ -692,9 +725,9 @@ function updatePlayer(dt) {
         }
     }
     
-    // Ducking
-    const wasDucking = p.state === 'duck';
-    const isDucking = game.keys.down && p.grounded && !p.attacking && !p.fireState && !p.tailActive;
+    // Ducking - can now duck in the air
+    const wasDucking = p.state === 'duck' || p.state === 'duck_spin';
+    const isDucking = game.keys.down && !p.attacking && !p.fireState && !p.tailActive;
     
     // Attack handling
     if (!p.attacking && !p.fireState && !p.tailActive) {
@@ -703,21 +736,32 @@ function updatePlayer(dt) {
             p.attackType = 'punch';
             p.attackFrame = 0;
             p.attackTime = 0;
+            p.attackHits = []; // Clear hit tracking for new attack
         } else if (game.keys.x) {
             p.attacking = true;
             p.attackType = 'kick';
             p.attackFrame = 0;
             p.attackTime = 0;
-        } else if (game.keys.space) {
-            if (isDucking) {
+            p.attackHits = []; // Clear hit tracking for new attack
+        } else if (game.keys.spacePressed) {
+            // If ducking (on ground or in air), do tail spin
+            if (game.keys.down) {
                 p.tailActive = true;
                 p.tailTime = 0;
-            } else if (p.fireCooldown <= 0) {
+                p.attackHits = []; // Clear hit tracking for tail attack
+				if (game.debug) {
+					console.log('Tail spin started');
+				}
+            } 
+            // If not ducking and fire is ready, blow fire
+            else if (p.fireCooldown <= 0) {
                 p.fireState = 'windup';
                 p.fireTime = 0;
                 p.fireTickTime = 0;
                 p.fireDamageCount = 0;
             }
+            // Clear spacePressed so it doesn't trigger again
+            game.keys.spacePressed = false;
         }
     }
     
@@ -735,7 +779,12 @@ function updatePlayer(dt) {
     
     if (p.tailActive) {
         p.tailTime += dt;
-        if (p.tailTime >= GAME_CONFIG.tail.activeMs / 1000) {
+        // Keep tail active as long as space is held and player is ducking
+        // If space is released or player stops ducking, deactivate
+        if (!game.keys.space || !game.keys.down) {
+			if (game.debug) {
+	            console.log(`Tail deactivated: space=${game.keys.space}, down=${game.keys.down}, frame=${p.frame}`);
+			}
             p.tailActive = false;
         }
     }
@@ -783,7 +832,7 @@ function updatePlayer(dt) {
         p.grounded = false;
     }
     
-    // Check rock collisions for movement blocking
+    // Check obstacle (rock) collisions for movement blocking
     let finalX = nextX;
     const nextPlayerBox = {
         x: nextX,
@@ -792,20 +841,18 @@ function updatePlayer(dt) {
         height: p.height
     };
     
-    for (let enemy of game.enemies) {
-        if (enemy.type === 'rock') {
-            const rockBox = {
-                x: enemy.x,
-                y: enemy.y,
-                width: enemy.width,
-                height: enemy.height
-            };
-            
-            if (aabbIntersects(nextPlayerBox, rockBox)) {
-                // Block movement - keep player at current position
-                finalX = p.x;
-                break;
-            }
+    for (let obstacle of game.obstacles) {
+        const obstacleBox = {
+            x: obstacle.x,
+            y: obstacle.y,
+            width: obstacle.width,
+            height: obstacle.height
+        };
+        
+        if (aabbIntersects(nextPlayerBox, obstacleBox)) {
+            // Block movement - keep player at current position
+            finalX = p.x;
+            break;
         }
     }
     
@@ -820,6 +867,8 @@ function updatePlayer(dt) {
         newState = 'fire_windup';
     } else if (p.fireState === 'beam') {
         newState = 'fire_beam';
+    } else if (p.tailActive) {
+        newState = 'duck_spin';
     } else if (p.attacking) {
         newState = p.attackType;
     } else if (game.keys.down) {
@@ -834,6 +883,9 @@ function updatePlayer(dt) {
         p.state = newState;
         p.frame = 0;
         p.frameTime = 0;
+		if (game.debug) {
+        	console.log(`State changed to: ${newState}, Frame: 0`);
+		}
     } else if (p.frameTime > GAME_CONFIG.animation.frameDuration) {
         p.frameTime = 0;
         
@@ -843,7 +895,20 @@ function updatePlayer(dt) {
         const frameCount = stateData?.frames?.length || 1;
         
         // Loop back to frame 0 after the last frame
+        const oldFrame = p.frame;
         p.frame = (p.frame + 1) % frameCount;
+		if (game.debug) {
+        	console.log(`State: ${p.state}, Frame: ${oldFrame} → ${p.frame} (${frameCount} total frames)`);
+		}
+        
+        // Clear attack hits when tail spin animation loops back to frame 0
+        // This allows continuous damage on each loop
+        if (p.frame === 0 && p.state === 'duck_spin') {
+            p.attackHits = [];
+            if (game.debug) {
+                console.log('Tail spin looped - cleared attackHits for new damage cycle');
+            }
+        }
     }
     
     // Update size based on current state and frame (AFTER state is determined)
@@ -984,6 +1049,8 @@ function applyFireDamage() {
             enemy.hp -= 1;
             if (enemy.hp <= 0) {
                 enemy.dead = true;
+            } else if (enemy.type === 'rock' && enemy.hp <= 3) {
+                enemy.element.classList.add('broken');
             }
         }
     });
@@ -1013,7 +1080,7 @@ function spawnEnemy(type) {
     const spawnX = game.camera.x + window.innerWidth + 50;
     const minSpacing = game.player.width;
     
-    // Check spacing
+    // Check spacing with other enemies
     for (let enemy of game.enemies) {
         if (Math.abs(enemy.x - spawnX) < minSpacing) return;
     }
@@ -1040,11 +1107,6 @@ function spawnEnemy(type) {
         enemy.width = 60;
         enemy.height = 40;
         enemy.shootCooldown = 2;
-    } else if (type === 'rock') {
-        enemy.width = 65;
-        enemy.height = 96;
-        enemy.vx = 0; // Rocks don't move
-        enemy.y = window.innerHeight * 0.9 - enemy.height; // On the ground
     }
     
     // Create element
@@ -1059,6 +1121,52 @@ function spawnEnemy(type) {
     enemy.element = el;
     document.getElementById('world').appendChild(el);
     game.enemies.push(enemy);
+}
+
+// Spawn obstacles (rocks)
+function spawnObstacle() {
+    if (game.obstacles.length >= GAME_CONFIG.spawn.maxObstacles) return;
+    if (game.spawn.gateReached) return;
+    
+    const spawnX = game.camera.x + window.innerWidth + 50;
+    const minSpacing = game.player.width;
+    
+    // Check spacing with other obstacles
+    for (let obstacle of game.obstacles) {
+        if (Math.abs(obstacle.x - spawnX) < minSpacing) return;
+    }
+    
+    // Check spacing with enemies too
+    for (let enemy of game.enemies) {
+        if (Math.abs(enemy.x - spawnX) < minSpacing) return;
+    }
+    
+    const obstacle = {
+        type: 'rock',
+        x: spawnX,
+        vx: 0, // Rocks don't move
+        vy: 0,
+        width: 64,
+        height: 96,
+        hp: GAME_CONFIG.hp.rock,
+        dead: false,
+        element: null
+    };
+    
+    obstacle.y = window.innerHeight * 0.9 - obstacle.height; // On the ground
+    
+    // Create element
+    const el = document.createElement('div');
+    el.className = 'obstacle rock sprite';
+    el.style.width = obstacle.width + 'px';
+    el.style.height = obstacle.height + 'px';
+    el.setAttribute('data-type', 'rock');
+    el.setAttribute('data-frame', '0');
+    el.setAttribute('data-active', 'true');
+    
+    obstacle.element = el;
+    document.getElementById('world').appendChild(el);
+    game.obstacles.push(obstacle);
 }
 
 // Update enemies
@@ -1095,6 +1203,32 @@ function updateEnemies(dt) {
         const groundHeight = window.innerHeight * 0.1;
         enemy.element.style.left = (enemy.x - game.camera.x) + 'px';
         enemy.element.style.bottom = (groundHeight + groundY - enemy.y - enemy.height) + 'px';
+        
+        return true;
+    });
+}
+
+// Update obstacles
+function updateObstacles(dt) {
+    game.obstacles = game.obstacles.filter(obstacle => {
+        if (obstacle.dead) {
+            obstacle.element.remove();
+            return false;
+        }
+        
+        // Obstacles don't move
+        
+        // Check if off-screen
+        if (obstacle.x < game.camera.x - 100) {
+            obstacle.element.remove();
+            return false;
+        }
+        
+        // Update position
+        const groundY = window.innerHeight * 0.9;
+        const groundHeight = window.innerHeight * 0.1;
+        obstacle.element.style.left = (obstacle.x - game.camera.x) + 'px';
+        obstacle.element.style.bottom = (groundHeight + groundY - obstacle.y - obstacle.height) + 'px';
         
         return true;
     });
@@ -1264,14 +1398,19 @@ function checkCollisions() {
         height: p.height
     };
     
-    if (p.state === 'duck') {
+    if (p.state === 'duck' || p.state === 'duck_spin') {
         playerBox.height *= 0.75;
         playerBox.y += p.height * 0.25;
         
         // Adjust x position for duck offset to match visual position
         const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
-        if (frameInfo && frameInfo.duckOffset) {
-            playerBox.x += frameInfo.duckOffset;
+        if (frameInfo) {
+            // Apply correct offset based on facing direction
+            if (p.facing === 'right' && frameInfo.duckOffset) {
+                playerBox.x += frameInfo.duckOffset;
+            } else if (p.facing === 'left' && frameInfo.duckOffsetLeft) {
+                playerBox.x += frameInfo.duckOffsetLeft;
+            }
         }
     }
     
@@ -1315,30 +1454,55 @@ function checkCollisions() {
         // Check punch hitbox first
         let punchHit = false;
         if (punchHitbox && aabbIntersects(punchHitbox, enemyBox)) {
-            punchHit = true;
-            if (enemy.type === 'rock') {
-                enemy.dead = true;
-            } else {
+            // Only damage if this enemy hasn't been hit by this attack yet
+            if (!p.attackHits.includes(enemy)) {
+                punchHit = true;
+                p.attackHits.push(enemy); // Mark as hit
                 enemy.hp -= GAME_CONFIG.damage.punch;
-                if (enemy.hp <= 0) enemy.dead = true;
+                if (enemy.hp <= 0) {
+                    enemy.dead = true;
+                } else if (enemy.type === 'rock' && enemy.hp <= 3) {
+                    enemy.element.classList.add('broken');
+                }
             }
         }
         
         // Regular body collision (only if not already hit by punch)
         if (!punchHit && aabbIntersects(playerBox, enemyBox)) {
             // Check if player is doing any damaging action
-            const isDucking = p.state === 'duck';
+            const isDucking = p.state === 'duck' || p.state === 'duck_spin';
             if ((isAttacking && !isPunching) || isDucking) {
-                // Any attack or duck damages enemies (including rocks)
-                if (enemy.type === 'rock') {
-                    enemy.dead = true;
-                } else if (p.tailActive || isDucking) {
-                    enemy.hp -= GAME_CONFIG.damage.tail;
-                    if (enemy.hp <= 0) enemy.dead = true;
-                } else if (p.attacking) {
-                    const damage = p.attackType === 'kick' ? 2 : 1;
-                    enemy.hp -= damage;
-                    if (enemy.hp <= 0) enemy.dead = true;
+                // Only damage if this enemy hasn't been hit by this attack yet
+                if (!p.attackHits.includes(enemy)) {
+                    // Debug logging for tail
+                    if (p.tailActive && enemy.type === 'rock' && game.debug) {
+                        console.log('Tail collision with rock:', {
+                            tailActive: p.tailActive,
+                            state: p.state,
+                            isDucking: isDucking,
+                            isAttacking: isAttacking,
+                            enemyHP: enemy.hp,
+                            damage: GAME_CONFIG.damage.tail
+                        });
+                    }
+                    
+                    // Any attack or duck_spin damages enemies (including rocks)
+                    let damage = 0;
+                    if (p.tailActive || p.state === 'duck_spin') {
+                        damage = GAME_CONFIG.damage.tail;
+                    } else if (p.attacking) {
+                        damage = p.attackType === 'kick' ? 2 : 1;
+                    }
+                    
+                    if (damage > 0) {
+                        p.attackHits.push(enemy); // Mark as hit
+                        enemy.hp -= damage;
+                        if (enemy.hp <= 0) {
+                            enemy.dead = true;
+                        } else if (enemy.type === 'rock' && enemy.hp <= 3) {
+                            enemy.element.classList.add('broken');
+                        }
+                    }
                 }
             } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
                 // Contact damage to player (not rocks)
@@ -1352,6 +1516,109 @@ function checkCollisions() {
             }
         }
     });
+    
+    // Obstacle collisions
+    game.obstacles.forEach(obstacle => {
+        const obstacleBox = {
+            x: obstacle.x,
+            y: obstacle.y,
+            width: obstacle.width,
+            height: obstacle.height
+        };
+        
+        // Check punch hitbox first
+        let punchHit = false;
+        if (punchHitbox && aabbIntersects(punchHitbox, obstacleBox)) {
+            // Only damage if this obstacle hasn't been hit by this attack yet
+            if (!p.attackHits.includes(obstacle)) {
+                punchHit = true;
+                p.attackHits.push(obstacle); // Mark as hit
+                obstacle.hp -= GAME_CONFIG.damage.punch;
+                if (obstacle.hp <= 0) {
+                    obstacle.dead = true;
+                } else if (obstacle.hp <= 3) {
+                    obstacle.element.classList.add('broken');
+                }
+            }
+        }
+        
+        // Regular body collision (only if not already hit by punch)
+        if (!punchHit && aabbIntersects(playerBox, obstacleBox)) {
+            // Check if player is doing any damaging action
+            const isDucking = p.state === 'duck' || p.state === 'duck_spin';
+            if ((isAttacking && !isPunching) || isDucking) {
+                // Only damage if this obstacle hasn't been hit by this attack yet
+                if (!p.attackHits.includes(obstacle)) {
+                    // Any attack or duck_spin damages obstacles
+                    let damage = 0;
+                    if (p.tailActive || p.state === 'duck_spin') {
+                        damage = GAME_CONFIG.damage.tail;
+                    } else if (p.attacking) {
+                        damage = p.attackType === 'kick' ? 2 : 1;
+                    }
+                    
+                    if (damage > 0) {
+                        p.attackHits.push(obstacle); // Mark as hit
+                        obstacle.hp -= damage;
+                        if (obstacle.hp <= 0) {
+                            obstacle.dead = true;
+                        } else if (obstacle.hp <= 3) {
+                            obstacle.element.classList.add('broken');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Fire beam collisions
+    const fireBeam = document.getElementById('player-fire-beam');
+    if (fireBeam && fireBeam._worldX !== undefined) {
+        const beamBox = {
+            x: fireBeam._worldX,
+            y: fireBeam._worldY,
+            width: 216,
+            height: 102
+        };
+        
+        // Check fire beam vs enemies
+        game.enemies.forEach(enemy => {
+            if (enemy.dead) return;
+            const enemyBox = {
+                x: enemy.x,
+                y: enemy.y,
+                width: enemy.width,
+                height: enemy.height
+            };
+            if (aabbIntersects(beamBox, enemyBox)) {
+                enemy.hp -= GAME_CONFIG.damage.fire * (game.fixedDeltaMs / 1000);
+                if (enemy.hp <= 0) {
+                    enemy.dead = true;
+                } else if (enemy.type === 'rock' && enemy.hp <= 3) {
+                    enemy.element.classList.add('broken');
+                }
+            }
+        });
+        
+        // Check fire beam vs obstacles
+        game.obstacles.forEach(obstacle => {
+            if (obstacle.dead) return;
+            const obstacleBox = {
+                x: obstacle.x,
+                y: obstacle.y,
+                width: obstacle.width,
+                height: obstacle.height
+            };
+            if (aabbIntersects(beamBox, obstacleBox)) {
+                obstacle.hp -= GAME_CONFIG.damage.fire * (game.fixedDeltaMs / 1000);
+                if (obstacle.hp <= 0) {
+                    obstacle.dead = true;
+                } else if (obstacle.hp <= 3) {
+                    obstacle.element.classList.add('broken');
+                }
+            }
+        });
+    }
     
     // Projectile collisions
     game.projectiles.forEach(proj => {
@@ -1391,10 +1658,10 @@ function checkCollisions() {
         
         // Regular body collision (only if not already hit by punch)
         if (!punchHitBoss && aabbIntersects(playerBox, bossBox)) {
-            const isDucking = p.state === 'duck';
+            const isDucking = p.state === 'duck' || p.state === 'duck_spin';
             if ((isAttacking && !isPunching) || isDucking) {
-                // Attack or duck damages boss
-                if (p.tailActive || isDucking) {
+                // Attack or duck_spin damages boss
+                if (p.tailActive || p.state === 'duck_spin') {
                     game.boss.hp -= GAME_CONFIG.damage.tail;
                     game.boss.hurtTime = 0.3;
                 } else if (p.attacking) {
@@ -1489,12 +1756,11 @@ function render() {
     let leftOffset = 0;
     
     // Apply duck offset when ducking
-    if (p.state === 'duck' && frameInfo && frameInfo.duckOffset) {
+    if (p.state === 'duck_spin' && frameInfo && frameInfo.duckOffset) {
 		if (p.facing == "right") {
 			leftOffset = frameInfo.duckOffset;
 		} else {
 			leftOffset = frameInfo.duckOffsetLeft;
-			console.log(frameInfo)
 		}
     }
     
@@ -1591,7 +1857,7 @@ function updateSpawner(dt) {
     const elapsed = game.time;
     const schedule = GAME_CONFIG.spawn.schedule;
     
-    // Find current phase
+    // Find current phase for enemies
     let phase = null;
     for (let p of schedule) {
         if (elapsed >= p.start && elapsed < p.end) {
@@ -1600,25 +1866,62 @@ function updateSpawner(dt) {
         }
     }
     
-    if (!phase) return;
-    
-    // Update spawn timers
-    phase.enemies.forEach((type, i) => {
-        const key = `${type}_${i}`;
-        if (!game.spawn.timers[key]) {
-            game.spawn.timers[key] = 0;
-        }
-        
-        game.spawn.timers[key] += dt;
-        
-        const interval = phase.intervals[i] / 1000;
-        if (game.spawn.timers[key] >= interval) {
-            if (game.enemies.length < phase.max) {
-                spawnEnemy(type);
-                game.spawn.timers[key] = 0;
+    if (!phase) {
+        // No more enemy spawning phases - mark as finished
+        if (!game.spawn.enemiesFinished) {
+            game.spawn.enemiesFinished = true;
+            if (game.debug) {
+                console.log('Enemy spawning finished at time:', elapsed);
             }
         }
-    });
+    } else {
+        // Update spawn timers for enemies
+        phase.enemies.forEach((type, i) => {
+            const key = `${type}_${i}`;
+            if (!game.spawn.timers[key]) {
+                game.spawn.timers[key] = 0;
+            }
+            
+            game.spawn.timers[key] += dt;
+            
+            const interval = phase.intervals[i] / 1000;
+            if (game.spawn.timers[key] >= interval) {
+                if (game.enemies.length < phase.max) {
+                    spawnEnemy(type);
+                    game.spawn.timers[key] = 0;
+                }
+            }
+        });
+    }
+    
+    // Obstacle spawning - stop when enemy spawning stops
+    if (game.spawn.enemiesFinished) {
+        if (!game.spawn.obstaclesFinished) {
+            game.spawn.obstaclesFinished = true;
+            if (game.debug) {
+                console.log('Obstacle spawning finished at time:', elapsed);
+            }
+        }
+        return; // Stop all spawning
+    }
+    
+    const obstacleSchedule = GAME_CONFIG.spawn.obstacleSchedule;
+    let obstaclePhase = null;
+    for (let p of obstacleSchedule) {
+        if (elapsed >= p.start && elapsed < p.end) {
+            obstaclePhase = p;
+            break;
+        }
+    }
+    
+    if (obstaclePhase) {
+        game.spawn.obstacleTimer += dt;
+        const obstacleInterval = obstaclePhase.interval / 1000;
+        if (game.spawn.obstacleTimer >= obstacleInterval) {
+            spawnObstacle();
+            game.spawn.obstacleTimer = 0;
+        }
+    }
 }
 
 // Main game loop
@@ -1636,13 +1939,41 @@ function gameLoop(timestamp) {
         
         updatePlayer(dt);
         updateEnemies(dt);
+        updateObstacles(dt);
         updateProjectiles(dt);
         updateSpawner(dt);
         
-        // Check boss spawn
-        if (game.player.x >= GAME_CONFIG.level.gateX && !game.boss && !game.spawn.gateReached) {
-            game.spawn.gateReached = true;
-            spawnBoss();
+        // Check boss spawn - hybrid approach
+        if (!game.boss && !game.spawn.gateReached) {
+            // Check if spawning has finished
+            if (game.spawn.enemiesFinished) {
+                // Check if all enemies are off-screen (left side)
+                const allEnemiesGone = game.enemies.length === 0 || 
+                    game.enemies.every(e => e.x < game.camera.x - 100);
+                
+                if (allEnemiesGone) {
+                    // Record where player was when last enemy cleared
+                    if (game.spawn.lastEnemyClearedX === 0) {
+                        game.spawn.lastEnemyClearedX = game.player.x;
+                        if (game.debug) {
+                            console.log('All enemies cleared at player x:', game.spawn.lastEnemyClearedX);
+                        }
+                    }
+                    
+                    // Calculate buffer distance (window width or 1000px, whichever is smaller)
+                    const bufferDistance = Math.min(window.innerWidth, 1000);
+                    const distanceTraveled = game.player.x - game.spawn.lastEnemyClearedX;
+                    
+                    // Spawn boss after buffer distance
+                    if (distanceTraveled >= bufferDistance) {
+                        game.spawn.gateReached = true;
+                        if (game.debug) {
+                            console.log('Spawning boss after buffer distance:', bufferDistance, 'traveled:', distanceTraveled);
+                        }
+                        spawnBoss();
+                    }
+                }
+            }
         }
         
         if (game.boss) {
@@ -1677,16 +2008,21 @@ function startGame() {
     
     game.player.hp = GAME_CONFIG.hp.player;
     game.player.x = 100;
-    game.player.y = 0;
+    game.player.y = window.innerHeight * 0.9 - game.player.height; // Start at ground level
     game.player.vx = 0;
     game.player.vy = 0;
     game.player.fireCooldown = 0;
     
     game.enemies = [];
+    game.obstacles = [];
     game.projectiles = [];
     game.boss = null;
     game.spawn.gateReached = false;
+    game.spawn.enemiesFinished = false;
+    game.spawn.obstaclesFinished = false;
+    game.spawn.lastEnemyClearedX = 0;
     game.spawn.timers = {};
+    game.spawn.obstacleTimer = 0;
     
     // Clear world
     const world = document.getElementById('world');
