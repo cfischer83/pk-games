@@ -62,20 +62,20 @@ const ANCHORS_JSON = {
             "kick": {
                 "frameSize": { "w": 155, "h": 128 },
                 "frames": [
-                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
-                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 },
+                    { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 },
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 }
                 ]
             },
             "duck": {
                 "frameSize": { "w": 176, "h": 96 },
                 "frames": [
-                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4 },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46 },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72 },
-                    { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 60 },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72 },
-                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46 },
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4, "duckOffsetLeft": 4 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
+                    { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 60, "duckOffsetLeft": -72 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 },
                 ]
             },
             "hurt": {
@@ -183,7 +183,9 @@ function getFrameInfo(actor, state, frameIndex) {
         spriteOffset: frame.spriteOffset || { x: 0, y: 0 },
         mouth: frame.mouth || (frames[0] && frames[0].mouth),
         tail: frame.tail || (frames[0] && frames[0].tail),
-        duckOffset: frame.duckOffset || 0
+        duckOffset: frame.duckOffset || 0,
+        duckOffsetLeft: frame.duckOffsetLeft || 0,
+        kickOffset: frame.kickOffset || 0
     };
 }
 

@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
 <title>Dragon Side-Scroller</title>
 <style>
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+	font-family: 'Press Start 2P', 'Helvetica Neue', Helvetica, Sans-serif;
 }
 
 body {
@@ -59,7 +62,7 @@ body {
 #ground {
     position: absolute;
     bottom: 0;
-    width: 1000%;
+    width: 1300%;
     height: 10%;
     background: url(img/ground.png) top left repeat;
 }
@@ -217,8 +220,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
-    border: 3px solid #fff;
+    background: #212121;
     padding: 40px;
     text-align: center;
     color: #fff;
@@ -237,11 +239,10 @@ body {
     font-size: 24px;
     padding: 15px 40px;
     margin: 20px 0;
-    background: linear-gradient(135deg, #ff6600 0%, #ff9900 100%);
-    border: 2px solid #fff;
-    color: #fff;
+    background: #0f1554;
+    border: 2px solid #ae3314;
+    color: #2f8000;
     cursor: pointer;
-    font-family: monospace;
     text-shadow: 1px 1px 2px #000;
     transition: transform 0.2s;
 }
@@ -254,6 +255,9 @@ body {
     margin-top: 30px;
     text-align: left;
     font-size: 14px;
+	line-height: 18px;
+	font-weight: 100;
+	font-family:'Courier New', Courier, monospace;
 }
 
 #debug {
@@ -278,6 +282,25 @@ body {
     border: 2px solid rgba(0, 255, 0, 0.5);
     pointer-events: none;
     z-index: 50;
+}
+
+/* Debug mode - show hitboxes */
+body.debug-mode #dragon1,
+body.debug-mode #dragon1-upper,
+body.debug-mode #dragon2,
+body.debug-mode .enemy,
+body.debug-mode .projectile,
+body.debug-mode .obstacle {
+    outline: 2px solid red !important;
+    outline-offset: -2px;
+}
+
+body.debug-mode #dragon1 {
+    outline-color: lime !important;
+}
+
+body.debug-mode #dragon2 {
+    outline-color: orange !important;
 }
 </style>
 </head>
@@ -312,7 +335,7 @@ body {
             </div>
         </div>
         <div id="boss-health">
-            <span style="color: #fff;">BOSS: </span>
+            <span style="color: #fff; text-shadow: 2px 2px 2px #000,2px 2px 2px #000,2px 2px 2px #000">BOSS: </span>
             <div class="health-bar">
                 <div class="health-fill" id="boss-health-fill"></div>
             </div>
@@ -320,15 +343,14 @@ body {
     </div>
     
     <div id="menu">
-        <h1>DRAGON FIGHTER</h1>
+        <img src="img/menu.png" width="427"><br />
         <button onclick="startGame()">START GAME</button>
         <div class="controls">
-            <strong>CONTROLS:</strong><br>
+            CONTROLS:<br>
             Arrow Keys - Move/Jump/Duck<br>
             Z - Punch<br>
             X - Kick<br>
-            Space - Fire/Tail Spin<br><br>
-            <strong>TIP:</strong> Jump attacks deal more damage!
+            Space - Fire<br><br>
         </div>
     </div>
     
@@ -360,6 +382,9 @@ const GAME_CONFIG = {
         coyoteMs: 120, 
         jumpBufferMs: 120, 
         terminalVy: 1400 
+    },
+    animation: {
+        frameDuration: 0.1  // Duration per frame in seconds (0.1 = 10 FPS, 0.05 = 20 FPS, etc.)
     },
     fire: { 
         windupMs: 500, 
@@ -483,8 +508,15 @@ let game = {
         space: false
     },
     
-    debug: true
+    debug: false
 };
+
+// Check for debug mode in querystring
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('debug') === 'true') {
+    game.debug = true;
+    document.body.classList.add('debug-mode');
+}
 
 // Physics calculations
 function calculatePhysics() {
@@ -692,7 +724,7 @@ function updatePlayer(dt) {
     // Update attack states
     if (p.attacking) {
         p.attackTime += dt;
-        const frameDuration = 0.1;
+        const frameDuration = GAME_CONFIG.animation.frameDuration;
         p.attackFrame = Math.floor(p.attackTime / frameDuration);
         
         if (p.attackFrame >= 4) {
@@ -802,7 +834,7 @@ function updatePlayer(dt) {
         p.state = newState;
         p.frame = 0;
         p.frameTime = 0;
-    } else if (p.frameTime > 0.1) {
+    } else if (p.frameTime > GAME_CONFIG.animation.frameDuration) {
         p.frameTime = 0;
         
         // Get the number of frames for this state
@@ -1169,7 +1201,7 @@ function updateBoss(dt) {
     }
     
     // Animation
-    if (b.frameTime > 0.1) {
+    if (b.frameTime > GAME_CONFIG.animation.frameDuration) {
         b.frameTime = 0;
         b.frame = (b.frame + 1) % 12;
     }
@@ -1235,6 +1267,20 @@ function checkCollisions() {
     if (p.state === 'duck') {
         playerBox.height *= 0.75;
         playerBox.y += p.height * 0.25;
+        
+        // Adjust x position for duck offset to match visual position
+        const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+        if (frameInfo && frameInfo.duckOffset) {
+            playerBox.x += frameInfo.duckOffset;
+        }
+    }
+    
+    // Adjust x position for kick offset when kicking and facing left
+    if (p.state === 'kick' && p.facing === 'left') {
+        const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
+        if (frameInfo && frameInfo.kickOffset) {
+            playerBox.x += frameInfo.kickOffset;
+        }
     }
     
     // Check if player is attacking
@@ -1438,9 +1484,24 @@ function render() {
         dragon1Upper.style.display = 'none';
     }
     
-    // Get duck offset from frame info if in duck state
+    // Get duck/kick offset from frame info
     const frameInfo = getFrameInfo('dragon1', p.state, p.frame);
-    const leftOffset = (p.state === 'duck' && frameInfo) ? frameInfo.duckOffset : 0;
+    let leftOffset = 0;
+    
+    // Apply duck offset when ducking
+    if (p.state === 'duck' && frameInfo && frameInfo.duckOffset) {
+		if (p.facing == "right") {
+			leftOffset = frameInfo.duckOffset;
+		} else {
+			leftOffset = frameInfo.duckOffsetLeft;
+			console.log(frameInfo)
+		}
+    }
+    
+    // Apply kick offset when kicking and facing left
+    if (p.state === 'kick' && p.facing === 'left' && frameInfo && frameInfo.kickOffset) {
+        leftOffset = frameInfo.kickOffset;
+    }
     
     // Position the player
     // groundY is at 90% of window height. Ground div is bottom 10%.
@@ -1508,7 +1569,7 @@ function render() {
         // Animate fire beam frames
         const dt = game.fixedDeltaMs / 1000;
         fireBeam._frameTime += dt;
-        if (fireBeam._frameTime >= 0.1) { // Change frame every 100ms
+        if (fireBeam._frameTime >= GAME_CONFIG.animation.frameDuration) {
             fireBeam._frameTime = 0;
             fireBeam._frame = (fireBeam._frame + 1) % fireBeam._totalFrames;
             updateFireBeamFrame(fireBeam);
@@ -1654,6 +1715,11 @@ function gameLose() {
 
 function toggleDebug() {
     document.getElementById('debug').style.display = game.debug ? 'block' : 'none';
+    if (game.debug) {
+        document.body.classList.add('debug-mode');
+    } else {
+        document.body.classList.remove('debug-mode');
+    }
 }
 
 function updateDebug() {
