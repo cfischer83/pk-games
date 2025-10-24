@@ -161,7 +161,43 @@ const ANCHORS_JSON = {
                 ]
             }
         }
-    }
+    },
+	"bird": {
+		"spriteSheet": { "w": 130, "h": 30, "src": "img/bird.png" },
+		"baseFrameSize": { "w": 42, "h": 30 },
+		"states": {
+			"fly": {
+				"frameSize": { "w": 42, "h": 30 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 44, "y": 0 } },
+					{ "spriteOffset": { "x": 88, "y": 0 } }
+				]
+			}
+		}
+	},
+	"tank": {},
+	"explosion": {
+		"spriteSheet": { "w": 132, "h": 32, "src": "img/explosion.png" },
+		"baseFrameSize": { "w": 10, "h": 6 },
+		"states": {
+			"explode": {
+				"frames": [
+					{ "frameSize": { "w": 10, "h": 6 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 12, "h": 10 }, "spriteOffset": { "x": 12, "y": 0 } },
+					{ "frameSize": { "w": 16, "h": 12 }, "spriteOffset": { "x": 26, "y": 0 } },
+					{ "frameSize": { "w": 20, "h": 20 }, "spriteOffset": { "x": 44, "y": 0 } },
+					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 66, "y": 0 } },
+					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 100, "y": 0 } }
+				]
+			}
+		}
+	}
 };
 
 /**

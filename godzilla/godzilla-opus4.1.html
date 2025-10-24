@@ -24,7 +24,7 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
-	background: url(img/planet.png) top right no-repeat, url(img/stars.png) top repeat-x #000;
+	background: url(img/planet.png) calc(100% - 250px) 0 no-repeat, url(img/stars.png) top repeat-x #000;
 }
 
 #viewport {
@@ -134,10 +134,8 @@ body {
 }
 
 .bird {
-    width: 40px;
+    width: 42px;
     height: 30px;
-    background: #884422;
-    border-radius: 40% 10% 40% 10%;
 }
 
 .tank {
@@ -190,17 +188,16 @@ body {
     top: 0;
     left: 0;
     height: 100%;
-    background: linear-gradient(90deg, #ff0000 0%, #ffff00 100%);
+    background: #F00;
     transition: width 0.3s;
 }
 
 .cooldown-bar {
     display: inline-block;
-    width: 150px;
-    height: 15px;
+    width: 200px;
+    height: 20px;
     background: #222;
     border: 2px solid #fff;
-    margin-left: 10px;
     position: relative;
 }
 
@@ -209,7 +206,7 @@ body {
     top: 0;
     left: 0;
     height: 100%;
-    background: linear-gradient(90deg, #0088ff 0%, #00ffff 100%);
+    background: #08F;
     transition: width 0.1s;
 }
 
@@ -333,11 +330,12 @@ body.debug-mode #dragon2 {
     
     <div id="hud">
         <div>
-            <span style="color: #fff;">HP: </span>
+            <span style="color: #fff; width: 100px; display: inline-block;">HP:</span>
             <div class="health-bar">
                 <div class="health-fill" id="player-health"></div>
             </div>
-            <span style="color: #fff; margin-left: 10px;">Fire: </span>
+			<br /><br />
+            <span style="color: #fff; width: 100px; display: inline-block;">Fire:</span>
             <div class="cooldown-bar">
                 <div class="cooldown-fill" id="fire-cooldown"></div>
             </div>
@@ -504,6 +502,7 @@ let game = {
     enemies: [],
     projectiles: [],
     obstacles: [],
+    explosions: [],  // Track active explosions
     
     camera: {
         x: 0,
@@ -1068,6 +1067,8 @@ function applyFireDamage() {
         if (aabbIntersects(beamBox, bossBox)) {
             game.boss.hp -= 1;
             game.boss.hurtTime = 0.3;
+            // Spawn explosion at boss center when damaged by fire beam
+            spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
         }
     }
 }
@@ -1099,10 +1100,18 @@ function spawnEnemy(type) {
     };
     
     if (type === 'bird') {
-        enemy.width = 40;
+        enemy.width = 42;
         enemy.height = 30;
-        enemy.y = window.innerHeight * 0.5 + Math.random() * 100;
+        // Spawn birds between ground level and max dragon jump height
+        // Y coordinate system: higher values = closer to ground
+        const groundY = window.innerHeight * 0.9;
+        const minBirdY = groundY - physics.targetApex - enemy.height; // Highest point (max jump)
+        const maxBirdY = groundY - enemy.height; // Ground level
+        enemy.y = minBirdY + Math.random() * (maxBirdY - minBirdY);
         enemy.vx = -80;
+        enemy.state = 'fly';
+        enemy.frame = 0;
+        enemy.frameTime = 0;
     } else if (type === 'tank') {
         enemy.width = 60;
         enemy.height = 40;
@@ -1117,6 +1126,11 @@ function spawnEnemy(type) {
     el.setAttribute('data-type', type);
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-active', 'true');
+    
+    // Apply initial sprite frame for birds
+    if (type === 'bird') {
+        applySpriteFrame(el, 'bird', 'fly', 0, 'left');
+    }
     
     enemy.element = el;
     document.getElementById('world').appendChild(el);
@@ -1183,7 +1197,16 @@ function updateEnemies(dt) {
         }
         
         if (enemy.type === 'bird') {
-            enemy.y += Math.sin(game.time * 3) * 50 * dt;
+            enemy.y += Math.sin(game.time * 3) * 150 * dt;
+            
+            // Animate bird frames
+            enemy.frameTime += dt;
+            if (enemy.frameTime >= GAME_CONFIG.animation.frameDuration) {
+                enemy.frameTime = 0;
+                const frameCount = getFrameCount('bird', 'fly');
+                enemy.frame = (enemy.frame + 1) % frameCount;
+                applySpriteFrame(enemy.element, 'bird', 'fly', enemy.frame, 'left');
+            }
         } else if (enemy.type === 'tank') {
             enemy.shootCooldown -= dt;
             if (enemy.shootCooldown <= 0) {
@@ -1272,6 +1295,66 @@ function updateProjectiles(dt) {
         const groundHeight = window.innerHeight * 0.1;
         proj.element.style.left = (proj.x - game.camera.x) + 'px';
         proj.element.style.bottom = (groundHeight + groundY - proj.y - proj.height) + 'px';
+        
+        return true;
+    });
+}
+
+// Explosion system
+function spawnExplosion(x, y) {
+    const explosion = {
+        x: x,
+        y: y,
+        frame: 0,
+        frameTime: 0,
+        element: null
+    };
+    
+    const el = document.createElement('div');
+    el.className = 'explosion sprite';
+    el.style.position = 'absolute';
+    el.style.zIndex = '20'; // Above everything else
+    
+    // Apply initial frame
+    applySpriteFrame(el, 'explosion', 'explode', 0);
+    
+    explosion.element = el;
+    document.getElementById('world').appendChild(el);
+    game.explosions.push(explosion);
+    
+    // Position explosion
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
+    const frameInfo = getFrameInfo('explosion', 'explode', 0);
+    el.style.left = (x - game.camera.x - frameInfo.width / 2) + 'px';
+    el.style.bottom = (groundHeight + groundY - y - frameInfo.height / 2) + 'px';
+}
+
+function updateExplosions(dt) {
+    game.explosions = game.explosions.filter(explosion => {
+        explosion.frameTime += dt;
+        
+        if (explosion.frameTime >= GAME_CONFIG.animation.frameDuration) {
+            explosion.frameTime = 0;
+            explosion.frame++;
+            
+            const frameCount = getFrameCount('explosion', 'explode');
+            if (explosion.frame >= frameCount) {
+                // Animation complete, remove explosion
+                explosion.element.remove();
+                return false;
+            }
+            
+            // Update to next frame
+            applySpriteFrame(explosion.element, 'explosion', 'explode', explosion.frame);
+            
+            // Update size and position as frame size changes
+            const frameInfo = getFrameInfo('explosion', 'explode', explosion.frame);
+            const groundY = window.innerHeight * 0.9;
+            const groundHeight = window.innerHeight * 0.1;
+            explosion.element.style.left = (explosion.x - game.camera.x - frameInfo.width / 2) + 'px';
+            explosion.element.style.bottom = (groundHeight + groundY - explosion.y - frameInfo.height / 2) + 'px';
+        }
         
         return true;
     });
@@ -1461,6 +1544,12 @@ function checkCollisions() {
                 enemy.hp -= GAME_CONFIG.damage.punch;
                 if (enemy.hp <= 0) {
                     enemy.dead = true;
+                    // Spawn explosion at enemy center (not rocks)
+                    if (enemy.type !== 'rock') {
+                        const explosionX = enemy.x + enemy.width / 2;
+                        const explosionY = enemy.y + enemy.height / 2;
+                        spawnExplosion(explosionX, explosionY);
+                    }
                 } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                     enemy.element.classList.add('broken');
                 }
@@ -1499,6 +1588,12 @@ function checkCollisions() {
                         enemy.hp -= damage;
                         if (enemy.hp <= 0) {
                             enemy.dead = true;
+                            // Spawn explosion at enemy center (not rocks)
+                            if (enemy.type !== 'rock') {
+                                const explosionX = enemy.x + enemy.width / 2;
+                                const explosionY = enemy.y + enemy.height / 2;
+                                spawnExplosion(explosionX, explosionY);
+                            }
                         } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                             enemy.element.classList.add('broken');
                         }
@@ -1511,6 +1606,15 @@ function checkCollisions() {
                     p.hp -= damage;
                     p.hurtTime = 0.5;
                     p.invulnerable = 1;
+                    
+                    // Spawn explosion at collision center
+                    const collisionX = Math.max(playerBox.x, enemyBox.x);
+                    const collisionRight = Math.min(playerBox.x + playerBox.width, enemyBox.x + enemyBox.width);
+                    const collisionY = Math.max(playerBox.y, enemyBox.y);
+                    const collisionBottom = Math.min(playerBox.y + playerBox.height, enemyBox.y + enemyBox.height);
+                    const explosionX = (collisionX + collisionRight) / 2;
+                    const explosionY = (collisionY + collisionBottom) / 2;
+                    spawnExplosion(explosionX, explosionY);
                 }
                 // Rocks block movement - this is handled in updatePlayer
             }
@@ -1594,6 +1698,10 @@ function checkCollisions() {
                 enemy.hp -= GAME_CONFIG.damage.fire * (game.fixedDeltaMs / 1000);
                 if (enemy.hp <= 0) {
                     enemy.dead = true;
+                    // Spawn explosion at enemy center (not for rocks)
+                    if (enemy.type !== 'rock') {
+                        spawnExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    }
                 } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                     enemy.element.classList.add('broken');
                 }
@@ -1634,6 +1742,16 @@ function checkCollisions() {
             p.hp -= damage;
             p.hurtTime = 0.5;
             p.invulnerable = 1;
+            
+            // Spawn explosion at projectile impact center
+            const collisionX = Math.max(playerBox.x, projBox.x);
+            const collisionRight = Math.min(playerBox.x + playerBox.width, projBox.x + projBox.width);
+            const collisionY = Math.max(playerBox.y, projBox.y);
+            const collisionBottom = Math.min(playerBox.y + playerBox.height, projBox.y + projBox.height);
+            const explosionX = (collisionX + collisionRight) / 2;
+            const explosionY = (collisionY + collisionBottom) / 2;
+            spawnExplosion(explosionX, explosionY);
+            
             proj.element.remove();
             game.projectiles = game.projectiles.filter(pr => pr !== proj);
         }
@@ -1654,6 +1772,8 @@ function checkCollisions() {
             punchHitBoss = true;
             game.boss.hp -= GAME_CONFIG.damage.punch;
             game.boss.hurtTime = 0.3;
+            // Spawn explosion at boss center when damaged
+            spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
         }
         
         // Regular body collision (only if not already hit by punch)
@@ -1664,16 +1784,28 @@ function checkCollisions() {
                 if (p.tailActive || p.state === 'duck_spin') {
                     game.boss.hp -= GAME_CONFIG.damage.tail;
                     game.boss.hurtTime = 0.3;
+                    // Spawn explosion at boss center when damaged by tail
+                    spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
                 } else if (p.attacking) {
                     const damage = p.attackType === 'kick' ? 2 : 1;
                     game.boss.hp -= damage;
                     game.boss.hurtTime = 0.3;
+                    // Spawn explosion at boss center when damaged by attack
+                    spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
                 }
             } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
                 p.hp -= 1;
                 p.hurtTime = 0.5;
                 p.invulnerable = 1;
                 p.vx = p.x < game.boss.x ? -200 : 200;
+                // Spawn explosion at collision center when player hit by boss
+                const overlapLeft = Math.max(playerBox.x, bossBox.x);
+                const overlapRight = Math.min(playerBox.x + playerBox.width, bossBox.x + bossBox.width);
+                const overlapTop = Math.max(playerBox.y, bossBox.y);
+                const overlapBottom = Math.min(playerBox.y + playerBox.height, bossBox.y + bossBox.height);
+                const explosionX = (overlapLeft + overlapRight) / 2;
+                const explosionY = (overlapTop + overlapBottom) / 2;
+                spawnExplosion(explosionX, explosionY);
             }
         }
     }
@@ -1941,6 +2073,7 @@ function gameLoop(timestamp) {
         updateEnemies(dt);
         updateObstacles(dt);
         updateProjectiles(dt);
+        updateExplosions(dt);
         updateSpawner(dt);
         
         // Check boss spawn - hybrid approach
@@ -2016,6 +2149,7 @@ function startGame() {
     game.enemies = [];
     game.obstacles = [];
     game.projectiles = [];
+    game.explosions = [];
     game.boss = null;
     game.spawn.gateReached = false;
     game.spawn.enemiesFinished = false;
