@@ -139,10 +139,9 @@ body {
 }
 
 .tank {
-    width: 60px;
-    height: 40px;
-    background: #556677;
-    border-radius: 10%;
+    width: 64px;
+    height: 32px;
+    background: url(img/tank.png) left bottom no-repeat;
 }
 
 .rock {
@@ -430,7 +429,7 @@ const GAME_CONFIG = {
         maxObstacles: 15,  // Allow more obstacles (rocks) than enemies
         minSpacingRule: 'dragonWidth',
         schedule: [
-            { start: 0, end: 20, enemies: ['bird'], intervals: [7000], max: 2 },
+            { start: 0, end: 20, enemies: ['tank', 'bird'], intervals: [7000], max: 2 },
             { start: 20, end: 80, enemies: ['bird', 'tank'], intervals: [6000, 9500], max: 3 },
             { start: 80, end: 110, enemies: ['bird', 'tank'], intervals: [4500, 7500], max: 4 }
         ],
@@ -677,18 +676,15 @@ function updatePlayer(dt) {
     if (p.invulnerable > 0) p.invulnerable -= dt;
     if (p.fireCooldown > 0) p.fireCooldown -= dt;
     
-    // Movement - can move while attacking or firing, but not while ducking on ground
+    // Movement - can move while attacking, firing, or ducking
     p.vx = 0;
-    const isDuckingNow = game.keys.down && p.grounded;
-    if (!isDuckingNow) {
-        if (game.keys.left && !game.keys.right) {
-            p.vx = -speed;
-            p.facing = 'left';
-        }
-        if (game.keys.right && !game.keys.left) {
-            p.vx = speed;
-            p.facing = 'right';
-        }
+    if (game.keys.left && !game.keys.right) {
+        p.vx = -speed;
+        p.facing = 'left';
+    }
+    if (game.keys.right && !game.keys.left) {
+        p.vx = speed;
+        p.facing = 'right';
     }
     
     // Gravity
@@ -1113,9 +1109,10 @@ function spawnEnemy(type) {
         enemy.frame = 0;
         enemy.frameTime = 0;
     } else if (type === 'tank') {
-        enemy.width = 60;
+        enemy.width = 64;
         enemy.height = 40;
         enemy.shootCooldown = 2;
+		enemy.y = window.innerHeight * 0.9 - enemy.height;
     }
     
     // Create element
@@ -1260,7 +1257,7 @@ function updateObstacles(dt) {
 function shootBullet(tank) {
     const bullet = {
         x: tank.x - 20,
-        y: tank.y + tank.height/2,
+        y: tank.y + (tank.height/2)-10,
         vx: -200,
         vy: 0,
         width: 12,
