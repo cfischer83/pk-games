@@ -181,7 +181,19 @@ const ANCHORS_JSON = {
 			}
 		}
 	},
-	"tank": {},
+	"bullet": {
+		"spriteSheet": { "w": 93, "h": 14, "src": "img/bullet.png" },
+		"baseFrameSize": { "w": 30, "h": 14 },
+		"states": {
+			"fired": {
+				"frames": [
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 31, "y": 0 } },
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 62, "y": 0 } }
+				]
+			}
+		}
+	},
 	"explosion": {
 		"spriteSheet": { "w": 132, "h": 32, "src": "img/explosion.png" },
 		"baseFrameSize": { "w": 10, "h": 6 },
@@ -194,6 +206,18 @@ const ANCHORS_JSON = {
 					{ "frameSize": { "w": 20, "h": 20 }, "spriteOffset": { "x": 44, "y": 0 } },
 					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 66, "y": 0 } },
 					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 100, "y": 0 } }
+				]
+			}
+		}
+	},
+	"life": {
+		"spriteSheet": { "w": 32, "h": 30, "src": "img/life.png" },
+		"baseFrameSize": { "w": 16, "h": 30 },
+		"states": {
+			"float": {
+				"frames": [
+					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 16, "y": 0 } }
 				]
 			}
 		}

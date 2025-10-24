@@ -123,6 +123,7 @@ body {
     animation: lightning-flash 0.3s infinite;
 }
 
+
 @keyframes fire-pulse {
     0%, 100% { opacity: 0.9; }
     50% { opacity: 1; }
@@ -155,13 +156,6 @@ body {
     background: url(img/rocks.png) bottom right no-repeat;
 }
 
-.bullet {
-    width: 12px;
-    height: 6px;
-    background: #ffff00;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #ffff00;
-}
 
 #hud {
     position: absolute;
@@ -502,6 +496,7 @@ let game = {
     projectiles: [],
     obstacles: [],
     explosions: [],  // Track active explosions
+    lifePickups: [],  // Track active life pickups
     
     camera: {
         x: 0,
@@ -1260,8 +1255,10 @@ function shootBullet(tank) {
         y: tank.y + (tank.height/2)-10,
         vx: -200,
         vy: 0,
-        width: 12,
-        height: 6,
+        width: 30,
+        height: 14,
+        frame: 0,
+        frameTime: 0,
         element: null
     };
     
@@ -1270,6 +1267,9 @@ function shootBullet(tank) {
     el.setAttribute('data-type', 'bullet');
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-active', 'true');
+    
+    // Apply initial sprite frame
+    applySpriteFrame(el, 'bullet', 'fired', 0, 'left');
     
     bullet.element = el;
     document.getElementById('world').appendChild(el);
@@ -1285,6 +1285,17 @@ function updateProjectiles(dt) {
         if (proj.x < game.camera.x - 100 || proj.x > game.camera.x + window.innerWidth + 100) {
             proj.element.remove();
             return false;
+        }
+        
+        // Animate bullet frames
+        if (proj.element.classList.contains('bullet') && proj.frameTime !== undefined) {
+            proj.frameTime += dt;
+            if (proj.frameTime >= GAME_CONFIG.animation.frameDuration) {
+                proj.frameTime = 0;
+                const frameCount = getFrameCount('bullet', 'fired');
+                proj.frame = (proj.frame + 1) % frameCount;
+                applySpriteFrame(proj.element, 'bullet', 'fired', proj.frame, 'left');
+            }
         }
         
         // Position projectiles
@@ -1352,6 +1363,105 @@ function updateExplosions(dt) {
             explosion.element.style.left = (explosion.x - game.camera.x - frameInfo.width / 2) + 'px';
             explosion.element.style.bottom = (groundHeight + groundY - explosion.y - frameInfo.height / 2) + 'px';
         }
+        
+        return true;
+    });
+}
+
+// Life pickup system
+function spawnLifePickup(x, y) {
+    // 33% chance to spawn
+    if (Math.random() >= 0.25) {
+        return;
+    }
+    
+    // Height of dragon1's head when standing on ground
+    // Dragon1 is 128px tall, head is approximately 20px from top
+    const groundY = window.innerHeight * 0.9;
+    const dragon1Height = 128;
+    const headOffsetFromTop = 20;
+    const lifeY = groundY - dragon1Height + headOffsetFromTop;
+    
+    const lifePickup = {
+        x: x,
+        y: lifeY,
+        vx: GAME_CONFIG.speed.base / 2,  // Half of dragon1's walking speed
+        width: 16,
+        height: 30,
+        lifetime: 0,
+        maxLifetime: 10,  // Disappear after 10 seconds
+        frame: 0,
+        frameTime: 0,
+        element: null
+    };
+    
+    const el = document.createElement('div');
+    el.className = 'life-pickup sprite';
+    el.style.position = 'absolute';
+    el.style.zIndex = '15';
+    
+    // Apply initial frame
+    applySpriteFrame(el, 'life', 'float', 0);
+    
+    lifePickup.element = el;
+    document.getElementById('world').appendChild(el);
+    game.lifePickups.push(lifePickup);
+    
+    // Position pickup
+    const groundHeight = window.innerHeight * 0.1;
+    el.style.left = (lifePickup.x - game.camera.x) + 'px';
+    el.style.bottom = (groundHeight + groundY - lifePickup.y - lifePickup.height) + 'px';
+}
+
+function updateLifePickups(dt) {
+    const p = game.player;
+    
+    game.lifePickups = game.lifePickups.filter(pickup => {
+        // Update lifetime
+        pickup.lifetime += dt;
+        if (pickup.lifetime >= pickup.maxLifetime) {
+            pickup.element.remove();
+            return false;
+        }
+        
+        // Move right at half walking speed
+        pickup.x += pickup.vx * dt;
+        
+        // Animate frames
+        pickup.frameTime += dt;
+        if (pickup.frameTime >= GAME_CONFIG.animation.frameDuration) {
+            pickup.frameTime = 0;
+            const frameCount = getFrameCount('life', 'float');
+            pickup.frame = (pickup.frame + 1) % frameCount;
+            applySpriteFrame(pickup.element, 'life', 'float', pickup.frame);
+        }
+        
+        // Check collision with player
+        const playerBox = {
+            x: p.x,
+            y: p.y,
+            width: p.width,
+            height: p.height
+        };
+        const pickupBox = {
+            x: pickup.x,
+            y: pickup.y,
+            width: pickup.width,
+            height: pickup.height
+        };
+        
+        if (aabbIntersects(playerBox, pickupBox)) {
+            // Add 2 HP to player
+            p.hp = Math.min(p.hp + 2, GAME_CONFIG.hp.player);
+            pickup.element.remove();
+            return false;
+        }
+        
+        // Position pickup
+        const groundY = window.innerHeight * 0.9;
+        const groundHeight = window.innerHeight * 0.1;
+        pickup.element.style.left = (pickup.x - game.camera.x) + 'px';
+        pickup.element.style.bottom = (groundHeight + groundY - pickup.y - pickup.height) + 'px';
         
         return true;
     });
@@ -1541,12 +1651,10 @@ function checkCollisions() {
                 enemy.hp -= GAME_CONFIG.damage.punch;
                 if (enemy.hp <= 0) {
                     enemy.dead = true;
-                    // Spawn explosion at enemy center (not rocks)
-                    if (enemy.type !== 'rock') {
-                        const explosionX = enemy.x + enemy.width / 2;
-                        const explosionY = enemy.y + enemy.height / 2;
-                        spawnExplosion(explosionX, explosionY);
-                    }
+                    // Spawn explosion at enemy center
+                    const explosionX = enemy.x + enemy.width / 2;
+                    const explosionY = enemy.y + enemy.height / 2;
+                    spawnExplosion(explosionX, explosionY);
                 } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                     enemy.element.classList.add('broken');
                 }
@@ -1585,12 +1693,10 @@ function checkCollisions() {
                         enemy.hp -= damage;
                         if (enemy.hp <= 0) {
                             enemy.dead = true;
-                            // Spawn explosion at enemy center (not rocks)
-                            if (enemy.type !== 'rock') {
-                                const explosionX = enemy.x + enemy.width / 2;
-                                const explosionY = enemy.y + enemy.height / 2;
-                                spawnExplosion(explosionX, explosionY);
-                            }
+                            // Spawn explosion at enemy center
+                            const explosionX = enemy.x + enemy.width / 2;
+                            const explosionY = enemy.y + enemy.height / 2;
+                            spawnExplosion(explosionX, explosionY);
                         } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                             enemy.element.classList.add('broken');
                         }
@@ -1637,6 +1743,8 @@ function checkCollisions() {
                 obstacle.hp -= GAME_CONFIG.damage.punch;
                 if (obstacle.hp <= 0) {
                     obstacle.dead = true;
+                    // Spawn life pickup when rock is destroyed
+                    spawnLifePickup(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                 } else if (obstacle.hp <= 3) {
                     obstacle.element.classList.add('broken');
                 }
@@ -1663,6 +1771,8 @@ function checkCollisions() {
                         obstacle.hp -= damage;
                         if (obstacle.hp <= 0) {
                             obstacle.dead = true;
+                            // Spawn life pickup when rock is destroyed
+                            spawnLifePickup(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                         } else if (obstacle.hp <= 3) {
                             obstacle.element.classList.add('broken');
                         }
@@ -1718,6 +1828,8 @@ function checkCollisions() {
                 obstacle.hp -= GAME_CONFIG.damage.fire * (game.fixedDeltaMs / 1000);
                 if (obstacle.hp <= 0) {
                     obstacle.dead = true;
+                    // Spawn life pickup when rock is destroyed
+                    spawnLifePickup(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
                 } else if (obstacle.hp <= 3) {
                     obstacle.element.classList.add('broken');
                 }
@@ -2071,6 +2183,7 @@ function gameLoop(timestamp) {
         updateObstacles(dt);
         updateProjectiles(dt);
         updateExplosions(dt);
+        updateLifePickups(dt);
         updateSpawner(dt);
         
         // Check boss spawn - hybrid approach
@@ -2147,6 +2260,7 @@ function startGame() {
     game.obstacles = [];
     game.projectiles = [];
     game.explosions = [];
+    game.lifePickups = [];
     game.boss = null;
     game.spawn.gateReached = false;
     game.spawn.enemiesFinished = false;
