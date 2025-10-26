@@ -360,6 +360,47 @@ body.debug-mode #dragon2 {
 
 <script src="dragon-sprites.js"></script>
 <script>
+// Preload images
+const imagesToPreload = [
+	'img/planet.png',
+	'img/stars.png',
+	'img/stars-wide.gif',
+	'img/mountains.png',
+	'img/midlands.png',
+	'img/ground.png',
+	'img/tank.png',
+	'img/rocks.png',
+	'img/menu.png',
+	'img/dragon1.png',
+	'img/dragon2.png'
+];
+
+function preloadImages(urls, callback) {
+	let loadedCount = 0;
+	const totalImages = urls.length;
+	urls.forEach(url => {
+		const img = new Image();
+		img.src = url;
+		img.onload = () => {
+			loadedCount++;
+			if (loadedCount === totalImages) {
+				if (callback) callback();
+			}
+		};
+		img.onerror = () => {
+			console.error(`Failed to load image: ${url}`);
+			loadedCount++;
+			if (loadedCount === totalImages) {
+				if (callback) callback();
+			}
+		};
+	});
+}
+
+// It's good practice to wait for images to load before starting the game,
+// but for this setup, we'll just fire and forget.
+preloadImages(imagesToPreload);
+
 // Configuration
 const GAME_CONFIG = {
     // *** TESTING MODE *** 
@@ -2613,6 +2654,7 @@ function startGame() {
     world.innerHTML = '<div id="dragon1" class="sprite" data-upper="stand" data-lower="stand" data-facing="right" data-frame="0" data-attack="none" data-can-fire="true"></div><div id="dragon1-upper" class="sprite"></div>';
     
     requestAnimationFrame(gameLoop);
+	pkAnalytics("start");
 }
 
 function gameWin() {
@@ -2628,6 +2670,7 @@ function gameWin() {
         game.boss.deathTimer = 5;  // 5 seconds of death animation
         game.boss.explosionTimer = 0;
     }
+	pkAnalytics("win");
 }
 
 function gameLose() {
@@ -2645,6 +2688,7 @@ function gameLose() {
     game.player.explosionTimer = 0;
     game.player.state = 'dead';  // Set to dead state
     game.player.frame = 0;
+	pkAnalytics("lose");
 }
 
 function showGameOverMenu(won) {
@@ -2697,6 +2741,22 @@ function updateDebug() {
 console.log('Dragon Side-Scroller initialized');
 console.log('Physics:', physics);
 console.log('Config:', GAME_CONFIG);
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N8SN5SJEFW"></script>
+<script type="text/javascript">
+	function pkAnalytics(action) {
+		console.log("send to ga4: action="+action);
+		gtag('event', 'PlayGodzilla', {
+			'game_action': action,
+			'game_level': "1",
+			'game_difficulty': "normal",
+			'game_details': "normal" + ":" + action
+		});
+	}
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-N8SN5SJEFW');
 </script>
 </body>
 </html>
