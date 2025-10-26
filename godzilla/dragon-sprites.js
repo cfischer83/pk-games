@@ -107,6 +107,12 @@ const ANCHORS_JSON = {
                     { "spriteOffset": { "x": 5, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
                     { "spriteOffset": { "x": 165, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
                 ]
+            },
+            "dead": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 148, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
             }
         }
     },
@@ -151,13 +157,13 @@ const ANCHORS_JSON = {
             "hurt": {
                 "frameSize": { "w": 240, "h": 220 },
                 "frames": [
-                    { "spriteOffset": { "x": 0, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                    { "spriteOffset": { "x": 0, "y": 890 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
                 ]
             },
             "dead": {
                 "frameSize": { "w": 240, "h": 220 },
                 "frames": [
-                    { "spriteOffset": { "x": 240, "y": 880 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                    { "spriteOffset": { "x": 250, "y": 904 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
                 ]
             }
         }
@@ -218,6 +224,18 @@ const ANCHORS_JSON = {
 				"frames": [
 					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 0, "y": 0 } },
 					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 16, "y": 0 } }
+				]
+			}
+		}
+	},
+	"lightning": {
+		"spriteSheet": { "w": 758, "h": 1336, "src": "dragon2.png" },
+		"baseFrameSize": { "w": 128, "h": 64 },
+		"states": {
+			"bolt": {
+				"frames": [
+					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1152 } },
+					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1234 } }
 				]
 			}
 		}
@@ -290,13 +308,17 @@ function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
     
     // Handle flipping
     // Dragon1 sprite faces right by default, Dragon2 sprite faces left by default
+    // Lightning sprite faces left by default (same as dragon2)
     let flipTransform;
-    if (actor === 'dragon2') {
-        // Dragon2 sprite is naturally left-facing, so flip for right
+    if (actor === 'dragon2' || actor === 'lightning') {
+        // Dragon2 and lightning sprites are naturally left-facing, so flip for right
         flipTransform = facing === 'right' ? 'scaleX(-1)' : 'scaleX(1)';
+        // Set transform origin to center for clean horizontal flip
+        element.style.transformOrigin = 'center center';
     } else {
         // Dragon1 sprite is naturally right-facing, so flip for left
         flipTransform = facing === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
+        element.style.transformOrigin = 'center bottom';
     }
     element.style.transform = flipTransform;
     
