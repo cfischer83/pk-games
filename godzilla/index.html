@@ -123,6 +123,13 @@ body {
     animation: lightning-flash 0.25s infinite;
 }
 
+.lightning-bolt.lower {
+	rotate: -20deg;
+}
+.lightning-bolt.lowerRight {
+	rotate: 200deg;
+}
+
 
 @keyframes fire-pulse {
     0%, 100% { opacity: 0.9; }
@@ -371,8 +378,8 @@ const imagesToPreload = [
 	'img/tank.png',
 	'img/rocks.png',
 	'img/menu.png',
-	'img/dragon1.png',
-	'img/dragon2.png'
+	'dragon1.png',
+	'dragon2.png'
 ];
 
 function preloadImages(urls, callback) {
@@ -1787,12 +1794,19 @@ function shootLightning() {
         mouthX = b.x + b.width;  // Right edge of sprite
         mouthY = b.y + b.height - 40;  // 40px up from bottom
     }
+
+	var dir = Math.random() * 1000 < 500 ? true : false;
+	var boltDir = dir ? 250 : 650;
+	var boltLowerClass = dir ? "" : " lower";
+	if ((b.facing === 'right') && boltLowerClass === " lower") {
+		boltLowerClass = " lowerRight";
+	}
     
     const bolt = {
         x: mouthX,
         y: mouthY,
         vx: b.facing === 'left' ? -600 : 600,  // 1.5x faster than normal projectiles (300 * 1.5)
-        vy: 250,  // Slight downward arc (also 1.5x faster)
+        vy: boltDir,  // Slight downward arc (also 1.5x faster)
         width: boltWidth,
         height: boltHeight,
         frame: 0,
@@ -1802,7 +1816,7 @@ function shootLightning() {
     };
     
     const el = document.createElement('div');
-    el.className = 'lightning-bolt projectile sprite';
+    el.className = 'lightning-bolt projectile sprite' + boltLowerClass;
     el.setAttribute('data-type', 'lightning');
     el.setAttribute('data-active', 'true');
     
@@ -2487,8 +2501,8 @@ function updateSpawner(dt) {
 
 // Main game loop
 function gameLoop(timestamp) {
-    // Keep running during death animations
-    if (!game.running && !game.player.dying && !(game.boss && game.boss.dying)) {
+    // Stop if game is not running
+    if (!game.running) {
         return;
     }
     
@@ -2574,6 +2588,7 @@ function gameLoop(timestamp) {
             
             // Show game over menu after 5 seconds
             if (game.player.deathTimer <= 0) {
+                game.player.dying = false;
                 showGameOverMenu(false);
             }
         }
@@ -2595,6 +2610,7 @@ function gameLoop(timestamp) {
             
             // Show game over menu after 5 seconds
             if (game.boss.deathTimer <= 0) {
+                game.boss.dying = false;
                 showGameOverMenu(true);
             }
         }
