@@ -5,7 +5,7 @@
 const ANCHORS_JSON = {
     "scale": 1,
     "dragon1": {
-        "spriteSheet": { "w": 1128, "h": 670, "src": "../img/godzilla-dark.png" },
+        "spriteSheet": { "w": 1128, "h": 670, "src": "../img/dragon1.png" },
         "baseFrameSize": { "w": 142, "h": 128 },
         "fire": {
             "beamSize": { "w": 216, "h": 102 },

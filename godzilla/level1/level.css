@@ -28,5 +28,8 @@
     bottom: 0;
     width: 1400%;
     height: 10%;
-    background: url(img/ground.png) top left repeat;
+    background: url(img/ground.png) top left repeat #000;
+}
+.konami #game-container {
+	background: url(../img/planet.png) calc(100% - 250px) 0 no-repeat,  url(../img/stars.png) top repeat-x,  linear-gradient(to bottom, #000 0%, #000 100px, #204a93 100%);
 }

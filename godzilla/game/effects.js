@@ -156,3 +156,49 @@ function updateLifePickups(dt) {
         return true;
     });
 }
+
+const KONAMI_SEQUENCE = [
+	'ArrowUp',
+	'ArrowUp',
+	'ArrowDown',
+	'ArrowDown',
+	'ArrowLeft',
+	'ArrowRight',
+	'ArrowLeft',
+	'ArrowRight',
+	'b',
+	'a'
+];
+
+let konamiIndex = 0;
+let konamiEnabled = false;
+
+function activateKonamiMode() {
+	if (konamiEnabled) {
+		return;
+	}
+	konamiEnabled = true;
+	document.body.classList.add('konami');
+	if (typeof ANCHORS_JSON !== 'undefined' && ANCHORS_JSON?.dragon1?.spriteSheet) {
+		console.log('Before:', ANCHORS_JSON.dragon1.spriteSheet.src);
+		ANCHORS_JSON.dragon1.spriteSheet.src = '../img/godzilla-dark.png';
+		console.log('After:', ANCHORS_JSON.dragon1.spriteSheet.src);
+	} else {
+		console.log('ANCHORS_JSON.dragon1.spriteSheet not found');
+	}
+}
+
+window.addEventListener('keydown', event => {
+	if (konamiEnabled) {
+		return;
+	}
+	const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+	if (key === KONAMI_SEQUENCE[konamiIndex]) {
+		konamiIndex += 1;
+		if (konamiIndex === KONAMI_SEQUENCE.length) {
+			activateKonamiMode();
+		}
+	} else {
+		konamiIndex = key === KONAMI_SEQUENCE[0] ? 1 : 0;
+	}
+});

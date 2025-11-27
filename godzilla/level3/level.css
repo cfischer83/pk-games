@@ -36,3 +36,6 @@
     height: 10%;
     background: url(img/ground.png) top left repeat-x;
 }
+.konami #game-container {
+	background: url(../img/saturn.png) 400px 0 no-repeat, url(../img/stars.png) 0 0 repeat-x, linear-gradient(to bottom, #000 0%, #000 100px, #24f 100%);
+}
