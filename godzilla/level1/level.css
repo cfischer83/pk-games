@@ -1,0 +1,32 @@
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+	background: url(../img/planet.png) calc(100% - 250px) 0 no-repeat, url(../img/stars.png) top repeat-x #000;
+}
+
+#stars {
+	background: url(../img/stars-wide.gif) 0 0 repeat;
+	top: 100px;
+}
+
+#far-mountains {
+    bottom: 10%;
+    height: 40%;
+    background: url(img/mountains.png) bottom left repeat-x;
+}
+
+#near-mountains {
+    bottom: 10%;
+    height: 30%;
+	min-height: 134px;
+	background: url(img/midlands.png) bottom left repeat-x;
+}
+
+#ground {
+    position: absolute;
+    bottom: 0;
+    width: 1400%;
+    height: 10%;
+    background: url(img/ground.png) top left repeat;
+}

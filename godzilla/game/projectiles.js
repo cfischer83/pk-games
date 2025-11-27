@@ -28,6 +28,14 @@ function updateProjectiles(dt) {
                 const frameCount = getFrameCount('lightning', 'bolt');
                 proj.frame = (proj.frame + 1) % frameCount;
                 applySpriteFrame(proj.element, 'lightning', 'bolt', proj.frame, proj.facing);
+                
+                // Re-apply rotation and origin if they exist
+                if (proj.rotation !== undefined && proj.scale !== undefined) {
+                    if (proj.transformOrigin) {
+                        proj.element.style.transformOrigin = proj.transformOrigin;
+                    }
+                    proj.element.style.transform = `${proj.scale} rotate(${proj.rotation}deg)`;
+                }
             }
         }
         

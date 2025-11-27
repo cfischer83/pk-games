@@ -80,9 +80,9 @@ function showGameOverMenu(won) {
     game.running = false;
     const menu = document.getElementById('menu');
     if (won) {
-        menu.innerHTML = '<h1>YOU WIN!</h1><button onclick="window.location.reload();">PLAY AGAIN</button>';
+        menu.innerHTML = '<h1>YOU WIN!</h1><button onclick="window.location.reload();">PLAY AGAIN</button><br /><button onclick="window.location.href = \'../index.html\'" class="secondary-btn">BACK TO START</button>';
     } else {
-        menu.innerHTML = '<h1>YOU LOSE!</h1><button onclick="window.location.reload();">RETRY?</button>';
+        menu.innerHTML = '<h1>YOU LOSE!</h1><button onclick="window.location.reload();">RETRY?</button><br /><button onclick="window.location.href = \'../index.html\'" class="secondary-btn">BACK TO START</button>';
     }
     menu.style.display = 'block';
 }

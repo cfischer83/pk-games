@@ -1,0 +1,288 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+	font-family: 'Press Start 2P', 'Helvetica Neue', Helvetica, Sans-serif;
+}
+
+body {
+    overflow: hidden;
+    font-family: monospace;
+    background: #000;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+	background: url(img/stars.png) top repeat-x #000;
+}
+
+#viewport {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.parallax-layer {
+    position: absolute;
+    width: 500%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+
+#world {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.sprite {
+    position: absolute;
+    image-rendering: pixelated;
+    transform-origin: center bottom;
+    background-repeat: no-repeat;
+}
+
+#dragon1 {
+    z-index: 10;
+}
+
+#dragon1-upper {
+    position: absolute;
+    z-index: 11;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+    display: none;
+}
+
+#dragon2 {
+    z-index: 15;
+}
+
+.enemy {
+    z-index: 8;
+}
+
+.projectile {
+    z-index: 9;
+}
+
+.obstacle {
+    z-index: 7;
+}
+
+.fire-beam {
+    z-index: 16;
+}
+
+.lightning-bolt {
+    z-index: 13;
+    /* background: linear-gradient(90deg,
+        rgba(200, 200, 255, 0.9) 0%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(200, 200, 255, 0.9) 100%);
+    box-shadow: 0 0 30px #8888ff, 0 0 60px #6666ff; */
+    animation: lightning-flash 0.25s infinite;
+	background-color: rgba(255, 255, 255, 0.2);
+	box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2);
+}
+
+.lightning-bolt.lower {
+	rotate: -20deg;
+}
+.lightning-bolt.lowerRight {
+	rotate: 200deg;
+}
+
+
+@keyframes fire-pulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+}
+
+@keyframes lightning-flash {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.bird {
+    width: 42px;
+    height: 30px;
+}
+
+.tank {
+    width: 64px;
+    height: 32px;
+    background: url(img/tank.png) left bottom no-repeat;
+}
+
+.rock {
+    width: 64px;
+    height: 96px;
+    background: url(img/rocks.png) bottom left no-repeat;
+}
+.rock.broken {
+    width: 64px;
+    height: 96px;
+    background: url(img/rocks.png) bottom right no-repeat;
+}
+
+
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.health-bar {
+    display: inline-block;
+    width: 200px;
+    height: 20px;
+    background: #222;
+    border: 2px solid #fff;
+    position: relative;
+}
+
+.health-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #F00;
+    transition: width 0.3s;
+}
+
+.cooldown-bar {
+    display: inline-block;
+    width: 200px;
+    height: 20px;
+    background: #222;
+    border: 2px solid #fff;
+    position: relative;
+}
+
+.cooldown-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #08F;
+    transition: width 0.1s;
+}
+
+#boss-health {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: none;
+}
+
+#menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #212121;
+    padding: 40px;
+    text-align: center;
+    color: #fff;
+    z-index: 200;
+    font-size: 18px;
+}
+
+#menu h1 {
+    font-size: 36px;
+    margin-bottom: 30px;
+    color: #FFFF00;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#menu button {
+    font-size: 24px;
+    padding: 15px 40px;
+    margin: 20px 0;
+    background: #111;
+    border: 2px solid #0F0;
+    color: #0F0;
+    cursor: pointer;
+    text-shadow: 1px 1px 2px #000;
+    transition: transform 0.2s;
+}
+
+#menu button.secondary-btn {
+	font-size: 24px;
+	padding: 15px 40px;
+	border: 0;
+	color: #0F0;
+	background: transparent;
+}
+
+#menu button:hover {
+    color: #111;
+	background-color: #0F0;
+	text-shadow: none;
+}
+
+.controls {
+    margin-top: 30px;
+    text-align: left;
+    font-size: 14px;
+	line-height: 18px;
+	font-weight: 100;
+	font-family:'Courier New', Courier, monospace;
+}
+.controls .uni {
+	font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+}
+
+#debug {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    color: #0f0;
+    font-size: 12px;
+    z-index: 150;
+    display: none;
+}
+
+.hitbox {
+    position: absolute;
+    border: 2px solid rgba(255, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 50;
+}
+
+.hurtbox {
+    position: absolute;
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    pointer-events: none;
+    z-index: 50;
+}
+
+/* Debug mode - show hitboxes */
+body.debug-mode #dragon1,
+body.debug-mode #dragon1-upper,
+body.debug-mode #dragon2,
+body.debug-mode .enemy,
+body.debug-mode .projectile,
+body.debug-mode .obstacle {
+    outline: 2px solid red !important;
+    outline-offset: -2px;
+}
+
+body.debug-mode #dragon1 {
+    outline-color: lime !important;
+}
+
+body.debug-mode #dragon2 {
+    outline-color: orange !important;
+}

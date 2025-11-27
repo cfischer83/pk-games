@@ -42,6 +42,27 @@ function spawnEnemy(type) {
         enemy.height = 40;
         enemy.shootCooldown = 2;
 		enemy.y = window.innerHeight * 0.9 - enemy.height;
+    } else if (type === 'bubble-craft') {
+        enemy.width = 30;
+        enemy.height = 26;
+        // Spawn at mid-sky height (between top and ground)
+        const groundY = window.innerHeight * 0.9;
+        enemy.y = groundY * 0.3;  // Mid-sky
+        enemy.baseY = enemy.y;  // Remember original height for retreat
+        enemy.vx = -60;  // Slow drift left
+        enemy.state = 'fly';
+        enemy.frame = 0;
+        enemy.frameTime = 0;
+        enemy.pattern = 'hover';  // 'hover', 'diving', 'retreating'
+        enemy.diveSpeed = 300;  // Configurable dive speed
+        enemy.diveProgress = 0;  // For easing curve (0 to 1)
+        enemy.diveEarly = Math.random() < 0.5;  // 50% chance to dive earlier (steeper angle)
+        enemy.diveStartX = enemy.x;
+        enemy.diveStartY = enemy.y;
+        enemy.diveTargetX = enemy.x;
+        enemy.diveTargetY = enemy.y;
+        enemy.retreatStartY = enemy.y;
+        enemy.retreatTargetY = enemy.y;
     }
     
     // Create element
@@ -53,9 +74,11 @@ function spawnEnemy(type) {
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-active', 'true');
     
-    // Apply initial sprite frame for birds
+    // Apply initial sprite frame for birds and bubble-crafts
     if (type === 'bird') {
         applySpriteFrame(el, 'bird', 'fly', 0, 'left');
+    } else if (type === 'bubble-craft') {
+        applySpriteFrame(el, 'bubble-craft', 'fly', 0, 'left');
     }
     
     enemy.element = el;
@@ -93,6 +116,8 @@ function updateEnemies(dt) {
                 shootBullet(enemy);
                 enemy.shootCooldown = 2;
             }
+        } else if (enemy.type === 'bubble-craft') {
+            updateBubbleCraft(enemy, dt);
         }
         
         // Check if off-screen
@@ -136,4 +161,115 @@ function shootBullet(tank) {
     bullet.element = el;
     document.getElementById('world').appendChild(el);
     game.projectiles.push(bullet);
+}
+
+// Easing function for smooth arc (ease-in-out)
+function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// Update bubble-craft enemy behavior
+function updateBubbleCraft(enemy, dt) {
+    const p = game.player;
+    const groundY = window.innerHeight * 0.9;
+    
+    // Animate frames continuously
+    enemy.frameTime += dt;
+    if (enemy.frameTime >= GAME_CONFIG.animation.frameDuration) {
+        enemy.frameTime = 0;
+        const frameCount = getFrameCount('bubble-craft', 'fly');
+        enemy.frame = (enemy.frame + 1) % frameCount;
+        applySpriteFrame(enemy.element, 'bubble-craft', 'fly', enemy.frame, 'left');
+    }
+    
+    if (enemy.pattern === 'hover') {
+        // Drift left slowly at fixed height
+        enemy.x += enemy.vx * dt;
+        
+        // Check for dive opportunity
+        // Player center position
+        const playerCenterX = p.x + p.width / 2;
+        const playerCenterY = p.y + p.height / 2;
+        const enemyCenterX = enemy.x + enemy.width / 2;
+        const enemyCenterY = enemy.y + enemy.height / 2;
+        
+        // Distance to player
+        const dx = enemyCenterX - playerCenterX;
+        const dy = playerCenterY - enemyCenterY;  // dy is positive when enemy is above player
+        
+        // Determine when to dive based on angle ratio
+        // At 45 degrees: dx/dy = 1.0
+        // Early dive at steeper angle: dx/dy around 1.5-2.0 (craft much further right)
+        const targetRatio = enemy.diveEarly ? 1.5 + Math.random() * 0.5 : 1.0;  // 1.5-2.0 for early, 1.0 for 45°
+        
+        // Check if at appropriate angle and enemy is above and to the right
+        if (dx > 0 && dy > 0) {
+            const currentRatio = dx / dy;
+            // Trigger dive when we reach the target ratio (within small tolerance)
+            if (currentRatio <= targetRatio + 0.1 && currentRatio >= targetRatio - 0.2) {
+                // Start dive!
+                enemy.pattern = 'diving';
+                enemy.diveProgress = 0;
+                enemy.diveStartX = enemy.x;
+                enemy.diveStartY = enemy.y;
+                
+                // For early dives, target AHEAD of the player to intercept their walk
+                // Calculate where player will be when craft arrives
+                if (enemy.diveEarly) {
+                    // Estimate dive time based on distance and speed
+                    const estimatedDiveDistance = Math.sqrt(dx * dx + dy * dy);
+                    const estimatedDiveTime = estimatedDiveDistance / enemy.diveSpeed;
+                    // Lead the player by their walking speed
+                    const playerSpeed = GAME_CONFIG.speed.base || 130;
+                    const leadDistance = playerSpeed * estimatedDiveTime * 0.8;  // 80% lead to not overshoot too much
+                    enemy.diveTargetX = p.x + leadDistance;
+                } else {
+                    // Normal dive targets current player position
+                    enemy.diveTargetX = p.x;
+                }
+                enemy.diveTargetY = p.y + p.height - enemy.height;  // Align bottoms
+            }
+        }
+    } else if (enemy.pattern === 'diving') {
+        // Calculate dive duration based on distance and speed
+        const diveDistanceX = enemy.diveStartX - enemy.diveTargetX;
+        const diveDistanceY = enemy.diveTargetY - enemy.diveStartY;
+        const totalDistance = Math.sqrt(diveDistanceX * diveDistanceX + diveDistanceY * diveDistanceY);
+        const diveDuration = totalDistance / enemy.diveSpeed;
+        
+        // Progress through dive with easing
+        enemy.diveProgress += dt / diveDuration;
+        
+        // Apply eased position FIRST (before checking completion)
+        const clampedProgress = Math.min(enemy.diveProgress, 1);
+        const easedProgress = easeInOutQuad(clampedProgress);
+        enemy.x = enemy.diveStartX - (enemy.diveStartX - enemy.diveTargetX) * easedProgress;
+        enemy.y = enemy.diveStartY + (enemy.diveTargetY - enemy.diveStartY) * easedProgress;
+        
+        if (enemy.diveProgress >= 1) {
+            // Start retreat from current position
+            enemy.pattern = 'retreating';
+            enemy.diveProgress = 0;
+            enemy.retreatStartY = enemy.y;
+            enemy.retreatTargetY = enemy.baseY;
+        }
+        
+    } else if (enemy.pattern === 'retreating') {
+        // Arc back up to original height while continuing left
+        const retreatDuration = 1.5;  // seconds to retreat
+        enemy.diveProgress += dt / retreatDuration;
+        
+        if (enemy.diveProgress >= 1) {
+            enemy.diveProgress = 1;
+            enemy.pattern = 'hover';
+            enemy.y = enemy.baseY;
+        } else {
+            // Ease back up vertically
+            const easedProgress = easeInOutQuad(enemy.diveProgress);
+            enemy.y = enemy.retreatStartY + (enemy.retreatTargetY - enemy.retreatStartY) * easedProgress;
+        }
+        
+        // Continue drifting left during retreat
+        enemy.x += enemy.vx * dt;
+    }
 }

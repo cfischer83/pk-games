@@ -233,8 +233,8 @@ function shootLightning() {
     const b = game.boss;
     
     // Lightning bolt dimensions
-    const boltWidth = 160;
-    const boltHeight = 48;
+    const boltWidth = 130;
+    const boltHeight = 9;
     
     // Calculate mouth position in world coordinates
     // Lightning comes from bottom corner of mouth, 40px up from bottom
@@ -242,26 +242,42 @@ function shootLightning() {
     
     if (b.facing === 'left') {
         // Facing left - right edge of bolt should align with left edge of dragon
-        mouthX = b.x - boltWidth;  // Offset by bolt width so right edge is at dragon's left edge
-        mouthY = b.y + b.height - 40;  // 40px up from bottom
+        mouthX = b.x - boltWidth;  
+        mouthY = b.y + b.height - 40;
     } else {
-        // Facing right - left edge of bolt should align with right edge of dragon
-        mouthX = b.x + b.width;  // Right edge of sprite
-        mouthY = b.y + b.height - 40;  // 40px up from bottom
+        // Facing right - right edge of bolt (source) should align with right edge of dragon
+        // We position the div to the left of the mouth, so its right edge is at the mouth
+        mouthX = b.x + b.width - boltWidth;  
+        mouthY = b.y + b.height - 40;
     }
 
-	var dir = Math.random() * 1000 < 500 ? true : false;
-	var boltDir = dir ? 250 : 650;
-	var boltLowerClass = dir ? "" : " lower";
-	if ((b.facing === 'right') && boltLowerClass === " lower") {
-		boltLowerClass = " lowerRight";
-	}
+    // Randomize attack type: 80% angled, 20% straight down
+    const isAngled = Math.random() < 0.8;
+    
+    // Total speed magnitude (constant so all bolts appear same speed)
+    const totalSpeed = 700;
+    
+    let vx, vy;
+    
+    if (isAngled) {
+        // Random angle between 15° and 75° below horizontal
+        const angle = (15 + Math.random() * 60) * Math.PI / 180;
+        vx = Math.cos(angle) * totalSpeed;
+        vy = Math.sin(angle) * totalSpeed;
+        // Apply direction based on facing
+        if (b.facing === 'left') {
+            vx = -vx;
+        }
+    } else { // Straight Down
+        vx = 0;
+        vy = totalSpeed;
+    }
     
     const bolt = {
         x: mouthX,
         y: mouthY,
-        vx: b.facing === 'left' ? -600 : 600,  // 1.5x faster than normal projectiles (300 * 1.5)
-        vy: boltDir,  // Slight downward arc (also 1.5x faster)
+        vx: vx,
+        vy: vy,
         width: boltWidth,
         height: boltHeight,
         frame: 0,
@@ -271,12 +287,30 @@ function shootLightning() {
     };
     
     const el = document.createElement('div');
-    el.className = 'lightning-bolt projectile sprite' + boltLowerClass;
+    el.className = 'lightning-bolt projectile sprite';
     el.setAttribute('data-type', 'lightning');
     el.setAttribute('data-active', 'true');
     
     // Apply sprite frame with facing direction
     applySpriteFrame(el, 'lightning', 'bolt', 0, b.facing);
+    
+    // Calculate rotation based on velocity
+    const angle = Math.atan2(vy, vx) * 180 / Math.PI;
+    
+    // Sprite is naturally Left-facing (180 degrees) with Source on the Right
+    // We position the div so the Right edge is always at the Mouth
+    // We pivot around the Right Center (Mouth)
+    // We rotate by (angle - 180) to align the Left-facing sprite to the target angle
+    const rotation = angle - 180;
+    const scale = 'scaleX(1)'; 
+    const transformOrigin = 'right center'; 
+    
+    el.style.transformOrigin = transformOrigin;
+    el.style.transform = `${scale} rotate(${rotation}deg)`;
+    
+    bolt.rotation = rotation;
+    bolt.scale = scale;
+    bolt.transformOrigin = transformOrigin;
     
     bolt.element = el;
     document.getElementById('world').appendChild(el);

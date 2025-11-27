@@ -5,7 +5,7 @@
 const ANCHORS_JSON = {
     "scale": 1,
     "dragon1": {
-        "spriteSheet": { "w": 1128, "h": 670, "src": "dragon1.png" },
+        "spriteSheet": { "w": 1128, "h": 670, "src": "../img/dragon1.png" },
         "baseFrameSize": { "w": 142, "h": 128 },
         "fire": {
             "beamSize": { "w": 216, "h": 102 },
@@ -117,12 +117,12 @@ const ANCHORS_JSON = {
         }
     },
     "dragon2": {
-        "spriteSheet": { "w": 758, "h": 1336, "src": "dragon2.png" },
+        "spriteSheet": { "w": 758, "h": 1336, "src": "../img/dragon2.png" },
         "baseFrameSize": { "w": 240, "h": 220 },
         "lightning": {
             "boltSize": { "w": 160, "h": 48 },
             "mouth": { "fromTop": 32, "fromRight": 8 },
-            "cooldownMs": 3000
+            "cooldownMs": 1500
         },
         "states": {
             "fly": {
@@ -168,8 +168,51 @@ const ANCHORS_JSON = {
             }
         }
     },
+    "anguirus": {
+        "spriteSheet": { "w": 446, "h": 283, "src": "../img/anguirus.png" }, // TODO: Update with actual dimensions
+        "baseFrameSize": { "w": 138, "h": 132 }, // TODO: Update with actual dimensions
+        "states": {
+            "walk": {
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 0 } },
+                    { "spriteOffset": { "x": 152, "y": 0 } },
+                    { "spriteOffset": { "x": 0, "y": 0 } },
+                    { "spriteOffset": { "x": 302, "y": 0 } }
+                ]
+            },
+            "attack_windup": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 28, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            },
+            "attack": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            },
+            "dead": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            }
+        }
+    },
 	"bird": {
-		"spriteSheet": { "w": 130, "h": 30, "src": "img/bird.png" },
+		"spriteSheet": { "w": 130, "h": 30, "src": "../img/bird.png" },
 		"baseFrameSize": { "w": 42, "h": 30 },
 		"states": {
 			"fly": {
@@ -188,7 +231,7 @@ const ANCHORS_JSON = {
 		}
 	},
 	"bullet": {
-		"spriteSheet": { "w": 93, "h": 14, "src": "img/bullet.png" },
+		"spriteSheet": { "w": 93, "h": 14, "src": "../img/bullet.png" },
 		"baseFrameSize": { "w": 30, "h": 14 },
 		"states": {
 			"fired": {
@@ -201,7 +244,7 @@ const ANCHORS_JSON = {
 		}
 	},
 	"explosion": {
-		"spriteSheet": { "w": 132, "h": 32, "src": "img/explosion.png" },
+		"spriteSheet": { "w": 132, "h": 32, "src": "../img/explosion.png" },
 		"baseFrameSize": { "w": 10, "h": 6 },
 		"states": {
 			"explode": {
@@ -217,7 +260,7 @@ const ANCHORS_JSON = {
 		}
 	},
 	"life": {
-		"spriteSheet": { "w": 32, "h": 30, "src": "img/life.png" },
+		"spriteSheet": { "w": 32, "h": 30, "src": "../img/life.png" },
 		"baseFrameSize": { "w": 16, "h": 30 },
 		"states": {
 			"float": {
@@ -229,13 +272,29 @@ const ANCHORS_JSON = {
 		}
 	},
 	"lightning": {
-		"spriteSheet": { "w": 758, "h": 1336, "src": "dragon2.png" },
-		"baseFrameSize": { "w": 128, "h": 64 },
+		"spriteSheet": { "w": 758, "h": 1336, "src": "../img/dragon2.png" },
+		"baseFrameSize": { "w": 131, "h": 9 },
 		"states": {
 			"bolt": {
 				"frames": [
-					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1152 } },
-					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1234 } }
+					{ "frameSize": { "w": 131, "h": 9 }, "spriteOffset": { "x": 240, "y": 1162 } },
+					{ "frameSize": { "w": 131, "h": 9 }, "spriteOffset": { "x": 409, "y": 1162 } }
+				]
+			}
+		}
+	},
+	"bubble-craft": {
+		"spriteSheet": { "w": 158, "h": 26, "src": "../img/bubble-craft.png" },
+		"baseFrameSize": { "w": 30, "h": 26 },
+		"states": {
+			"fly": {
+				"frameSize": { "w": 30, "h": 26 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 32, "y": 0 } },
+					{ "spriteOffset": { "x": 64, "y": 0 } },
+					{ "spriteOffset": { "x": 96, "y": 0 } },
+					{ "spriteOffset": { "x": 128, "y": 0 } }
 				]
 			}
 		}

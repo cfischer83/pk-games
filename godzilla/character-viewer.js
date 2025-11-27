@@ -246,7 +246,7 @@ function createFireBeam() {
     
     beam.style.width = beamWidth + 'px';
     beam.style.height = beamHeight + 'px';
-    beam.style.backgroundImage = `url('dragon1.png')`;
+    beam.style.backgroundImage = `url('img/dragon1.png')`;
     beam.style.backgroundSize = '1128px 670px';
     beam.style.imageRendering = 'pixelated';
     

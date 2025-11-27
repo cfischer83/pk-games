@@ -127,8 +127,18 @@ function checkCollisions() {
             } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
                 // Contact damage to player (not rocks)
                 if (enemy.type !== 'rock') {
-                    const damage = enemy.type === 'bird' ? 1 : 2;
-                    p.hp -= damage;
+                    // Bubble-craft does configured damage and retreats on hit
+                    if (enemy.type === 'bubble-craft') {
+                        p.hp -= GAME_CONFIG.damage.bubbleCraftContact;
+                        // Trigger retreat from current position
+                        enemy.pattern = 'retreating';
+                        enemy.diveProgress = 0;
+                        enemy.retreatStartY = enemy.y;
+                        enemy.retreatTargetY = enemy.baseY;
+                    } else {
+                        const damage = enemy.type === 'bird' ? 1 : 2;
+                        p.hp -= damage;
+                    }
                     p.hurtTime = 0.5;
                     p.invulnerable = 1;
                     

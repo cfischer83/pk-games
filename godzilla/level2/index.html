@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+<title>Godzilla On Planet Kodiak</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="level.css" />
+</head>
+<body>
+<div id="game-container">
+    <div id="viewport">
+        <div class="parallax-layer" id="stars"></div>
+        <div class="parallax-layer" id="far-mountains"></div>
+        <div class="parallax-layer" id="near-mountains"></div>
+        <div id="ground"></div>
+        <div id="world">
+            <div id="dragon1" class="sprite" 
+                data-upper="stand" 
+                data-lower="stand" 
+                data-facing="right" 
+                data-frame="0" 
+                data-attack="none"
+                data-can-fire="true"></div>
+            <div id="dragon1-upper" class="sprite"></div>
+        </div>
+    </div>
+    
+    <div id="hud">
+        <div>
+            <span style="color: #fff; width: 100px; display: inline-block;">HP:</span>
+            <div class="health-bar">
+                <div class="health-fill" id="player-health"></div>
+            </div>
+			<br /><br />
+            <span style="color: #fff; width: 100px; display: inline-block;">Fire:</span>
+            <div class="cooldown-bar">
+                <div class="cooldown-fill" id="fire-cooldown"></div>
+            </div>
+        </div>
+        <div id="boss-health">
+            <span style="color: #fff; text-shadow: 2px 2px 2px #000,2px 2px 2px #000,2px 2px 2px #000">BOSS: </span>
+            <div class="health-bar">
+                <div class="health-fill" id="boss-health-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="menu">
+        <img src="../img/menu.png" width="427"><br />
+        <button onclick="startGame()">START GAME</button>
+        <div class="controls">
+            CONTROLS:<br>
+            <span class="uni"> &#x21e6; &#x21e8;</span> Arrow keys to walk<br>
+			<span class="uni"> &#x21e7;</span> - Jump<br>
+            <span class="uni"> &#x21e9;</span> or C - Duck<br>
+            Z - Punch<br>
+            X - Kick<br>
+            [Space] - Fire (or Tail Spin while ducking)<br><br>
+        </div>
+    </div>
+
+    <div id="debug"></div>
+</div>
+
+<script src="../game/game-config.js"></script>
+<script src="level-configs.js"></script>
+<script src="../dragons/dragon-sprites.js"></script>
+<script src="../dragons/player-dragon.js"></script>
+<script src="../dragons/boss-dragon2.js"></script>
+<script src="../game/engine-physics.js"></script>
+<script src="../game/engine-core.js"></script>
+<script src="../game/engine-debug.js"></script>
+<script src="../game/engine-collisions.js"></script>
+<script src="../game/enemies.js"></script>
+<script src="../game/obstacles.js"></script>
+<script src="../game/projectiles.js"></script>
+<script src="../game/effects.js"></script>
+<script src="../game/level-runtime.js"></script>
+<script src="../game/game-shell.js"></script>
+
+<script>
+// Preload images
+const imagesToPreload = [
+	'img/mountains.png',
+	'img/midlands.png',
+	'img/ground.png',
+	'../img/planet.png',
+	'../img/stars.png',
+	'../img/stars-wide.gif',
+	'../img/tank.png',
+	'../img/rocks.png',
+	'../img/menu.png',
+	'../img/dragon1.png',
+	'../img/dragon2.png'
+];
+
+function preloadImages(urls, callback) {
+	let loadedCount = 0;
+	const totalImages = urls.length;
+	urls.forEach(url => {
+		const img = new Image();
+		img.src = url;
+		img.onload = () => {
+			loadedCount++;
+			if (loadedCount === totalImages) {
+				if (callback) callback();
+			}
+		};
+		img.onerror = () => {
+			console.error(`Failed to load image: ${url}`);
+			loadedCount++;
+			if (loadedCount === totalImages) {
+				if (callback) callback();
+			}
+		};
+	});
+}
+
+// It's good practice to wait for images to load before starting the game,
+// but for this setup, we'll just fire and forget.
+preloadImages(imagesToPreload);
+
+// Initialize
+console.log('Dragon Side-Scroller initialized');
+console.log('Physics:', physics);
+console.log('Config:', GAME_CONFIG);
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N8SN5SJEFW"></script>
+<script type="text/javascript">
+	function pkAnalytics(action) {
+		console.log("send to ga4: action="+action);
+		gtag('event', 'PlayGodzilla', {
+			'game_action': action,
+			'game_level': "2",
+			'game_difficulty': "normal",
+			'game_details': "normal" + ":level2:" + action
+		});
+	}
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-N8SN5SJEFW');
+</script>
+</body>
+</html>
