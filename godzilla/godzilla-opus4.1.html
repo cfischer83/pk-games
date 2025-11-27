@@ -49,14 +49,14 @@ body {
 #far-mountains {
     bottom: 10%;
     height: 40%;
-    background: url(img/mountains.png) bottom left repeat-x;
+    background: url(level1/img/mountains.png) bottom left repeat-x;
 }
 
 #near-mountains {
     bottom: 10%;
     height: 30%;
 	min-height: 134px;
-	background: url(img/midlands.png) bottom left repeat-x;
+	background: url(level1/img/midlands.png) bottom left repeat-x;
 }
 
 #ground {
@@ -64,7 +64,7 @@ body {
     bottom: 0;
     width: 1400%;
     height: 10%;
-    background: url(img/ground.png) top left repeat;
+    background: url(level1/img/ground.png) top left repeat;
 }
 
 #world {
@@ -358,7 +358,476 @@ body.debug-mode #dragon2 {
     <div id="debug"></div>
 </div>
 
-<script src="dragon-sprites.js"></script>
+<script>
+// Anchors JSON - Sprite sheet configuration
+const ANCHORS_JSON = {
+    "scale": 1,
+    "dragon1": {
+        "spriteSheet": { "w": 1128, "h": 670, "src": "img/dragon1.png" },
+        "baseFrameSize": { "w": 142, "h": 128 },
+        "fire": {
+            "beamSize": { "w": 216, "h": 102 },
+            "tickMs": 300
+        },
+        "tail": { "risePx": 70 },
+        "states": {
+            "stand": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "walk": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 9, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 164, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 324, "y": 1 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 480, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 8, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 158, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 314, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 468, "y": 153 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "punch": {
+                "frameSize": { "w": 142, "h": 156 },
+                "frames": [
+                    { "spriteOffset": { "x": 643, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 755, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 874, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 986, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "punch_upper": {
+                "frameSize": { "w": 108, "h": 64 },
+                "frames": [
+                    { "spriteOffset": { "x": 644, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 756, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 875, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 987, "y": 0 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            },
+            "punch_lower": {
+                "frameSize": { "w": 142, "h": 64 },
+                "frames": [
+                    { "spriteOffset": { "x": 643, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 755, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 874, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 986, "y": 64 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "kick": {
+                "frameSize": { "w": 155, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 },
+                    { "spriteOffset": { "x": 789, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 },
+                    { "spriteOffset": { "x": 631, "y": 87 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "kickOffset": -13 }
+                ]
+            },
+            "duck": {
+                "frameSize": { "w": 146, "h": 96 },
+                "frames": [
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": -4, "duckOffsetLeft": 4 }
+                ]
+            },
+            "duck_spin": {
+                "frameSize": { "w": 176, "h": 96 },
+                "frames": [
+                    { "frameSize": { "w": 146, "h": 96 }, "spriteOffset": { "x": 14, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 0, "duckOffsetLeft": 4 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
+                    { "frameSize": { "w": 176, "h": 96 }, "spriteOffset": { "x": 350, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 60, "duckOffsetLeft": -72 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 264, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 72, "duckOffsetLeft": 0 },
+                    { "frameSize": { "w": 80, "h": 96 }, "spriteOffset": { "x": 172, "y": 296 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 }, "duckOffset": 46, "duckOffsetLeft": 20 }
+                ]
+            },
+            "hurt": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 148, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } },
+                    { "spriteOffset": { "x": 284, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            },
+            "fire_windup": {
+                "frameSize": { "w": 130, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 589, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 731, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 871, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 1003, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            },
+            "fire_beam": {
+                "frameSize": { "w": 154, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 5, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } },
+                    { "spriteOffset": { "x": 165, "y": 543 }, "mouth": { "fromTop": 24, "fromRight": 0 } }
+                ]
+            },
+            "dead": {
+                "frameSize": { "w": 142, "h": 128 },
+                "frames": [
+                    { "spriteOffset": { "x": 148, "y": 417 }, "mouth": { "fromTop": 24, "fromRight": 0 }, "tail": { "fromBottom": 0, "fromCenterX": 0 } }
+                ]
+            }
+        }
+    },
+    "dragon2": {
+        "spriteSheet": { "w": 758, "h": 1336, "src": "img/dragon2.png" },
+        "baseFrameSize": { "w": 240, "h": 220 },
+        "lightning": {
+            "boltSize": { "w": 160, "h": 48 },
+            "mouth": { "fromTop": 32, "fromRight": 8 },
+            "cooldownMs": 1500
+        },
+        "states": {
+            "fly": {
+                "frameSize": { "w": 240, "h": 218 },
+                "frames": [
+                    { "spriteOffset": { "x": 4, "y": 6 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 6 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 6 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 236 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 236 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 236 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 464 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 464 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 464 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 682 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 682 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 682 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+
+                    { "spriteOffset": { "x": 252, "y": 682 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 682 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 464 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 464 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 236 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 236 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 236 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 502, "y": 6 }, "mouth": { "fromTop": 34, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 252, "y": 6 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+                    { "spriteOffset": { "x": 4, "y": 6 }, "mouth": { "fromTop": 32, "fromRight": 8 } },
+
+                ]
+            },
+            "hurt": {
+                "frameSize": { "w": 240, "h": 220 },
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 890 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                ]
+            },
+            "dead": {
+                "frameSize": { "w": 240, "h": 220 },
+                "frames": [
+                    { "spriteOffset": { "x": 250, "y": 904 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                ]
+            }
+        }
+    },
+    "anguirus": {
+        "spriteSheet": { "w": 446, "h": 283, "src": "img/anguirus.png" }, // TODO: Update with actual dimensions
+        "baseFrameSize": { "w": 138, "h": 132 }, // TODO: Update with actual dimensions
+        "states": {
+            "walk": {
+                "frames": [
+                    { "spriteOffset": { "x": 0, "y": 0 } },
+                    { "spriteOffset": { "x": 152, "y": 0 } },
+                    { "spriteOffset": { "x": 0, "y": 0 } },
+                    { "spriteOffset": { "x": 302, "y": 0 } }
+                ]
+            },
+            "attack_windup": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 28, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } },
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            },
+            "attack": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            },
+            "dead": {
+				"frameSize": { "w": 103, "h": 207 },
+                "frames": [
+                    { "spriteOffset": { "x": 185, "y": 155 } }
+                ]
+            }
+        }
+    },
+	"bird": {
+		"spriteSheet": { "w": 130, "h": 30, "src": "img/bird.png" },
+		"baseFrameSize": { "w": 42, "h": 30 },
+		"states": {
+			"fly": {
+				"frameSize": { "w": 42, "h": 30 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 44, "y": 0 } },
+					{ "spriteOffset": { "x": 88, "y": 0 } }
+				]
+			}
+		}
+	},
+	"bullet": {
+		"spriteSheet": { "w": 93, "h": 14, "src": "img/bullet.png" },
+		"baseFrameSize": { "w": 30, "h": 14 },
+		"states": {
+			"fired": {
+				"frames": [
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 31, "y": 0 } },
+					{ "frameSize": { "w": 30, "h": 14 }, "spriteOffset": { "x": 62, "y": 0 } }
+				]
+			}
+		}
+	},
+	"explosion": {
+		"spriteSheet": { "w": 132, "h": 32, "src": "img/explosion.png" },
+		"baseFrameSize": { "w": 10, "h": 6 },
+		"states": {
+			"explode": {
+				"frames": [
+					{ "frameSize": { "w": 10, "h": 6 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 12, "h": 10 }, "spriteOffset": { "x": 12, "y": 0 } },
+					{ "frameSize": { "w": 16, "h": 12 }, "spriteOffset": { "x": 26, "y": 0 } },
+					{ "frameSize": { "w": 20, "h": 20 }, "spriteOffset": { "x": 44, "y": 0 } },
+					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 66, "y": 0 } },
+					{ "frameSize": { "w": 32, "h": 32 }, "spriteOffset": { "x": 100, "y": 0 } }
+				]
+			}
+		}
+	},
+	"life": {
+		"spriteSheet": { "w": 32, "h": 30, "src": "img/life.png" },
+		"baseFrameSize": { "w": 16, "h": 30 },
+		"states": {
+			"float": {
+				"frames": [
+					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 0, "y": 0 } },
+					{ "frameSize": { "w": 16, "h": 30 }, "spriteOffset": { "x": 16, "y": 0 } }
+				]
+			}
+		}
+	},
+	"lightning": {
+		"spriteSheet": { "w": 758, "h": 1336, "src": "img/dragon2.png" },
+		"baseFrameSize": { "w": 128, "h": 64 },
+		"states": {
+			"bolt": {
+				"frames": [
+					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1152 } },
+					{ "frameSize": { "w": 128, "h": 64 }, "spriteOffset": { "x": 599, "y": 1234 } }
+				]
+			}
+		}
+	},
+	"bubble-craft": {
+		"spriteSheet": { "w": 158, "h": 26, "src": "img/bubble-craft.png" },
+		"baseFrameSize": { "w": 30, "h": 26 },
+		"states": {
+			"fly": {
+				"frameSize": { "w": 30, "h": 26 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 32, "y": 0 } },
+					{ "spriteOffset": { "x": 64, "y": 0 } },
+					{ "spriteOffset": { "x": 96, "y": 0 } },
+					{ "spriteOffset": { "x": 128, "y": 0 } }
+				]
+			}
+		}
+	}
+};
+
+/**
+ * Get frame information for a specific actor, state, and frame index
+ * @param {string} actor - 'dragon1' or 'dragon2'
+ * @param {string} state - Animation state name
+ * @param {number} frameIndex - Frame number
+ * @returns {Object|null} Frame info with width, height, spriteOffset, mouth, tail
+ */
+function getFrameInfo(actor, state, frameIndex) {
+    const actorData = ANCHORS_JSON[actor];
+    if (!actorData || !actorData.states[state]) return null;
+    
+    const stateData = actorData.states[state];
+    const frames = stateData.frames || [];
+    const frameIdx = Math.min(frameIndex, frames.length - 1);
+    const frame = frames[frameIdx] || frames[frames.length - 1] || {};
+    
+    // Determine frame size
+    let frameSize = frame.frameSize || stateData.frameSize || actorData.baseFrameSize;
+    
+    return {
+        width: frameSize.w * ANCHORS_JSON.scale,
+        height: frameSize.h * ANCHORS_JSON.scale,
+        spriteOffset: frame.spriteOffset || { x: 0, y: 0 },
+        mouth: frame.mouth || (frames[0] && frames[0].mouth),
+        tail: frame.tail || (frames[0] && frames[0].tail),
+        duckOffset: frame.duckOffset || 0,
+        duckOffsetLeft: frame.duckOffsetLeft || 0,
+        kickOffset: frame.kickOffset || 0
+    };
+}
+
+/**
+ * Apply sprite sheet positioning to an element
+ * @param {HTMLElement} element - DOM element to apply sprite to
+ * @param {string} actor - 'dragon1' or 'dragon2'
+ * @param {string} state - Animation state name
+ * @param {number} frameIndex - Frame number
+ * @param {string} facing - 'left' or 'right'
+ * @returns {Object|null} Frame info that was applied
+ */
+function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
+    const frameInfo = getFrameInfo(actor, state, frameIndex);
+    if (!frameInfo) return null;
+    
+    const actorData = ANCHORS_JSON[actor];
+    const scale = ANCHORS_JSON.scale;
+    
+    // Set element size
+    element.style.width = frameInfo.width + 'px';
+    element.style.height = frameInfo.height + 'px';
+    
+    // Set background image
+    element.style.backgroundImage = `url('${actorData.spriteSheet.src}')`;
+    
+    // Calculate background size (scale the entire sprite sheet)
+    const bgWidth = actorData.spriteSheet.w * scale;
+    const bgHeight = actorData.spriteSheet.h * scale;
+    element.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    
+    // Calculate background position
+    const offsetX = frameInfo.spriteOffset.x * scale;
+    const offsetY = frameInfo.spriteOffset.y * scale;
+    element.style.backgroundPosition = `-${offsetX}px -${offsetY}px`;
+    
+    // Handle flipping
+    // Dragon1 sprite faces right by default, Dragon2 sprite faces left by default
+    // Lightning sprite faces left by default (same as dragon2)
+    let flipTransform;
+    if (actor === 'dragon2' || actor === 'lightning') {
+        // Dragon2 and lightning sprites are naturally left-facing, so flip for right
+        flipTransform = facing === 'right' ? 'scaleX(-1)' : 'scaleX(1)';
+        // Set transform origin to center for clean horizontal flip
+        element.style.transformOrigin = 'center center';
+    } else {
+        // Dragon1 sprite is naturally right-facing, so flip for left
+        flipTransform = facing === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
+        element.style.transformOrigin = 'center bottom';
+    }
+    element.style.transform = flipTransform;
+    
+    // Set pixelated rendering
+    element.style.imageRendering = 'pixelated';
+    
+    return frameInfo;
+}
+
+/**
+ * Get the number of frames for a given actor and state
+ * @param {string} actor - 'dragon1' or 'dragon2'
+ * @param {string} state - Animation state name
+ * @returns {number} Number of frames
+ */
+function getFrameCount(actor, state) {
+    const actorData = ANCHORS_JSON[actor];
+    if (!actorData || !actorData.states[state]) return 1;
+    
+    const stateData = actorData.states[state];
+    return stateData.frames?.length || 1;
+}
+
+/**
+ * Get all available states for an actor
+ * @param {string} actor - 'dragon1' or 'dragon2'
+ * @returns {string[]} Array of state names
+ */
+function getAvailableStates(actor) {
+    const actorData = ANCHORS_JSON[actor];
+    if (!actorData) return [];
+    
+    return Object.keys(actorData.states);
+}
+
+/**
+ * Calculate fire beam position based on dragon's mouth position
+ * @param {Object} dragonState - Dragon state object with x, y, width, height, facing, state, frame
+ * @param {number} beamWidth - Width of the fire beam
+ * @param {number} beamHeight - Height of the fire beam
+ * @param {number} cameraX - Camera X position (0 for character viewer)
+ * @param {number} groundY - Ground Y position (window.innerHeight * 0.9 for game)
+ * @param {number} windowHeight - Full window height
+ * @returns {Object} Object with left, bottom, transform properties for CSS
+ */
+function calculateFireBeamPosition(dragonState, beamWidth, beamHeight, cameraX = 0, groundY = 0, windowHeight = 0) {
+    const scale = ANCHORS_JSON.scale;
+    const frameInfo = getFrameInfo('dragon1', dragonState.state, dragonState.frame);
+    
+    // Use sprite mouth data and configuration offsets
+    const mouthOffsetFromTop = 60; // Configurable offset from dragon's Y position
+    const mouthOffsetFromRight = 0; // Configurable horizontal offset
+    
+    const mouthY = dragonState.y + mouthOffsetFromTop;
+    let mouthX;
+    
+    // Calculate bottom position: groundHeight + (groundY - mouthY - beamHeight/2)
+    const groundHeight = windowHeight * 0.1;
+    const beamBottom = groundHeight + groundY - mouthY - beamHeight / 2;
+    
+    if (dragonState.facing === 'right') {
+        // Mouth is fromRight pixels from the right edge, adjusted by sprite data
+        mouthX = dragonState.x + dragonState.width + mouthOffsetFromRight;
+        if (frameInfo && frameInfo.mouth) {
+            mouthX -= frameInfo.mouth.fromRight * scale;
+        }
+        
+        return {
+            left: (mouthX - cameraX) + 'px',
+            bottom: beamBottom + 'px',
+            transform: 'scaleX(1)'
+        };
+    } else {
+        // When facing left, mouth position is mirrored
+        mouthX = dragonState.x;
+        if (frameInfo && frameInfo.mouth) {
+            mouthX += frameInfo.mouth.fromRight * scale;
+        }
+        
+        return {
+            left: (mouthX - beamWidth - cameraX) + 'px',
+            bottom: beamBottom + 'px',
+            transform: 'scaleX(-1)'
+        };
+    }
+}
+
+
+</script>
+
+
+
 <script>
 // Configuration
 const GAME_CONFIG = {
