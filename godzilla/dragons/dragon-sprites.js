@@ -5,7 +5,7 @@
 const ANCHORS_JSON = {
     "scale": 1,
     "dragon1": {
-        "spriteSheet": { "w": 1128, "h": 670, "src": "../img/dragon1.png" },
+        "spriteSheet": { "w": 1128, "h": 670, "src": "../img/godzilla-dark.png" },
         "baseFrameSize": { "w": 142, "h": 128 },
         "fire": {
             "beamSize": { "w": 216, "h": 102 },
@@ -319,6 +319,39 @@ const ANCHORS_JSON = {
 				]
 			}
 		}
+	},
+	"mechagodzilla": {
+		"spriteSheet": { "w": 520, "h": 136, "src": "../img/mechagodzilla.png" },
+		"baseFrameSize": { "w": 122, "h": 136 },
+		"states": {
+			"stand": {
+				"frameSize": { "w": 122, "h": 136 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } }
+				]
+			},
+			"walk": {
+				"frameSize": { "w": 122, "h": 136 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 136, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 278, "y": 0 } }
+				]
+			},
+			"slide": {
+				"frameSize": { "w": 122, "h": 136 },
+				"frames": [
+					{ "spriteOffset": { "x": 278, "y": 0 } }
+				]
+			},
+			"dead": {
+				"frameSize": { "w": 122, "h": 136 },
+				"frames": [
+					{ "spriteOffset": { "x": 407, "y": 0 } }
+				]
+			}
+		}
 	}
 };
 
@@ -388,10 +421,10 @@ function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
     
     // Handle flipping
     // Dragon1 sprite faces right by default, Dragon2 sprite faces left by default
-    // Lightning sprite faces left by default (same as dragon2)
+    // Lightning and mechagodzilla sprites face left by default (same as dragon2)
     let flipTransform;
-    if (actor === 'dragon2' || actor === 'lightning') {
-        // Dragon2 and lightning sprites are naturally left-facing, so flip for right
+    if (actor === 'dragon2' || actor === 'lightning' || actor === 'mechagodzilla') {
+        // These sprites are naturally left-facing, so flip for right
         flipTransform = facing === 'right' ? 'scaleX(-1)' : 'scaleX(1)';
         // Set transform origin to center for clean horizontal flip
         element.style.transformOrigin = 'center center';

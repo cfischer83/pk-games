@@ -63,7 +63,9 @@ const BASE_GAME_CONFIG = {
         bubbleCraftContact: 5,
         turretLaser: 2,
         bossBody: 1, 
-        bossLightning: 4 
+        bossLightning: 4,
+        mechagodzillaLaser: 3,
+        mechagodzillaBullet: 2
     },
     camera: { 
         lookAheadPx: 80 

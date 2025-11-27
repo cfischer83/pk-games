@@ -316,7 +316,14 @@ function checkCollisions() {
                 if (proj.element.classList.contains('lightning-bolt')) {
                     damage = GAME_CONFIG.damage.bossLightning;
                 } else if (isLaser) {
-                    damage = GAME_CONFIG.damage.turretLaser;
+                    // Check if it's a mechagodzilla laser
+                    if (proj.source === 'mechagodzilla') {
+                        damage = GAME_CONFIG.damage.mechagodzillaLaser;
+                    } else {
+                        damage = GAME_CONFIG.damage.turretLaser;
+                    }
+                } else if (proj.source === 'mechagodzilla') {
+                    damage = GAME_CONFIG.damage.mechagodzillaBullet;
                 } else {
                     damage = GAME_CONFIG.damage.tankBullet;
                 }
