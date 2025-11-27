@@ -63,6 +63,18 @@ function spawnEnemy(type) {
         enemy.diveTargetY = enemy.y;
         enemy.retreatStartY = enemy.y;
         enemy.retreatTargetY = enemy.y;
+    } else if (type === 'turret') {
+        enemy.width = 80;
+        enemy.height = 130;
+        enemy.vx = 0;  // Turret doesn't move
+        enemy.y = window.innerHeight * 0.9 - enemy.height;
+        enemy.state = 'still';
+        enemy.frame = 0;
+        enemy.frameTime = 0;
+        enemy.shootCooldown = 2;  // Start with a shorter initial cooldown
+        enemy.burstCount = 0;  // Track shots in current burst
+        enemy.burstCooldown = 0;  // Time between shots in a burst
+        enemy.facing = 'left';  // Will be updated based on player position
     }
     
     // Create element
@@ -74,11 +86,13 @@ function spawnEnemy(type) {
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-active', 'true');
     
-    // Apply initial sprite frame for birds and bubble-crafts
+    // Apply initial sprite frame for birds, bubble-crafts, and turrets
     if (type === 'bird') {
         applySpriteFrame(el, 'bird', 'fly', 0, 'left');
     } else if (type === 'bubble-craft') {
         applySpriteFrame(el, 'bubble-craft', 'fly', 0, 'left');
+    } else if (type === 'turret') {
+        applySpriteFrame(el, 'turret', 'still', 0, 'left');
     }
     
     enemy.element = el;
@@ -94,8 +108,8 @@ function updateEnemies(dt) {
             return false;
         }
         
-        // Movement (rocks don't move)
-        if (enemy.type !== 'rock') {
+        // Movement (rocks and turrets don't move)
+        if (enemy.type !== 'rock' && enemy.type !== 'turret') {
             enemy.x += enemy.vx * dt;
         }
         
@@ -118,6 +132,8 @@ function updateEnemies(dt) {
             }
         } else if (enemy.type === 'bubble-craft') {
             updateBubbleCraft(enemy, dt);
+        } else if (enemy.type === 'turret') {
+            updateTurret(enemy, dt);
         }
         
         // Check if off-screen
@@ -272,4 +288,98 @@ function updateBubbleCraft(enemy, dt) {
         // Continue drifting left during retreat
         enemy.x += enemy.vx * dt;
     }
+}
+
+// Update turret enemy behavior
+function updateTurret(enemy, dt) {
+    const p = game.player;
+    
+    // Face the player
+    const turretCenterX = enemy.x + enemy.width / 2;
+    const playerCenterX = p.x + p.width / 2;
+    enemy.facing = playerCenterX < turretCenterX ? 'left' : 'right';
+    
+    // Handle burst shooting
+    if (enemy.burstCount > 0) {
+        // In the middle of a burst
+        enemy.burstCooldown -= dt;
+        if (enemy.burstCooldown <= 0) {
+            shootLaser(enemy);
+            enemy.burstCount--;
+            if (enemy.burstCount > 0) {
+                enemy.burstCooldown = 0.33;  // ~0.33s between shots (3 shots in 1 second)
+            } else {
+                // Burst complete, start main cooldown
+                enemy.shootCooldown = 4;
+                enemy.state = 'still';
+                enemy.frame = 0;
+            }
+        }
+        
+        // Animate shooting frames during burst
+        enemy.frameTime += dt;
+        if (enemy.frameTime >= 0.08) {  // Fast animation during shooting
+            enemy.frameTime = 0;
+            const frameCount = getFrameCount('turret', 'shooting');
+            enemy.frame = (enemy.frame + 1) % frameCount;
+        }
+        applySpriteFrame(enemy.element, 'turret', 'shooting', enemy.frame, enemy.facing);
+    } else {
+        // Waiting for next burst
+        enemy.shootCooldown -= dt;
+        if (enemy.shootCooldown <= 0) {
+            // Start a new burst
+            enemy.burstCount = 3;
+            enemy.burstCooldown = 0;  // Fire first shot immediately
+            enemy.state = 'shooting';
+            enemy.frame = 0;
+            enemy.frameTime = 0;
+        }
+        
+        // Show still state
+        applySpriteFrame(enemy.element, 'turret', 'still', 0, enemy.facing);
+    }
+}
+
+// Shoot laser from turret
+function shootLaser(turret) {
+    const laserWidth = 20;
+    const laserHeight = 5;
+    
+    // Spawn laser from the side of the turret facing the player
+    let laserX;
+    if (turret.facing === 'left') {
+        laserX = turret.x - laserWidth;
+    } else {
+        laserX = turret.x + turret.width;
+    }
+    
+    // Spawn at roughly mid-height of turret
+    const laserY = turret.y + turret.height * 0.2;
+    
+    const laser = {
+        x: laserX,
+        y: laserY,
+        vx: turret.facing === 'left' ? -400 : 400,
+        vy: 0,
+        width: laserWidth,
+        height: laserHeight,
+        type: 'laser',
+        element: null
+    };
+    
+    const el = document.createElement('div');
+    el.className = 'laser projectile';
+    el.setAttribute('data-type', 'laser');
+    el.setAttribute('data-active', 'true');
+    el.style.position = 'absolute';
+    el.style.width = laserWidth + 'px';
+    el.style.height = laserHeight + 'px';
+    el.style.backgroundColor = '#ffffff';
+    el.style.borderRadius = '3px';
+    el.style.boxShadow = '0 0 13px 6px #ff0000, 0 0 16px #ff4444';
+    
+    laser.element = el;
+    document.getElementById('world').appendChild(el);
+    game.projectiles.push(laser);
 }

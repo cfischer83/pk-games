@@ -298,23 +298,44 @@ function checkCollisions() {
             height: proj.height
         };
         
-        if (aabbIntersects(playerBox, projBox) && p.invulnerable <= 0) {
-            const damage = proj.element.classList.contains('lightning-bolt') ? 4 : 2;
-            p.hp -= damage;
-            p.hurtTime = 0.5;
-            p.invulnerable = 1;
+        if (aabbIntersects(playerBox, projBox)) {
+            const isLaser = proj.type === 'laser';
             
-            // Spawn explosion at projectile impact center
-            const collisionX = Math.max(playerBox.x, projBox.x);
-            const collisionRight = Math.min(playerBox.x + playerBox.width, projBox.x + projBox.width);
-            const collisionY = Math.max(playerBox.y, projBox.y);
-            const collisionBottom = Math.min(playerBox.y + playerBox.height, projBox.y + projBox.height);
-            const explosionX = (collisionX + collisionRight) / 2;
-            const explosionY = (collisionY + collisionBottom) / 2;
-            spawnExplosion(explosionX, explosionY);
-            
-            proj.element.remove();
-            game.projectiles = game.projectiles.filter(pr => pr !== proj);
+            // For lasers, player can destroy them if attacking
+            if (isLaser && isAttacking) {
+                // Player destroys the laser with their attack
+                const explosionX = proj.x + proj.width / 2;
+                const explosionY = proj.y + proj.height / 2;
+                spawnExplosion(explosionX, explosionY);
+                
+                proj.element.remove();
+                game.projectiles = game.projectiles.filter(pr => pr !== proj);
+            } else if (p.invulnerable <= 0) {
+                // Player takes damage
+                let damage;
+                if (proj.element.classList.contains('lightning-bolt')) {
+                    damage = GAME_CONFIG.damage.bossLightning;
+                } else if (isLaser) {
+                    damage = GAME_CONFIG.damage.turretLaser;
+                } else {
+                    damage = GAME_CONFIG.damage.tankBullet;
+                }
+                p.hp -= damage;
+                p.hurtTime = 0.5;
+                p.invulnerable = 1;
+                
+                // Spawn explosion at projectile impact center
+                const collisionX = Math.max(playerBox.x, projBox.x);
+                const collisionRight = Math.min(playerBox.x + playerBox.width, projBox.x + projBox.width);
+                const collisionY = Math.max(playerBox.y, projBox.y);
+                const collisionBottom = Math.min(playerBox.y + playerBox.height, projBox.y + projBox.height);
+                const explosionX = (collisionX + collisionRight) / 2;
+                const explosionY = (collisionY + collisionBottom) / 2;
+                spawnExplosion(explosionX, explosionY);
+                
+                proj.element.remove();
+                game.projectiles = game.projectiles.filter(pr => pr !== proj);
+            }
         }
     });
     

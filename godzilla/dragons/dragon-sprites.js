@@ -298,6 +298,27 @@ const ANCHORS_JSON = {
 				]
 			}
 		}
+	},
+	"turret": {
+		"spriteSheet": { "w": 344, "h": 130, "src": "../img/turret.png" },
+		"baseFrameSize": { "w": 82, "h": 130 },
+		"states": {
+			"still": {
+				"frameSize": { "w": 82, "h": 130 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } }
+				]
+			},
+			"shooting": {
+				"frameSize": { "w": 82, "h": 130 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 88, "y": 0 } },
+					{ "spriteOffset": { "x": 176, "y": 0 } },
+					{ "spriteOffset": { "x": 262, "y": 0 } }
+				]
+			}
+		}
 	}
 };
 

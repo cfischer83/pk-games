@@ -50,7 +50,8 @@ const BASE_GAME_CONFIG = {
         bird: 1, 
         tank: 2, 
         rock: 6,
-        'bubble-craft': 1
+        'bubble-craft': 1,
+        turret: 5
     },
     damage: { 
         punch: 1, 
@@ -60,6 +61,7 @@ const BASE_GAME_CONFIG = {
         birdContact: 1, 
         tankBullet: 2, 
         bubbleCraftContact: 5,
+        turretLaser: 2,
         bossBody: 1, 
         bossLightning: 4 
     },
