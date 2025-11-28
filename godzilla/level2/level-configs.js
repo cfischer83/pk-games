@@ -3,7 +3,7 @@ const LEVEL_CONFIG = {
     // *** TESTING MODE *** 
     // Set to true to spawn boss immediately without enemies/obstacles
     // Set to false to use normal spawn schedule
-    TESTING_BOSS: true,
+    TESTING_BOSS: false,
     spawn: { 
         maxEnemies: 10,
         maxObstacles: 15,  // Allow more obstacles (rocks) than enemies

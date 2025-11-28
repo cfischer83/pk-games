@@ -81,7 +81,7 @@ function updateBoss(dt) {
         }
         
         // Movement patterns
-        const moveSpeed = 80;
+        const moveSpeed = 150;
         const preferredDistance = 300;  // MechaGodzilla wants to keep distance
         
         if (b.pattern === 'approach') {

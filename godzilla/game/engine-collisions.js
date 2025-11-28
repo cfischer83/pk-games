@@ -77,6 +77,10 @@ function checkCollisions() {
                     const explosionX = enemy.x + enemy.width / 2;
                     const explosionY = enemy.y + enemy.height / 2;
                     spawnExplosion(explosionX, explosionY);
+                    // Turrets have 50% chance to drop life pickup
+                    if (enemy.type === 'turret') {
+                        spawnLifePickup(explosionX, explosionY, 0.5);
+                    }
                 } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                     enemy.element.classList.add('broken');
                 }
@@ -119,6 +123,10 @@ function checkCollisions() {
                             const explosionX = enemy.x + enemy.width / 2;
                             const explosionY = enemy.y + enemy.height / 2;
                             spawnExplosion(explosionX, explosionY);
+                            // Turrets have 50% chance to drop life pickup
+                            if (enemy.type === 'turret') {
+                                spawnLifePickup(explosionX, explosionY, 0.5);
+                            }
                         } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                             enemy.element.classList.add('broken');
                         }
@@ -241,6 +249,10 @@ function checkCollisions() {
                     if (enemy.type !== 'rock') {
                         spawnExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
                     }
+                    // Turrets have 50% chance to drop life pickup
+                    if (enemy.type === 'turret') {
+                        spawnLifePickup(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 0.5);
+                    }
                 } else if (enemy.type === 'rock' && enemy.hp <= 3) {
                     enemy.element.classList.add('broken');
                 }
@@ -324,6 +336,8 @@ function checkCollisions() {
                     }
                 } else if (proj.source === 'mechagodzilla') {
                     damage = GAME_CONFIG.damage.mechagodzillaBullet;
+                } else if (proj.source === 'gigan') {
+                    damage = GAME_CONFIG.damage.giganEyeBeam;
                 } else {
                     damage = GAME_CONFIG.damage.tankBullet;
                 }
@@ -390,6 +404,10 @@ function checkCollisions() {
             game.boss.invulnerable = 0.5;  // 0.5 second invulnerability
             // Spawn explosion at boss center when damaged
             spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
+            // Trigger Gigan hurt animation if available and not attacking
+            if (typeof onGiganHurt === 'function') {
+                onGiganHurt();
+            }
         }
         
         // Regular body collision (only if not already hit by punch)
@@ -418,7 +436,15 @@ function checkCollisions() {
             }
             
             const isDucking = p.state === 'duck' || p.state === 'duck_spin';
-            if ((isAttacking && !isPunching) || isDucking) {
+            
+            // Special Gigan collision rules: Gigan's attack takes priority
+            const isGigan = document.getElementById('gigan') !== null;
+            const giganAttacking = isGigan && b.pattern === 'attack';
+            
+            if (giganAttacking) {
+                // Gigan's attack does continuous damage regardless of player state
+                // (handled in boss-gigan.js updateBoss)
+            } else if ((isAttacking && !isPunching) || isDucking) {
                 // Attack or duck_spin damages boss (only if boss not invulnerable)
                 if (b.invulnerable <= 0) {
                     if (p.tailActive || p.state === 'duck_spin') {
@@ -427,6 +453,10 @@ function checkCollisions() {
                         game.boss.invulnerable = 0.5;  // 0.5 second invulnerability
                         // Spawn explosion at boss center when damaged by tail
                         spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
+                        // Trigger Gigan hurt animation if available
+                        if (typeof onGiganHurt === 'function') {
+                            onGiganHurt();
+                        }
                     } else if (p.attacking) {
                         const damage = p.attackType === 'kick' ? 2 : 1;
                         game.boss.hp -= damage;
@@ -434,21 +464,29 @@ function checkCollisions() {
                         game.boss.invulnerable = 0.5;  // 0.5 second invulnerability
                         // Spawn explosion at boss center when damaged by attack
                         spawnExplosion(game.boss.x + game.boss.width / 2, game.boss.y + game.boss.height / 2);
+                        // Trigger Gigan hurt animation if available
+                        if (typeof onGiganHurt === 'function') {
+                            onGiganHurt();
+                        }
                     }
                 }
             } else if (p.invulnerable <= 0 && !isAttacking && !isDucking) {
-                p.hp -= 1;
-                p.hurtTime = 0.5;
-                p.invulnerable = 1;
-                p.vx = p.x < game.boss.x ? -200 : 200;
-                // Spawn explosion at collision center when player hit by boss
-                const overlapLeft = Math.max(playerBox.x, bossBox.x);
-                const overlapRight = Math.min(playerBox.x + playerBox.width, bossBox.x + bossBox.width);
-                const overlapTop = Math.max(playerBox.y, bossBox.y);
-                const overlapBottom = Math.min(playerBox.y + playerBox.height, bossBox.y + bossBox.height);
-                const explosionX = (overlapLeft + overlapRight) / 2;
-                const explosionY = (overlapTop + overlapBottom) / 2;
-                spawnExplosion(explosionX, explosionY);
+                // For Gigan: player attacking negates contact damage (unless Gigan is attacking)
+                // For other bosses: normal contact damage
+                if (!isGigan || !isAttacking) {
+                    p.hp -= 1;
+                    p.hurtTime = 0.5;
+                    p.invulnerable = 1;
+                    p.vx = p.x < game.boss.x ? -200 : 200;
+                    // Spawn explosion at collision center when player hit by boss
+                    const overlapLeft = Math.max(playerBox.x, bossBox.x);
+                    const overlapRight = Math.min(playerBox.x + playerBox.width, bossBox.x + bossBox.width);
+                    const overlapTop = Math.max(playerBox.y, bossBox.y);
+                    const overlapBottom = Math.min(playerBox.y + playerBox.height, bossBox.y + bossBox.height);
+                    const explosionX = (overlapLeft + overlapRight) / 2;
+                    const explosionY = (overlapTop + overlapBottom) / 2;
+                    spawnExplosion(explosionX, explosionY);
+                }
             }
         }
     }

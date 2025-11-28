@@ -323,6 +323,18 @@ function gameLoop(timestamp) {
         updateLifePickups(dt);
         updateSpawner(dt);
         
+        // Xiliens flyover effect (level 4)
+        checkXiliensFlyoverTrigger(dt);
+        updateXiliensFlyover(dt);
+        
+        // Rodan ally (level 4)
+        checkRodanTrigger(dt);
+        updateRodanAlly(dt);
+        
+        // P-1 Rocket (level 4)
+        checkP1RocketTrigger(dt);
+        updateP1Rocket(dt);
+        
         // Check boss spawn - hybrid approach
         if (!game.boss && !game.spawn.gateReached) {
             // *** TESTING MODE: Spawn boss immediately ***

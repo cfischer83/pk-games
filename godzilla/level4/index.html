@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 
-<title>Godzilla On Planet Kodiak - Earth</title>
+<title>Godzilla On Planet Kodiak - Jupiter</title>
 <link rel="stylesheet" type="text/css" href="../style.css" />
 <link rel="stylesheet" type="text/css" href="level.css" />
 
@@ -67,10 +67,10 @@
 </div>
 
 <script src="../game/game-config.js"></script>
-<script src="../level1/level-configs.js"></script>
+<script src="level-configs.js"></script>
 <script src="../dragons/dragon-sprites.js"></script>
 <script src="../dragons/player-dragon.js"></script>
-<script src="../dragons/boss-anguirus.js"></script>
+<script src="../dragons/boss-dragon2.js"></script>
 <script src="../game/engine-physics.js"></script>
 <script src="../game/engine-core.js"></script>
 <script src="../game/engine-debug.js"></script>
@@ -88,14 +88,14 @@ const imagesToPreload = [
 	'img/mountains.png',
 	'img/midlands.png',
 	'img/ground.png',
-	'../img/planet.png',
+	'../img/jupiter.png',
 	'../img/stars.png',
 	'../img/stars-wide.gif',
 	'../img/tank.png',
 	'../img/rocks.png',
 	'../img/menu.png',
 	'../img/dragon1.png',
-	'../img/anguirus.png'
+	'../img/dragon2.png'
 ];
 
 function preloadImages(urls, callback) {
@@ -135,9 +135,9 @@ console.log('Config:', GAME_CONFIG);
 		console.log("send to ga4: action="+action);
 		gtag('event', 'PlayGodzilla', {
 			'game_action': action,
-			'game_level': "1",
+			'game_level': "4",
 			'game_difficulty': "normal",
-			'game_details': "normal" + ":level1:" + action
+			'game_details': "normal" + ":level4:" + action
 		});
 	}
 	window.dataLayer = window.dataLayer || [];

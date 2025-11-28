@@ -122,7 +122,7 @@ const ANCHORS_JSON = {
         "lightning": {
             "boltSize": { "w": 160, "h": 48 },
             "mouth": { "fromTop": 32, "fromRight": 8 },
-            "cooldownMs": 1500
+            "cooldownMs": 700
         },
         "states": {
             "fly": {
@@ -157,7 +157,7 @@ const ANCHORS_JSON = {
             "hurt": {
                 "frameSize": { "w": 240, "h": 220 },
                 "frames": [
-                    { "spriteOffset": { "x": 0, "y": 890 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
+                    { "spriteOffset": { "x": 0, "y": 892 }, "mouth": { "fromTop": 32, "fromRight": 8 } }
                 ]
             },
             "dead": {
@@ -321,7 +321,7 @@ const ANCHORS_JSON = {
 		}
 	},
 	"mechagodzilla": {
-		"spriteSheet": { "w": 520, "h": 136, "src": "../img/mechagodzilla.png" },
+		"spriteSheet": { "w": 650, "h": 136, "src": "../img/mechagodzilla.png" },
 		"baseFrameSize": { "w": 122, "h": 136 },
 		"states": {
 			"stand": {
@@ -342,13 +342,141 @@ const ANCHORS_JSON = {
 			"slide": {
 				"frameSize": { "w": 122, "h": 136 },
 				"frames": [
-					{ "spriteOffset": { "x": 278, "y": 0 } }
+					{ "spriteOffset": { "x": 528, "y": 0 } }
 				]
 			},
 			"dead": {
 				"frameSize": { "w": 122, "h": 136 },
 				"frames": [
 					{ "spriteOffset": { "x": 407, "y": 0 } }
+				]
+			}
+		}
+	},
+	"gigan": {
+		"spriteSheet": { "w": 454, "h": 482, "src": "../img/gigan.png" },
+		"baseFrameSize": { "w": 130, "h": 140 },
+		"eyeBeam": { "w": 99, "h": 10, "offset": { "x": 187, "y": 468 } },
+		"states": {
+			"stand": {
+				"frameSize": { "w": 130, "h": 140 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } }
+				]
+			},
+			"walk": {
+				"frameSize": { "w": 130, "h": 140 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 154, "y": 2 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 308, "y": 2 } }
+				]
+			},
+			"hurt": {
+				"frameSize": { "w": 130, "h": 140 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 307 } },
+					{ "spriteOffset": { "x": 154, "y": 2 } },
+					{ "spriteOffset": { "x": 0, "y": 307 } }
+				]
+			},
+			"intimidate": {
+				"frameSize": { "w": 138, "h": 142 },
+				"frames": [
+					{ "spriteOffset": { "x": 165, "y": 308 } }
+				]
+			},
+			"attack": {
+				"frameSize": { "w": 130, "h": 142 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 156 } },
+					{ "spriteOffset": { "x": 162, "y": 156 } },
+					{ "spriteOffset": { "x": 0, "y": 156 } },
+					{ "spriteOffset": { "x": 324, "y": 156 } }
+				]
+			},
+			"dead": {
+				"frameSize": { "w": 130, "h": 141 },
+				"frames": [
+					{ "spriteOffset": { "x": 317, "y": 307 } }
+				]
+			}
+		}
+	},
+	"xiliens": {
+		"spriteSheet": { "w": 74, "h": 54, "src": "../img/xiliens.png" },
+		"baseFrameSize": { "w": 37, "h": 26 },
+		"states": {
+			"fly": {
+				"frameSize": { "w": 37, "h": 26 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 38, "y": 0 } },
+					{ "spriteOffset": { "x": 38, "y": 0 } },
+					{ "spriteOffset": { "x": 38, "y": 0 } },
+					{ "spriteOffset": { "x": 0, "y": 26 } },
+					{ "spriteOffset": { "x": 0, "y": 26 } },
+					{ "spriteOffset": { "x": 0, "y": 26 } },
+					{ "spriteOffset": { "x": 38, "y": 26 } },
+					{ "spriteOffset": { "x": 38, "y": 26 } },
+					{ "spriteOffset": { "x": 38, "y": 26 } }
+				]
+			}
+		}
+	},
+	"rodan-bubble": {
+		"spriteSheet": { "w": 510, "h": 263, "src": "../img/rodan-bubble.png" },
+		"baseFrameSize": { "w": 168, "h": 263 },
+		"states": {
+			"carry": {
+				"frameSize": { "w": 168, "h": 263 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 170, "y": 0 } },
+					{ "spriteOffset": { "x": 340, "y": 0 } }
+				]
+			}
+		}
+	},
+	"rodan": {
+		"spriteSheet": { "w": 462, "h": 96, "src": "../img/rodan.png" },
+		"baseFrameSize": { "w": 116, "h": 96 },
+		"states": {
+			"glide": {
+				"frameSize": { "w": 116, "h": 96 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } }
+				]
+			},
+			"dive": {
+				"frameSize": { "w": 116, "h": 96 },
+				"frames": [
+					{ "spriteOffset": { "x": 116, "y": 0 } }
+				]
+			},
+			"retreat": {
+				"frameSize": { "w": 116, "h": 96 },
+				"frames": [
+					{ "spriteOffset": { "x": 232, "y": 0 } },
+					{ "frameSize": { "w": 114, "h": 96 }, "spriteOffset": { "x": 348, "y": 0 } }
+				]
+			}
+		}
+	},
+	"p-1": {
+		"spriteSheet": { "w": 186, "h": 192, "src": "../img/p-1.png" },
+		"baseFrameSize": { "w": 62, "h": 192 },
+		"scale": 0.5,
+		"states": {
+			"launch": {
+				"frameSize": { "w": 62, "h": 192 },
+				"frames": [
+					{ "spriteOffset": { "x": 0, "y": 0 } },
+					{ "spriteOffset": { "x": 62, "y": 0 } },
+					{ "spriteOffset": { "x": 124, "y": 0 } }
 				]
 			}
 		}
@@ -421,9 +549,9 @@ function applySpriteFrame(element, actor, state, frameIndex, facing = 'right') {
     
     // Handle flipping
     // Dragon1 sprite faces right by default, Dragon2 sprite faces left by default
-    // Lightning and mechagodzilla sprites face left by default (same as dragon2)
+    // Lightning, mechagodzilla, and gigan sprites face left by default (same as dragon2)
     let flipTransform;
-    if (actor === 'dragon2' || actor === 'lightning' || actor === 'mechagodzilla') {
+    if (actor === 'dragon2' || actor === 'lightning' || actor === 'mechagodzilla' || actor === 'gigan') {
         // These sprites are naturally left-facing, so flip for right
         flipTransform = facing === 'right' ? 'scaleX(-1)' : 'scaleX(1)';
         // Set transform origin to center for clean horizontal flip

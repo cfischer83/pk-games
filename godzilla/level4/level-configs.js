@@ -1,9 +1,22 @@
-// Level 3 Specific Configuration
+// Level 4 Specific Configuration
 const LEVEL_CONFIG = {
     // *** TESTING MODE *** 
     // Set to true to spawn boss immediately without enemies/obstacles
     // Set to false to use normal spawn schedule
-    TESTING_BOSS: false,
+    TESTING_BOSS: true,
+    
+    // Cinematic flyover - xiliens carrying rodan in bubble
+    xiliensFlyover: {
+        enabled: true,
+        triggerTime: 5  // seconds into the level
+    },
+    
+    // P-1 Rocket launch
+    p1Rocket: {
+        enabled: true,
+        launchDelay: 2  // Rocket visible immediately, launches after 2 seconds
+    },
+    
     spawn: { 
         maxEnemies: 10,
         maxObstacles: 0,  // Allow more obstacles (rocks) than enemies
@@ -11,7 +24,7 @@ const LEVEL_CONFIG = {
         schedule: [
             { start: 0, end: 20, enemies: ['turret'], intervals: [1000, 4000], max: 2 },
             { start: 20, end: 40, enemies: ['turret', 'tank', 'bubble-craft'], intervals: [4000, 4000, 6500], max: 5 },
-            { start: 40, end: 60, enemies: ['turret', 'bird', 'tank', 'bubble-craft'], intervals: [4500, 7500, 6000, 2000], max: 7 }
+            { start: 40, end: 80, enemies: ['turret', 'bird', 'tank', 'bubble-craft'], intervals: [4500, 7500, 6000, 2000], max: 7 }
         ],
         obstacleSchedule: [
             // empty

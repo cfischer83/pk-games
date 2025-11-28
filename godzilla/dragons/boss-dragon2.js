@@ -20,7 +20,7 @@ function spawnBoss() {
         facing: 'left',  // Dragon2 sprite naturally faces left
         pattern: 'hover',  // 'hover', 'swooping', 'retreating'
         swoopTargetY: 100,  // Target Y position for swoop
-        hoverY: 100  // Home hover position
+        hoverY: 200  // Home hover position
     };
     
     const el = document.createElement('div');
@@ -87,12 +87,12 @@ function updateBoss(dt) {
         // Check if it's time to swoop
         if (b.swoopCooldown <= 0) {
             b.pattern = 'swooping';
-            // Random swoop depth: 50% chance to go to ground level, otherwise mid-height
+            // Random swoop depth: 30% chance to go to ground level, otherwise mid-height
             const goToGround = true; // Math.random() < 0.5;
             b.swoopTargetY = goToGround ? maxSwoopY : (b.hoverY + maxSwoopY) / 2;
             
-            // 50% chance to swoop towards player horizontally, otherwise go straight down
-            b.swoopTowardsPlayer = Math.random() < 0.2;
+            // 70% chance to swoop towards player horizontally, otherwise go straight down
+            b.swoopTowardsPlayer = Math.random() < 0.7;
             if (b.swoopTowardsPlayer) {
                 b.swoopTargetX = game.player.x;
                 // Face the direction we're swooping

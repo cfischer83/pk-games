@@ -65,7 +65,9 @@ const BASE_GAME_CONFIG = {
         bossBody: 1, 
         bossLightning: 4,
         mechagodzillaLaser: 3,
-        mechagodzillaBullet: 2
+        mechagodzillaBullet: 2,
+        giganAttack: 10,
+        giganEyeBeam: 2
     },
     camera: { 
         lookAheadPx: 80 
