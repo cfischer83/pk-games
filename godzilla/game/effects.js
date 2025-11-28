@@ -16,16 +16,16 @@ function spawnExplosion(x, y) {
     // Apply initial frame
     applySpriteFrame(el, 'explosion', 'explode', 0);
     
-    explosion.element = el;
-    document.getElementById('world').appendChild(el);
-    game.explosions.push(explosion);
-    
-    // Position explosion
+    // Position explosion before appending to prevent flash at (0,0)
     const groundY = window.innerHeight * 0.9;
     const groundHeight = window.innerHeight * 0.1;
     const frameInfo = getFrameInfo('explosion', 'explode', 0);
     el.style.left = (x - game.camera.x - frameInfo.width / 2) + 'px';
     el.style.bottom = (groundHeight + groundY - y - frameInfo.height / 2) + 'px';
+    
+    explosion.element = el;
+    document.getElementById('world').appendChild(el);
+    game.explosions.push(explosion);
 }
 
 function updateExplosions(dt) {
@@ -93,14 +93,14 @@ function spawnLifePickup(x, y, spawnChance = 0.25) {
     // Apply initial frame
     applySpriteFrame(el, 'life', 'float', 0);
     
-    lifePickup.element = el;
-    document.getElementById('world').appendChild(el);
-    game.lifePickups.push(lifePickup);
-    
-    // Position pickup
+    // Position pickup before appending to prevent flash at (0,0)
     const groundHeight = window.innerHeight * 0.1;
     el.style.left = (lifePickup.x - game.camera.x) + 'px';
     el.style.bottom = (groundHeight + groundY - lifePickup.y - lifePickup.height) + 'px';
+    
+    lifePickup.element = el;
+    document.getElementById('world').appendChild(el);
+    game.lifePickups.push(lifePickup);
 }
 
 function updateLifePickups(dt) {
@@ -611,7 +611,7 @@ function spawnP1Rocket() {
     rocketEl.id = 'p1-rocket';
     rocketEl.className = 'sprite';
     rocketEl.style.position = 'absolute';
-    rocketEl.style.zIndex = '99'; // Below ground (100+) but above everything else
+    rocketEl.style.zIndex = '2'; // Below ground (100+) but above everything else
     rocketEl.style.width = width + 'px';
     rocketEl.style.height = height + 'px';
     rocketEl.style.pointerEvents = 'none';

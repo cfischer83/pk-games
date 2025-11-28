@@ -245,6 +245,12 @@ function shootEyeLaser(boss) {
     el.style.borderRadius = '3px';
     el.style.boxShadow = '0 0 13px 6px #ff0000, 0 0 16px #ff4444';
     
+    // Set initial position before appending to prevent flash at (0,0)
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
+    el.style.left = (laser.x - game.camera.x) + 'px';
+    el.style.bottom = (groundHeight + groundY - laser.y - laser.height) + 'px';
+    
     laser.element = el;
     document.getElementById('world').appendChild(el);
     game.projectiles.push(laser);
@@ -282,6 +288,12 @@ function shootHandBullet(boss) {
     el.setAttribute('data-active', 'true');
     
     applySpriteFrame(el, 'bullet', 'fired', 0, boss.facing);
+    
+    // Set initial position before appending to prevent flash at (0,0)
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
+    el.style.left = (bullet.x - game.camera.x) + 'px';
+    el.style.bottom = (groundHeight + groundY - bullet.y - bullet.height) + 'px';
     
     bullet.element = el;
     document.getElementById('world').appendChild(el);

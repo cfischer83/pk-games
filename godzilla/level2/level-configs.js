@@ -1,5 +1,6 @@
 // Level 2 Specific Configuration
 const LEVEL_CONFIG = {
+    levelNumber: 2,
     // *** TESTING MODE *** 
     // Set to true to spawn boss immediately without enemies/obstacles
     // Set to false to use normal spawn schedule

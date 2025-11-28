@@ -78,6 +78,20 @@ h1 {
 	text-shadow: 2px 2px 2px #000, -2px -2px 2px #000, 0px 0px 20px #0f0, 0px 0px 24px #0f0;
 	margin: 20px;
 }
+button {
+	font-family: 'Press Start 2P', monospace;
+	padding: 15px 30px;
+	font-size: 16px;
+	cursor: pointer;
+	background: #0F0;
+	color: #000;
+	border: 2px solid #000;
+}
+button:hover {
+	color: #0F0;
+	background-color: #000;
+	border: 2px solid #0F0;
+}
 </style>
 </head>
 <body>
@@ -85,9 +99,35 @@ h1 {
     <div class="planet" id="earth"><a href="level1/index.html"></a></div>
 	<div class="planet" id="mars"><a href="level2/index.html"></a></div>
 	<div class="planet" id="saturn"><a href="level3/index.html"></a></div>
-	<div class="planet" id="jupiter"><a href="#" onclick="alert('coming soon...')"></a></div>
+	<div class="planet" id="jupiter"><a href="level4/index.html"></a></div>
 </div>
-<h1>Select A Planet</h1>
+<h1 id="title">Godzilla On Planet Kodiak</h1>
+<div id="start-button" style="text-align: center; margin: 20px;"></div>
+<script>
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const nextLevel = params.get('nextlevel') || '1';
+    const buttonDiv = document.getElementById('start-button');
+    const titleEl = document.getElementById('title');
+    
+    const levelUrls = {
+        '1': 'level1/index.html',
+        '2': 'level2/index.html',
+        '3': 'level3/index.html',
+        '4': 'level4/index.html'
+    };
+    
+    if (nextLevel === 'done') {
+        titleEl.textContent = 'YOU WIN!';
+        //titleEl.style.color = '#FFD700';
+        buttonDiv.innerHTML = '<button onclick="window.location.href=\'level1/index.html\'">PLAY AGAIN</button>';
+    } else {
+        const levelNum = levelUrls[nextLevel] ? nextLevel : '1';
+        const url = levelUrls[levelNum];
+        buttonDiv.innerHTML = '<button onclick="window.location.href=\'' + url + '\'">START LEVEL ' + levelNum + '</button>';
+    }
+})();
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N8SN5SJEFW"></script>
 <script type="text/javascript">
 	function pkAnalytics(action) {

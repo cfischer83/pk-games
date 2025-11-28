@@ -1,14 +1,15 @@
 // Level 4 Specific Configuration
 const LEVEL_CONFIG = {
+    levelNumber: 4,
     // *** TESTING MODE *** 
     // Set to true to spawn boss immediately without enemies/obstacles
     // Set to false to use normal spawn schedule
-    TESTING_BOSS: true,
+    TESTING_BOSS: false,
     
     // Cinematic flyover - xiliens carrying rodan in bubble
     xiliensFlyover: {
         enabled: true,
-        triggerTime: 5  // seconds into the level
+        triggerTime: 15  // seconds into the level
     },
     
     // P-1 Rocket launch

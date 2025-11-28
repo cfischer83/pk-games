@@ -349,6 +349,12 @@ function shootEyeBeam(boss) {
         el.style.transform = 'scaleX(-1)';
     }
     
+    // Set initial position before appending to prevent flash at (0,0)
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
+    el.style.left = (beam.x - game.camera.x) + 'px';
+    el.style.bottom = (groundHeight + groundY - beam.y - beam.height) + 'px';
+    
     beam.element = el;
     document.getElementById('world').appendChild(el);
     game.projectiles.push(beam);

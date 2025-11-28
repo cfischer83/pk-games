@@ -39,6 +39,12 @@ function spawnObstacle() {
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-active', 'true');
     
+    // Set initial position before appending to prevent flash at (0,0)
+    const groundY = window.innerHeight * 0.9;
+    const groundHeight = window.innerHeight * 0.1;
+    el.style.left = (obstacle.x - game.camera.x) + 'px';
+    el.style.bottom = (groundHeight + groundY - obstacle.y - obstacle.height) + 'px';
+    
     obstacle.element = el;
     document.getElementById('world').appendChild(el);
     game.obstacles.push(obstacle);

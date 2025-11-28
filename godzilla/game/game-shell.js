@@ -79,10 +79,13 @@ function gameLose() {
 function showGameOverMenu(won) {
     game.running = false;
     const menu = document.getElementById('menu');
+    const currentLevel = GAME_CONFIG.levelNumber || 1;
+    const nextLevel = currentLevel >= 4 ? 'done' : (currentLevel + 1);
+    
     if (won) {
-        menu.innerHTML = '<h1>YOU WIN!</h1><button onclick="window.location.reload();">PLAY AGAIN</button><br /><button onclick="window.location.href = \'../index.html\'" class="secondary-btn">BACK TO START</button>';
+        menu.innerHTML = '<h1>YOU WIN!</h1><button onclick="window.location.reload();">PLAY AGAIN</button><br /><button onclick="window.location.href = \'../index.html?nextlevel=' + nextLevel + '\'" class="secondary-btn">BACK TO GALAXY</button>';
     } else {
-        menu.innerHTML = '<h1>YOU LOSE!</h1><button onclick="window.location.reload();">RETRY?</button><br /><button onclick="window.location.href = \'../index.html\'" class="secondary-btn">BACK TO START</button>';
+        menu.innerHTML = '<h1>YOU LOSE!</h1><button onclick="window.location.reload();">RETRY?</button><br /><button onclick="window.location.href = \'../index.html\'" class="secondary-btn">BACK TO GALAXY</button>';
     }
     menu.style.display = 'block';
 }
