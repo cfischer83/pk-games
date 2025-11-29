@@ -25,19 +25,31 @@ function spawnBoss() {
         invulnerable: 0,
         dead: false,
         facing: 'left',
-        pattern: 'approach',  // 'approach', 'intimidate', 'attack', 'backoff'
+        pattern: 'approach',  // 'approach', 'intimidate', 'attack', 'backoff', 'jumpback'
         
-        // Attack timing (4-8 seconds randomly)
-        attackCooldown: 4 + Math.random() * 4,
+        // Attack timing (3-6 seconds randomly)
+        attackCooldown: 4,//3 + Math.random() * 3,
         attackTimer: 0,
         attackDamageApplied: false,
         lungeDirection: 0,  // Store lunge direction when intimidation starts
         
-        // Eye beam timing (3-6 seconds randomly)
-        eyeBeamCooldown: 3 + Math.random() * 3,
+        // Eye beam timing (2-4 seconds randomly)
+        eyeBeamCooldown: 2 + Math.random() * 2,
+        eyeBeamSecondShot: false,  // Track if we need to fire second beam
+        eyeBeamSecondShotTimer: 0,
         
         // Back-off
         backoffTimer: 0,
+        postAttackCooldown: 0,  // Brief pause after attack before backoff can trigger
+        
+        // Jump back (triggered by 3 hits in 1.5 seconds)
+        hitTimestamps: [],  // Track recent hit times
+        jumpBackTimer: 0,
+        jumpBackQueued: false,  // Queue jumpBack if hit during attack
+        
+        // Retreat from tail swing (if player swings for 3+ seconds)
+        playerTailSwingTime: 0,  // Track how long player has been tail swinging
+        wasRetreating: false,  // Track if we were retreating last frame
         
         grounded: true
     };
@@ -132,8 +144,14 @@ function updateBoss(dt) {
         // Calculate overlap for back-off logic
         const overlapPct = getOverlapPercent(b);
         
-        // Back-off check (not during attack or intimidation)
-        if (b.pattern === 'approach' && overlapPct > 0.01) {
+        // Decrement post-attack cooldown
+        if (b.postAttackCooldown > 0) {
+            b.postAttackCooldown -= dt;
+        }
+		console.log(b.pattern);
+        
+        // Back-off check (not during attack, intimidation, or right after attack)
+        if (b.pattern === 'approach' && overlapPct > 0.01 && b.postAttackCooldown <= 0) {
             if (overlapPct > 0.20) {
                 // More than 20% overlap - quick slide/hop backwards
                 b.pattern = 'backoff';
@@ -153,17 +171,51 @@ function updateBoss(dt) {
                 b.state = 'walk';
             }
             
-            // Move towards player but stop before overlapping
-            const minDist = (b.width + game.player.width) / 2;  // Edge to edge
-            if (dist > minDist && overlapPct <= 0.01) {
+            // Track player tail swing duration
+            const playerTailSwinging = game.player.tailActive;
+            if (playerTailSwinging) {
+                b.playerTailSwingTime += dt;
+            } else {
+                b.playerTailSwingTime = 0;
+            }
+            
+            // If player has been tail swinging for 3+ seconds, retreat until they stop
+            const shouldRetreat = playerTailSwinging && b.playerTailSwingTime >= 2;
+            
+            // Check if retreat just ended - trigger immediate attack
+            const retreatJustEnded = b.wasRetreating && !shouldRetreat;
+            b.wasRetreating = shouldRetreat;
+            
+            if (shouldRetreat) {
+                // Walk backwards, away from player, but still face them
+                b.state = 'walk';
                 if (bossCenterX < playerCenterX) {
-                    b.x += moveSpeed * dt;
+                    b.x -= moveSpeed * dt;  // Move left (away from player on right)
                 } else {
-                    b.x -= moveSpeed * dt;
+                    b.x += moveSpeed * dt;  // Move right (away from player on left)
+                }
+            } else if (retreatJustEnded) {
+                // Immediate counter-attack after retreat ends (punish tail swing spam)
+                b.pattern = 'intimidate';
+                b.state = 'intimidate';
+                b.frame = 0;
+                b.frameTime = 0;
+                b.attackTimer = 0.5; // Shorter intimidation for counter-attack
+                b.lungeDirection = playerCenterX > bossCenterX ? 1 : -1;
+                // Don't reset cooldown - let it continue counting down
+            } else {
+                // Normal approach - move towards player but stop before overlapping
+                const minDist = (b.width + game.player.width) / 2;  // Edge to edge
+                if (dist > minDist && overlapPct <= 0.01) {
+                    if (bossCenterX < playerCenterX) {
+                        b.x += moveSpeed * dt;
+                    } else {
+                        b.x -= moveSpeed * dt;
+                    }
                 }
             }
             
-            // Attack cooldown
+            // Attack cooldown (can attack even while retreating)
             b.attackCooldown -= dt;
             if (b.attackCooldown <= 0) {
                 // Add randomness - 50% chance to attack if cooldown ready, otherwise short delay
@@ -187,9 +239,20 @@ function updateBoss(dt) {
             
             // Eye beam cooldown
             b.eyeBeamCooldown -= dt;
-            if (b.eyeBeamCooldown <= 0) {
+            if (b.eyeBeamCooldown <= 0 && !b.eyeBeamSecondShot) {
                 shootEyeBeam(b);
-                b.eyeBeamCooldown = 3 + Math.random() * 3; // 3-6 seconds
+                b.eyeBeamSecondShot = true;
+                b.eyeBeamSecondShotTimer = 0.2;  // 0.2 seconds until second shot
+            }
+            
+            // Second eye beam shot
+            if (b.eyeBeamSecondShot) {
+                b.eyeBeamSecondShotTimer -= dt;
+                if (b.eyeBeamSecondShotTimer <= 0) {
+                    shootEyeBeam(b);
+                    b.eyeBeamSecondShot = false;
+                    b.eyeBeamCooldown = 2 + Math.random() * 2; // 2-4 seconds
+                }
             }
             
         } else if (b.pattern === 'backoff') {
@@ -199,8 +262,13 @@ function updateBoss(dt) {
             
             b.backoffTimer -= dt;
             if (b.backoffTimer <= 0 || Math.abs(b.vx) < 20) {
-                b.pattern = 'approach';
-                b.state = 'walk';
+                // Immediately attack after backoff ends
+                b.pattern = 'intimidate';
+                b.state = 'intimidate';
+                b.frame = 0;
+                b.frameTime = 0;
+                b.attackTimer = 0.5; // Short intimidation for counter-attack
+                b.lungeDirection = playerCenterX > bossCenterX ? 1 : -1;
                 b.vx = 0;
             }
             
@@ -216,7 +284,7 @@ function updateBoss(dt) {
                 b.attackDamageApplied = false;
                 
                 // Lunge towards player (direction was locked when intimidation started)
-                b.vx = b.lungeDirection * 800; // Fast lunge like Anguirus
+                b.vx = b.lungeDirection * 400; // Moderate lunge speed
             }
             
         } else if (b.pattern === 'attack') {
@@ -224,8 +292,17 @@ function updateBoss(dt) {
             if (Math.abs(b.vx) > 0) {
                 b.x += b.vx * dt;
                 // Decelerate
-                b.vx *= 0.95;
+                b.vx *= 0.92;
                 if (Math.abs(b.vx) < 10) {
+                    b.vx = 0;
+                }
+                
+                // Stop lunge if we've reached/passed the player (prevent overshooting)
+                const bossCenterX = b.x + b.width / 2;
+                const playerCenterX = game.player.x + game.player.width / 2;
+                const passedPlayer = (b.lungeDirection > 0 && bossCenterX >= playerCenterX) ||
+                                     (b.lungeDirection < 0 && bossCenterX <= playerCenterX);
+                if (passedPlayer) {
                     b.vx = 0;
                 }
             }
@@ -249,7 +326,26 @@ function updateBoss(dt) {
                 b.pattern = 'approach';
                 b.state = 'walk';
                 b.frame = 0;
-                b.attackCooldown = 4 + Math.random() * 4; // 4-8 seconds
+                b.attackCooldown = 3 + Math.random() * 3; // 3-6 seconds
+                b.postAttackCooldown = 0.5;  // Brief pause before backoff can trigger
+                b.vx = 0;
+                
+                // Check if jumpBack was queued during attack
+                if (b.jumpBackQueued) {
+                    b.jumpBackQueued = false;
+                    startJumpBack(b);
+                }
+            }
+        } else if (b.pattern === 'jumpback') {
+            // Slide backwards using intimidate sprite
+            b.x += b.vx * dt;
+            b.vx *= 0.92;  // Decelerate
+            
+            b.jumpBackTimer -= dt;
+            if (b.jumpBackTimer <= 0 || Math.abs(b.vx) < 20) {
+                b.pattern = 'approach';
+                b.state = 'walk';
+                b.frame = 0;
                 b.vx = 0;
             }
         }
@@ -363,11 +459,55 @@ function shootEyeBeam(boss) {
 // Called when Gigan takes damage (from engine-collisions.js)
 function onGiganHurt() {
     const b = game.boss;
-    if (!b || b.dead || b.pattern === 'attack') return;
+    if (!b || b.dead) return;
     
-    // Start hurt animation (3 frames)
-    b.state = 'hurt';
+    const now = performance.now();
+    
+    // Track hit timestamp
+    b.hitTimestamps.push(now);
+    
+    // Remove hits older than 1.5 seconds
+    b.hitTimestamps = b.hitTimestamps.filter(t => now - t < 1500);
+    
+    // Check for 3 hits in 1.5 seconds - trigger jumpBack
+    if (b.hitTimestamps.length >= 3) {
+        b.hitTimestamps = [];  // Clear hits
+        
+        if (b.pattern === 'attack' || b.pattern === 'intimidate') {
+            // Queue jumpBack for after attack finishes
+            b.jumpBackQueued = true;
+        } else if (b.pattern !== 'jumpback') {
+            // Start jumpBack immediately
+            startJumpBack(b);
+            return;  // Skip normal hurt animation
+        }
+    }
+    
+    // Normal hurt animation (only if not attacking or approaching)
+    // Gigan is aggressive - doesn't flinch during approach, only jumpBack makes him retreat
+    if (b.pattern !== 'attack' && b.pattern !== 'approach' && b.pattern !== 'intimidate') {
+        b.state = 'hurt';
+        b.frame = 0;
+        b.frameTime = 0;
+        b.hurtFrames = 3;
+    }
+}
+
+// Start jump back - slide backwards two player widths
+function startJumpBack(b) {
+    const jumpBackDistance = game.player.width * 3;
+    
+    // Direction is backwards from facing
+    const direction = b.facing === 'left' ? 1 : -1;  // If facing left, jump back to the right
+    
+    b.pattern = 'jumpback';
+    b.state = 'intimidate';  // Use intimidate sprite for jumpBack
     b.frame = 0;
     b.frameTime = 0;
-    b.hurtFrames = 3;
+    
+    // Calculate velocity based on desired distance
+    // Higher multiplier = faster initial velocity = farther slide
+    b.vx = direction * jumpBackDistance * 3;
+    b.jumpBackTimer = 0.5;
+	shootEyeBeam(b);// always shoot on jumpback
 }
