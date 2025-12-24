@@ -1,9 +1,16 @@
+// Helper to get effective viewport width accounting for mobile zoom
+function getEffectiveViewportWidth() {
+    const mobileZoom = window.mobileZoomLevel || 1;
+    // When zoomed to 0.5, visible area is 2x wider, so we need to spawn further out
+    return window.innerWidth / mobileZoom;
+}
+
 // Spawn obstacles (rocks)
 function spawnObstacle() {
     if (game.obstacles.length >= GAME_CONFIG.spawn.maxObstacles) return;
     if (game.spawn.gateReached) return;
     
-    const spawnX = game.camera.x + window.innerWidth + 50;
+    const spawnX = game.camera.x + getEffectiveViewportWidth() + 50;
     const minSpacing = game.player.width;
     
     // Check spacing with other obstacles

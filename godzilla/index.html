@@ -16,7 +16,6 @@
 }
 
 body {
-    overflow: hidden;
     font-family: monospace;
     background: #000;
 }
@@ -27,6 +26,11 @@ body {
 	margin: auto;
 	position: relative;
 	zoom: 1.5;
+}
+@media (max-width: 1000px) {
+	#game-container {
+		zoom: 0.5;
+	}
 }
 #earth a {
 	width: 16px;
@@ -60,14 +64,14 @@ body {
 	left: 250px;
 	top: 170px;
 }
-.planet {
+/* .planet {
 	animation: planetSway 8s ease-in-out infinite alternate;
 	will-change: transform;
 }
 @keyframes planetSway {
 	from { transform: translateX(-6px); }
 	to { transform: translateX(6px); }
-}
+} */
 .planet a {
 	display: block;
 }

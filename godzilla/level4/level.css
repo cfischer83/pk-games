@@ -5,6 +5,19 @@
 	background: url(../img/jupiter.png) right 0 no-repeat, url(../img/stars.png) 0 0 repeat-x, linear-gradient(to bottom, #000 0%, #000 100px, #247 100%);
 }
 
+@media (pointer: coarse) and (hover: none) and (max-width: 1024px) {
+	#game-container {
+		position: relative;
+		width: 100vw;
+		height: 100vh;
+		background: url(../img/jupiter.png) right 0 no-repeat, url(../img/stars.png) 0 0 repeat-x;
+	}
+
+	#viewport {
+		background: linear-gradient(to bottom, #000 0%, #000 100px, #247 100%);
+	}
+}
+
 #hud {
 	margin-left: 0; /* account for Mars being on the left */
 }
@@ -35,7 +48,7 @@
 #ground {
     position: absolute;
     bottom: 0;
-    width: 1400%;
+    width: 5000%;
     height: 10%;
 	z-index: 3;
     background: url(img/ground.png) top left repeat #000;

@@ -26,7 +26,7 @@
 #ground {
     position: absolute;
     bottom: 0;
-    width: 1400%;
+    width: 5000%;
     height: 10%;
     background: url(img/ground.png) top left repeat #000;
 }

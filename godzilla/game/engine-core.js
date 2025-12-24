@@ -137,6 +137,7 @@ document.addEventListener('keyup', (e) => {
 // Camera update
 function updateCamera() {
     const p = game.player;
+    // Keep camera centered using actual window width - CSS zoom handles the visual scaling
     const targetX = Math.max(0, p.x - window.innerWidth/2 + GAME_CONFIG.camera.lookAheadPx);
     
     game.camera.x = targetX;
@@ -361,7 +362,10 @@ function gameLoop(timestamp) {
                     }
                     
                     // Calculate buffer distance (window width or 1000px, whichever is smaller)
-                    const bufferDistance = Math.min(window.innerWidth, 1000);
+                    // Account for mobile zoom - when zoomed out, use effective viewport width
+                    const mobileZoom = window.mobileZoomLevel || 1;
+                    const effectiveWidth = window.innerWidth / mobileZoom;
+                    const bufferDistance = Math.min(effectiveWidth, 1000);
                     const distanceTraveled = game.player.x - game.spawn.lastEnemyClearedX;
                     
                     // Spawn boss after buffer distance

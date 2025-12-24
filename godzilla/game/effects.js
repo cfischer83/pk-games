@@ -223,7 +223,10 @@ function spawnXiliensFlyover() {
     const containerHeight = xiliensHeight + rodanHeight;
     
     // Start off-screen to the right
-    const startX = window.innerWidth + 50;
+    // Account for mobile zoom - when zoomed out, viewport shows more area
+    const mobileZoom = window.mobileZoomLevel || 1;
+    const effectiveWidth = window.innerWidth / mobileZoom;
+    const startX = effectiveWidth + 50;
     const topY = 100; // 200px from top of screen
     
     xiliensFlyover = {
@@ -272,7 +275,13 @@ function spawnXiliensFlyover() {
     
     container.appendChild(xiliensEl);
     container.appendChild(rodanEl);
-    document.getElementById('world').appendChild(container);
+	if (document.getElementById('mobile-game-wrapper')) {
+		const worldZoom = document.getElementById('game-container').style.zoom;
+		container.style.zoom = worldZoom;
+		document.getElementById('mobile-game-wrapper').appendChild(container);
+	} else {
+  	  document.getElementById('world').appendChild(container);
+	}
     
     xiliensFlyover.element = container;
 }
@@ -346,7 +355,9 @@ let rodanFromLeft = true; // Alternates between left-to-right and right-to-left
 let rodanWaitTimer = 0;
 
 function spawnRodanAlly() {
-    const viewportWidth = window.innerWidth;
+    // Account for mobile zoom - when zoomed out, viewport shows more area
+    const mobileZoom = window.mobileZoomLevel || 1;
+    const viewportWidth = window.innerWidth / mobileZoom;
     const startX = rodanFromLeft ? -116 : viewportWidth;
     const startY = 100; // 100px from top
     const facing = rodanFromLeft ? 'right' : 'left';
@@ -362,7 +373,12 @@ function spawnRodanAlly() {
     
     // Apply initial sprite frame (glide state)
     applySpriteFrame(rodanEl, 'rodan', 'glide', 0, facing);
-    
+
+	const worldZoom = document.getElementById('game-container').style.zoom;
+	if (worldZoom) {
+		rodanEl.style.zoom = worldZoom;
+	}
+
     document.body.appendChild(rodanEl);
     
     rodanAlly = {
@@ -393,7 +409,9 @@ function updateRodanAlly(dt) {
     if (!rodanAlly) return;
     
     const rodan = rodanAlly;
-    const viewportWidth = window.innerWidth;
+    // Account for mobile zoom - when zoomed out, viewport shows more area
+    const mobileZoom = window.mobileZoomLevel || 1;
+    const viewportWidth = window.innerWidth / mobileZoom;
     
     // Animate frames
     rodan.frameTime += dt;
@@ -603,7 +621,10 @@ function spawnP1Rocket() {
     
     // Position: 200px from right edge of initial viewport, at ground level
     const groundY = window.innerHeight * 0.9 + 29; // 29 for rocket fire
-    const startX = game.camera.x + window.innerWidth - 200;
+    // Account for mobile zoom - when zoomed out, viewport shows more area
+    const mobileZoom = window.mobileZoomLevel || 1;
+    const effectiveWidth = window.innerWidth / mobileZoom;
+    const startX = game.camera.x + effectiveWidth - 200;
     const startY = groundY - height; // Bottom of rocket at ground level
     
     // Create rocket element
@@ -619,7 +640,13 @@ function spawnP1Rocket() {
     // Apply initial sprite frame with 50% scale
     applyP1SpriteFrame(rocketEl, 0);
     
-    document.getElementById('world').appendChild(rocketEl);
+	if (document.getElementById('mobile-game-wrapper')) {
+		const worldZoom = document.getElementById('game-container').style.zoom;
+		rocketEl.style.zoom = worldZoom;
+		document.getElementById('mobile-game-wrapper').appendChild(rocketEl);
+	} else {
+		document.getElementById('world').appendChild(rocketEl);
+	}
     
     p1Rocket = {
         element: rocketEl,
@@ -697,10 +724,9 @@ function updateP1Rocket(dt) {
     rocket.element.style.left = (rocket.x - game.camera.x) + 'px';
     rocket.element.style.bottom = (groundHeight + groundY - rocket.y - rocket.height) + 'px';
     
-    // Check if off-screen above viewport
+    // Check if off-screen above viewport (delay 5 seconds to account for mobile zoom)
     if (rocket.y + rocket.height < 0) {
-        rocket.element.remove();
-        p1Rocket = null;
+        setTimeout(rocket.element.remove(), 5000);
     }
 }
 

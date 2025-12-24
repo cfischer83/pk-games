@@ -28,7 +28,7 @@ body {
 
 .parallax-layer {
     position: absolute;
-    width: 500%;
+    width: 5000%;
     height: 100%;
     image-rendering: pixelated;
 }

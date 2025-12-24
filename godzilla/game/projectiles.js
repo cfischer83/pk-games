@@ -1,10 +1,14 @@
 // Update projectiles
 function updateProjectiles(dt) {
+    // Account for mobile zoom when checking if projectiles are off-screen
+    const mobileZoom = window.mobileZoomLevel || 1;
+    const effectiveWidth = window.innerWidth / mobileZoom;
+    
     game.projectiles = game.projectiles.filter(proj => {
         proj.x += proj.vx * dt;
         proj.y += proj.vy * dt;
         
-        if (proj.x < game.camera.x - 100 || proj.x > game.camera.x + window.innerWidth + 100) {
+        if (proj.x < game.camera.x - 100 || proj.x > game.camera.x + effectiveWidth + 100) {
             proj.element.remove();
             return false;
         }

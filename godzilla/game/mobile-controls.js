@@ -135,18 +135,43 @@
         // Helper to get which d-pad directions are touched
         function getDpadDirectionsAtPoint(x, y) {
             const directions = [];
+            const dpadBounds = dpad.getBoundingClientRect();
+            const centerX = dpadBounds.left + dpadBounds.width / 2;
+            const centerY = dpadBounds.top + dpadBounds.height / 2;
             
-            dpadButtons.forEach(btn => {
-                const rect = btn.getBoundingClientRect();
-                // Add some padding for easier diagonal touches
-                const padding = 8;
-                if (x >= rect.left - padding && 
-                    x <= rect.right + padding && 
-                    y >= rect.top - padding && 
-                    y <= rect.bottom + padding) {
-                    directions.push(btn.dataset.direction);
-                }
-            });
+            // Check if touch is in corner areas for diagonal support
+            const relX = x - centerX;
+            const relY = y - centerY;
+            
+            // Define corner zones (45 degree angles from center)
+            const isInTopRightCorner = relX > 0 && relY < 0 && Math.abs(relX) > Math.abs(relY) * 0.4 && Math.abs(relY) > Math.abs(relX) * 0.4;
+            const isInTopLeftCorner = relX < 0 && relY < 0 && Math.abs(relX) > Math.abs(relY) * 0.4 && Math.abs(relY) > Math.abs(relX) * 0.4;
+            const isInBottomRightCorner = relX > 0 && relY > 0 && Math.abs(relX) > Math.abs(relY) * 0.4 && Math.abs(relY) > Math.abs(relX) * 0.4;
+            const isInBottomLeftCorner = relX < 0 && relY > 0 && Math.abs(relX) > Math.abs(relY) * 0.4 && Math.abs(relY) > Math.abs(relX) * 0.4;
+            
+            // If in a corner, activate both directions
+            if (isInTopRightCorner) {
+                directions.push('up', 'right');
+            } else if (isInTopLeftCorner) {
+                directions.push('up', 'left');
+            } else if (isInBottomRightCorner) {
+                directions.push('down', 'right');
+            } else if (isInBottomLeftCorner) {
+                directions.push('down', 'left');
+            } else {
+                // Not in corner, check individual buttons
+                dpadButtons.forEach(btn => {
+                    const rect = btn.getBoundingClientRect();
+                    // Add some padding for easier touches
+                    const padding = 8;
+                    if (x >= rect.left - padding && 
+                        x <= rect.right + padding && 
+                        y >= rect.top - padding && 
+                        y <= rect.bottom + padding) {
+                        directions.push(btn.dataset.direction);
+                    }
+                });
+            }
             
             return directions;
         }
@@ -470,7 +495,7 @@
         
         // We want to show more game width by zooming out
         // Target: show at least 850px of game width
-        const targetGameWidth = 850;
+        const targetGameWidth = 1000;
         
         // Calculate zoom based on how much width we want to show
         let zoom = 1;
@@ -478,30 +503,68 @@
             zoom = availableWidth / targetGameWidth;
         }
         
-        // Keep container at full window size so game JS works correctly
-        // The zoom will visually shrink it
-        gameContainer.style.width = window.innerWidth + 'px';
-        gameContainer.style.height = window.innerHeight + 'px';
-        gameContainer.style.zoom = zoom;
+        // Expose zoom level globally so game engine can adjust spawn distances
+        // When zoomed to 0.5, the visible area is 2x wider, so spawns need to be further out
+        window.mobileZoomLevel = zoom;
+        
+        // Detect if browser supports CSS zoom (Chrome, Edge)
+        // Safari doesn't support it properly, so we'll use transform instead
+        const supportsZoom = CSS.supports('zoom', '1');
+        
+        if (supportsZoom) {
+            // Chrome/Edge: Use CSS zoom (works perfectly)
+            gameContainer.style.width = availableWidth + 'px';
+            gameContainer.style.height = availableHeight + 'px';
+            gameContainer.style.zoom = zoom;
+            gameContainer.style.transform = '';
+            gameContainer.style.transformOrigin = '';
+            
+            if (viewport) {
+                viewport.style.width = '';
+                viewport.style.height = '';
+                viewport.style.transform = '';
+                viewport.style.transformOrigin = '';
+                viewport.style.marginTop = '';
+            }
+        } else {
+            // Safari: CSS zoom doesn't work. Use transform with proper sizing.
+            // Make container bigger to show more content, then scale down
+            const scaledWidth = availableWidth / zoom;
+            const scaledHeight = availableHeight / zoom;
+            
+            gameContainer.style.width = scaledWidth + 'px';
+            gameContainer.style.height = scaledHeight + 'px';
+            gameContainer.style.zoom = '';
+            
+            // Use both transform and -webkit-transform for Safari
+            const transformValue = `scale(${zoom})`;
+            gameContainer.style.transform = transformValue;
+            gameContainer.style.webkitTransform = transformValue;
+            gameContainer.style.transformOrigin = 'top left';
+            gameContainer.style.webkitTransformOrigin = 'top left';
+            
+            // Ensure overflow is hidden on wrapper
+            wrapper.style.overflow = 'hidden';
+            
+            if (viewport) {
+                viewport.style.width = '';
+                viewport.style.height = '';
+                viewport.style.transform = '';
+                viewport.style.transformOrigin = '';
+                viewport.style.marginTop = '';
+            }
+        }
+        
         gameContainer.style.position = 'relative';
-        
-        // After zoom, the game will be:
-        // - Width: window.innerWidth * zoom (should fit in availableWidth)
-        // - Height: window.innerHeight * zoom (may be less than availableHeight)
-        
-        // To fill the height, we need to adjust. But we can't change container height
-        // without breaking game positioning. Instead, we can use a flex container
-        // that centers or aligns the zoomed game.
         
         // Debug output
         if (typeof game !== 'undefined' && game.debug) {
-            console.log('Zoom:', zoom, 'Window:', window.innerWidth, 'x', window.innerHeight, 'Available:', availableWidth, 'x', availableHeight);
+            console.log('Zoom:', zoom, 'Supports zoom:', supportsZoom, 'Available:', availableWidth, 'x', availableHeight);
         }
-
 		// Now change viewport to account for aspect ratio change
-		const zoomedHeightDiff = (window.innerHeight / zoom) - window.innerHeight;
-		console.log("zoomedHeightDiff = " + zoomedHeightDiff);
-		viewport.style.marginTop = zoomedHeightDiff + 'px';
+        const zoomedHeightDiff = (window.innerHeight / zoom) - window.innerHeight;
+        console.log("zoomedHeightDiff = " + zoomedHeightDiff);
+        viewport.style.marginTop = zoomedHeightDiff + 'px';
     }
 
     /**
@@ -570,4 +633,11 @@
         initMobileControls();
     }
     
+	// attach full screen to start game button
+	const startGame = document.getElementById("startGame") ?? null;
+	if (startGame) {
+		startGame.addEventListener("click", function() {
+			//document.documentElement.requestFullscreen()
+		})
+	}
 })();

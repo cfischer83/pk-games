@@ -1,8 +1,18 @@
+// Helper to get viewport margin offset (used for mobile zoom adjustment)
+function getViewportMarginOffset() {
+    const viewport = document.getElementById('viewport');
+    if (!viewport) return 0;
+    const marginTop = parseInt(viewport.style.marginTop) || 0;
+    return -marginTop;  // Negative because we need to go UP when margin pushes DOWN
+}
+
 // Boss logic
 function spawnBoss() {
+    const viewportOffset = getViewportMarginOffset();
+	const bossTop = (window.innerHeight > 500) ? 200 : 0;
     game.boss = {
         x: game.camera.x + window.innerWidth - 200,
-        y: 100,  // Y is now screen-top-based, same as player
+        y: 100 + viewportOffset,  // Y is now screen-top-based, same as player
         vx: 0,
         vy: 0,
         width: 240,
@@ -19,8 +29,8 @@ function spawnBoss() {
         dead: false,
         facing: 'left',  // Dragon2 sprite naturally faces left
         pattern: 'hover',  // 'hover', 'swooping', 'retreating'
-        swoopTargetY: 100,  // Target Y position for swoop
-        hoverY: 200  // Home hover position
+        swoopTargetY: 100 + viewportOffset,  // Target Y position for swoop
+        hoverY: bossTop + viewportOffset  // Home hover position
     };
     
     const el = document.createElement('div');
@@ -32,8 +42,13 @@ function spawnBoss() {
     el.setAttribute('data-frame', '0');
     el.setAttribute('data-attack', 'none');
     
-    document.getElementById('world').appendChild(el);
+	document.getElementById('world').appendChild(el);
     document.getElementById('boss-health').style.display = 'block';
+	// mobile viewport offset
+	//if (parseInt(Math.abs(document.getElementById('viewport').style.marginTop)) > 0) {
+		document.getElementById('viewport').style.overflowY = 'visible';
+		document.getElementById('viewport').style.overflowX = 'clip';
+	//}
 }
 
 function updateBoss(dt) {
