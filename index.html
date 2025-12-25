@@ -7,6 +7,24 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
 
+<!--- App Install pieces -->
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="PK Games" />
+<meta name="theme-color" content="#000000" />
+<link rel="apple-touch-icon" href="/assets/icon-152x152.png" />
+<link rel="apple-touch-icon" sizes="192x192" href="/assets/icon-192x192.png" />
+<link rel="apple-touch-icon" sizes="384x384" href="/assets/icon-384x384.png" />
+<link rel="apple-touch-icon" sizes="512x512" href="/assets/icon-512x512.png" />
+<script>
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('/sw.js');
+}
+</script>
+<!--- End App Install pieces -->
+
+
 <style type="text/css">
 body {
 	margin:0;
@@ -321,7 +339,7 @@ nav a:hover {
 				<span class="new">New</span>
 				<h2>Godzilla On Planet Kodiak</h2>
 				<img src="godzilla/cover.jpg" alt="Godzilla on Planet Kodiak" />
-				<p>Godzilla on Planet Kodiak is a desktop game that is a throwback to NES Godzilla Monster Of Monsters. AI assisted.</p>
+				<p>Godzilla on Planet Kodiak is a mobile and desktop game that is a throwback to NES Godzilla Monster Of Monsters. AI assisted.</p>
 			</a>
 		</div>
 		<div id="bejeweledtetris" class="game ai">
