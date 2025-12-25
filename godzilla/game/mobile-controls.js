@@ -92,12 +92,19 @@
                 <div class="action-btn action-btn-a" data-button="action">A</div>
             </div>
         `;
+
+		const rightControlsPadd = document.createElement('div');
+        rightControlsPadd.id = 'touch-controls-right-pad';
+		const leftControlsPadd = document.createElement('div');
+        leftControlsPadd.id = 'touch-controls-left-pad';
         
         // Move game container into wrapper
         gameContainer.parentNode.insertBefore(wrapper, gameContainer);
         wrapper.appendChild(leftControls);
+        wrapper.appendChild(leftControlsPadd);
         wrapper.appendChild(gameContainer);
         wrapper.appendChild(rightControls);
+        wrapper.appendChild(rightControlsPadd);
     }
     
     /**
@@ -123,6 +130,27 @@
             area.addEventListener('touchend', e => e.preventDefault(), { passive: false });
             area.addEventListener('contextmenu', e => e.preventDefault());
         });
+        
+        // Prevent unwanted selection/interaction in game container (except for buttons)
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.addEventListener('touchstart', (e) => {
+                // Allow buttons to work normally
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                    return; // Let the button handle it
+                }
+                // Prevent default for all other touches
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameContainer.addEventListener('touchmove', (e) => {
+                // Allow buttons to work normally
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                    return;
+                }
+                e.preventDefault();
+            }, { passive: false });
+        }
     }
     
     /**

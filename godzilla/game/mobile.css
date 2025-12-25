@@ -47,6 +47,22 @@
     display: none;
 }
 
+/* Padding to account for overflow area in iOS */
+#touch-controls-left-pad, #touch-controls-right-pad {
+	position: absolute;
+	background-color: #000;
+	top: 0;
+	width: 100px;
+	height: 100%;
+	z-index: 499;
+}
+#touch-controls-left-pad {
+	left: 0;
+}
+#touch-controls-right-pad {
+	right: 0;
+}
+
 /* ==================== TOUCH DEVICE STYLES ==================== */
 /* These styles only apply on touch-enabled devices */
 
@@ -69,6 +85,23 @@
     /* Zoom is applied by JS to fit available space */
     flex: 1;
     min-width: 0;
+    /* Prevent text selection and context menus on touch */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent unwanted touch interactions while allowing buttons */
+    touch-action: manipulation;
+}
+
+/* Explicitly allow buttons to be interactive */
+.touch-device #game-container button,
+.touch-device #game-container .button,
+.touch-device #game-container #menu button {
+    -webkit-touch-callout: default;
+    -webkit-user-select: auto;
+    user-select: auto;
+    touch-action: auto;
+    pointer-events: auto;
 }
 
 /* Remove scale wrapper if it exists from previous approach */
@@ -76,7 +109,19 @@
     display: contents;
 }
 
-.touch-device #touch-controls-left,
+.touch-device #touch-controls-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    z-index: 500;
+    flex-shrink: 0;
+    /* Wider to contain d-pad without overlap */
+    width: 180px;
+    min-width: 160px;
+}
+
 .touch-device #touch-controls-right {
     display: flex;
     flex-direction: column;
@@ -85,18 +130,18 @@
     background: #000;
     z-index: 500;
     flex-shrink: 0;
-    /* Base width - increased to prevent d-pad overlap */
-    width: 160px;
-    min-width: 140px;
+    /* Narrower since buttons are vertical */
+    width: 100px;
+    min-width: 90px;
 }
 
 /* Extra padding for safe areas */
 .touch-device #touch-controls-left {
-    padding-left: max(10px, env(safe-area-inset-left, 10px));
+    /* padding-left: max(10px, env(safe-area-inset-left, 10px)); */
 }
 
 .touch-device #touch-controls-right {
-    padding-right: max(10px, env(safe-area-inset-right, 10px));
+    /* padding-right: max(10px, env(safe-area-inset-right, 10px)); */
 }
 
 /* ==================== D-PAD STYLES ==================== */
@@ -318,11 +363,16 @@
 
 /* Small phones (iPhone SE size ~667px landscape width) - control sizing */
 @media (max-height: 400px) and (orientation: landscape) {
-    .touch-device #touch-controls-left,
+    .touch-device #touch-controls-left {
+        width: 160px;
+        min-width: 140px;
+        height: 110%;
+    }
+    
     .touch-device #touch-controls-right {
-        width: 130px;
-        min-width: 120px;
-		height: 110%;
+        width: 90px;
+        min-width: 80px;
+        height: 110%;
     }
     
     .dpad-container {
@@ -353,17 +403,23 @@
 
 /* Medium phones */
 @media (min-height: 401px) and (max-height: 500px) and (orientation: landscape) {
-    .touch-device #touch-controls-left,
+    .touch-device #touch-controls-left {
+        width: 170px;
+    }
+    
     .touch-device #touch-controls-right {
-        width: 150px;
+        width: 95px;
     }
 }
 
 /* Larger phones and small tablets */
 @media (min-height: 501px) and (orientation: landscape) {
-    .touch-device #touch-controls-left,
+    .touch-device #touch-controls-left {
+        width: 180px;
+    }
+    
     .touch-device #touch-controls-right {
-        width: 130px;
+        width: 100px;
     }
     
     .dpad-container {
@@ -390,9 +446,12 @@
 
 /* Large tablets (iPad Pro etc) - may not need controls shown as prominently */
 @media (min-width: 1024px) and (orientation: landscape) {
-    .touch-device #touch-controls-left,
+    .touch-device #touch-controls-left {
+        width: 190px;
+    }
+    
     .touch-device #touch-controls-right {
-        width: 150px;
+        width: 110px;
     }
     
     .dpad-container {

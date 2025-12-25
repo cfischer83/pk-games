@@ -250,7 +250,7 @@ function spawnXiliensFlyover() {
     const container = document.createElement('div');
     container.id = 'xiliens-flyover';
     container.style.position = 'absolute';
-    container.style.zIndex = '25'; // Above player (10), enemies (8), obstacles
+    container.style.zIndex = '9'; // Above player (10), enemies (8), obstacles
     container.style.width = containerWidth + 'px';
     container.style.height = containerHeight + 'px';
     container.style.pointerEvents = 'none';
@@ -366,7 +366,7 @@ function spawnRodanAlly() {
     const rodanEl = document.createElement('div');
     rodanEl.id = 'rodan-ally';
     rodanEl.style.position = 'fixed';
-    rodanEl.style.zIndex = '500';
+    rodanEl.style.zIndex = '16';
     rodanEl.style.left = startX + 'px';
     rodanEl.style.top = startY + 'px';
     rodanEl.style.pointerEvents = 'none';
@@ -376,10 +376,10 @@ function spawnRodanAlly() {
 
 	const worldZoom = document.getElementById('game-container').style.zoom;
 	if (worldZoom) {
-		rodanEl.style.zoom = worldZoom;
+		//rodanEl.style.zoom = worldZoom;
 	}
 
-    document.body.appendChild(rodanEl);
+    document.getElementById("game-container").appendChild(rodanEl);
     
     rodanAlly = {
         element: rodanEl,
@@ -424,17 +424,20 @@ function updateRodanAlly(dt) {
     
     // Get boss reference (use game.boss, not window.boss)
     const boss = game.boss;
+    // Get boss DOM element by ID (boss object doesn't store element reference)
+    const bossEl = document.getElementById('dragon2');
     
     // State machine
     if (rodan.state === 'glide') {
         // Move horizontally toward boss area
         if (rodan.fromLeft) {
             rodan.x += rodan.speed * dt;
-            // Start dive when roughly above the boss (boss x position adjusted for camera)
-            if (boss) {
-                const bossScreenX = boss.x - game.camera.x;
-                if (rodan.x >= bossScreenX - 50) {
-                    startRodanDive(rodan, boss);
+            // Start dive when roughly above the boss (use getBoundingClientRect for accurate positioning)
+            if (boss && bossEl) {
+                const bossRect = bossEl.getBoundingClientRect();
+                const rodanRect = rodan.element.getBoundingClientRect();
+                if (rodanRect.left >= bossRect.left - 50) {
+                    startRodanDive(rodan, boss, bossEl);
                 }
             } else if (rodan.x >= viewportWidth * 0.6) {
                 // No boss, retreat
@@ -443,11 +446,12 @@ function updateRodanAlly(dt) {
             }
         } else {
             rodan.x -= rodan.speed * dt;
-            // Start dive when roughly above the boss
-            if (boss) {
-                const bossScreenX = boss.x - game.camera.x;
-                if (rodan.x <= bossScreenX + boss.width + 50) {
-                    startRodanDive(rodan, boss);
+            // Start dive when roughly above the boss (use getBoundingClientRect for accurate positioning)
+            if (boss && bossEl) {
+                const bossRect = bossEl.getBoundingClientRect();
+                const rodanRect = rodan.element.getBoundingClientRect();
+                if (rodanRect.right <= bossRect.right + 50) {
+                    startRodanDive(rodan, boss, bossEl);
                 }
             } else if (rodan.x <= viewportWidth * 0.4) {
                 // No boss, retreat
@@ -457,17 +461,22 @@ function updateRodanAlly(dt) {
         }
     } else if (rodan.state === 'dive') {
         // Track boss dynamically if not yet dealt damage
-        if (!rodan.hasDealtDamage && boss) {
-            // Boss position in screen space - target the CENTER
-            const bossScreenX = boss.x - game.camera.x;
-            const targetX = bossScreenX + boss.width / 2;
-            const targetY = boss.y + boss.height / 2; // Aim for center (same as collision check)
+        if (!rodan.hasDealtDamage && boss && bossEl) {
+            // Use getBoundingClientRect for accurate positioning across coordinate systems
+            const bossRect = bossEl.getBoundingClientRect();
+            const rodanRect = rodan.element.getBoundingClientRect();
             
-            const dx = targetX - (rodan.x + rodan.width / 2);
-            const dy = targetY - (rodan.y + rodan.height / 2);
+            // Target boss CENTER in viewport coordinates
+            const targetX = bossRect.left + bossRect.width / 2;
+            const targetY = bossRect.top + bossRect.height / 2;
+            const rodanCenterX = rodanRect.left + rodanRect.width / 2;
+            const rodanCenterY = rodanRect.top + rodanRect.height / 2;
+            
+            const dx = targetX - rodanCenterX;
+            const dy = targetY - rodanCenterY;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
-            // Always update velocity while tracking (removed dist > 10 check)
+            // Always update velocity while tracking
             const diveSpeed = 400;
             rodan.diveVx = (dx / dist) * diveSpeed;
             rodan.diveVy = (dy / dist) * diveSpeed;
@@ -475,8 +484,8 @@ function updateRodanAlly(dt) {
             // Update facing based on direction
             rodan.facing = rodan.diveVx >= 0 ? 'right' : 'left';
             
-            // Check collision - within 15px of center
-            if (dist <= 15) {
+            // Check collision - within 30px of center (increased for better hit detection)
+            if (dist <= 30) {
                 // Deal damage to boss
                 boss.hp -= 5;
                 rodan.hasDealtDamage = true;
@@ -530,17 +539,27 @@ function updateRodanAlly(dt) {
     }
 }
 
-function startRodanDive(rodan, boss) {
+function startRodanDive(rodan, boss, bossEl) {
     rodan.state = 'dive';
     rodan.frame = 0;
     
-    // Calculate initial dive vector toward boss CENTER (in screen space)
-    const bossScreenX = boss.x - game.camera.x;
-    const targetX = bossScreenX + boss.width / 2;
-    const targetY = boss.y + boss.height / 2; // Target center, same as collision
+    // Use getBoundingClientRect for accurate positioning across coordinate systems
+    if (!bossEl) {
+        bossEl = document.getElementById('dragon2');
+        if (!bossEl) return;
+    }
     
-    const dx = targetX - (rodan.x + rodan.width / 2);
-    const dy = targetY - (rodan.y + rodan.height / 2);
+    const bossRect = bossEl.getBoundingClientRect();
+    const rodanRect = rodan.element.getBoundingClientRect();
+    
+    // Calculate initial dive vector toward boss CENTER in viewport coordinates
+    const targetX = bossRect.left + bossRect.width / 2;
+    const targetY = bossRect.top + bossRect.height / 2;
+    const rodanCenterX = rodanRect.left + rodanRect.width / 2;
+    const rodanCenterY = rodanRect.top + rodanRect.height / 2;
+    
+    const dx = targetX - rodanCenterX;
+    const dy = targetY - rodanCenterY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
     const diveSpeed = 400;
@@ -724,9 +743,14 @@ function updateP1Rocket(dt) {
     rocket.element.style.left = (rocket.x - game.camera.x) + 'px';
     rocket.element.style.bottom = (groundHeight + groundY - rocket.y - rocket.height) + 'px';
     
-    // Check if off-screen above viewport (delay 5 seconds to account for mobile zoom)
-    if (rocket.y + rocket.height < 0) {
-        setTimeout(rocket.element.remove(), 5000);
+    // Check if off-screen above viewport with large buffer for mobile zoom
+    // On mobile, viewport margin-top can shift coordinates, so use generous buffer
+    const viewportOffset = parseInt(document.getElementById('viewport')?.style.marginTop) || 0;
+    const offscreenBuffer = 500 + Math.abs(viewportOffset); // 500px buffer + viewport offset
+    
+    if (rocket.y + rocket.height < -offscreenBuffer) {
+        rocket.element.remove();
+        p1Rocket = null;
     }
 }
 

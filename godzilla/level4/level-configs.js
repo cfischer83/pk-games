@@ -4,7 +4,7 @@ const LEVEL_CONFIG = {
     // *** TESTING MODE *** 
     // Set to true to spawn boss immediately without enemies/obstacles
     // Set to false to use normal spawn schedule
-    TESTING_BOSS: true,
+    TESTING_BOSS: false,
     
     // Cinematic flyover - xiliens carrying rodan in bubble
     xiliensFlyover: {
