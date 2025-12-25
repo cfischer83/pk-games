@@ -240,6 +240,12 @@ body {
 	font-weight: 100;
 	font-family:'Courier New', Courier, monospace;
 }
+.controls span {
+	font-size: 14px;
+	line-height: 18px;
+	font-weight: 100;
+	font-family:'Courier New', Courier, monospace;
+}
 .controls .uni {
 	font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
 }

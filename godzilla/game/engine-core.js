@@ -100,34 +100,69 @@ const physics = calculatePhysics();
 // Input handling
 document.addEventListener('keydown', (e) => {
     switch(e.key.toLowerCase()) {
-        case 'arrowleft': game.keys.left = true; e.preventDefault(); break;
-        case 'arrowright': game.keys.right = true; e.preventDefault(); break;
-        case 'arrowup': game.keys.up = true; e.preventDefault(); break;
-        case 'arrowdown': game.keys.down = true; e.preventDefault(); break;
-        case 'c': game.keys.down = true; e.preventDefault(); break; // 'c' also ducks
-        case 'z': game.keys.z = true; e.preventDefault(); break;
-        case 'x': game.keys.x = true; e.preventDefault(); break;
+        // Movement - Arrow keys + WASD
+        case 'arrowleft': 
+        case 'a': 
+            game.keys.left = true; e.preventDefault(); break;
+        case 'arrowright': 
+        case 'd': 
+            game.keys.right = true; e.preventDefault(); break;
+        case 'arrowup': 
+        case 'w': 
+            game.keys.up = true; e.preventDefault(); break;
+        case 'arrowdown': 
+        case 's':
+        case 'c': 
+            game.keys.down = true; e.preventDefault(); break;
+        // Punch - Z or J
+        case 'z': 
+        case 'j': 
+            game.keys.z = true; e.preventDefault(); break;
+        // Kick - X or K
+        case 'x': 
+        case 'k': 
+            game.keys.x = true; e.preventDefault(); break;
+        // Fire/Tail Spin - Space or L
         case ' ': 
+        case 'l':
             if (!game.keys.space) {  // Only set spacePressed on initial press
                 game.keys.spacePressed = true;
             }
             game.keys.space = true; 
             e.preventDefault(); 
             break;
-        case 'd': game.debug = !game.debug; toggleDebug(); break;
+        // Debug toggle (use backtick instead of 'd' since 'd' is now movement)
+        case '`': game.debug = !game.debug; toggleDebug(); break;
     }
 });
 
 document.addEventListener('keyup', (e) => {
     switch(e.key.toLowerCase()) {
-        case 'arrowleft': game.keys.left = false; break;
-        case 'arrowright': game.keys.right = false; break;
-        case 'arrowup': game.keys.up = false; break;
-        case 'arrowdown': game.keys.down = false; break;
-        case 'c': game.keys.down = false; break; // Release duck when 'c' is released
-        case 'z': game.keys.z = false; break;
-        case 'x': game.keys.x = false; break;
+        // Movement - Arrow keys + WASD
+        case 'arrowleft': 
+        case 'a': 
+            game.keys.left = false; break;
+        case 'arrowright': 
+        case 'd': 
+            game.keys.right = false; break;
+        case 'arrowup': 
+        case 'w': 
+            game.keys.up = false; break;
+        case 'arrowdown': 
+        case 's':
+        case 'c': 
+            game.keys.down = false; break;
+        // Punch - Z or J
+        case 'z': 
+        case 'j': 
+            game.keys.z = false; break;
+        // Kick - X or K
+        case 'x': 
+        case 'k': 
+            game.keys.x = false; break;
+        // Fire/Tail Spin - Space or L
         case ' ': 
+        case 'l':
             game.keys.space = false; 
             game.keys.spacePressed = false;
             break;

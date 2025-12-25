@@ -497,6 +497,24 @@
 
 /* ==================== MENU ADJUSTMENTS FOR MOBILE ==================== */
 
+/* Hide desktop-only text on touch devices, show touch-only text */
+.touch-device .desktop-only {
+    display: none;
+}
+
+.touch-device .touch-only {
+    display: inline;
+}
+
+/* Hide touch-only text on desktop */
+.desktop-only {
+    display: inline;
+}
+
+.touch-only {
+    display: none;
+}
+
 .touch-device #menu {
     max-width: 90%;
     padding: 20px;
