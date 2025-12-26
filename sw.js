@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pk-games-v7';
+const CACHE_NAME = 'pk-games-v8';
 const urlsToCache = [
 	'/index.html',
 	'/logo2.png',
@@ -58,12 +58,14 @@ self.addEventListener('fetch', (event) => {
 	event.respondWith(
 		caches.match(request).then((cachedResponse) => {
 			const fetchPromise = fetch(request).then((networkResponse) => {
+				// Clone before using
+				const responseToCache = networkResponse.clone();
 				// Update cache with fresh content
 				caches.open(CACHE_NAME).then((cache) => {
-					cache.put(request, networkResponse.clone());
+					cache.put(request, responseToCache);
 				});
 				return networkResponse;
-			});
+			}).catch(() => cachedResponse);
 			
 			// Return cached version immediately, but update in background
 			return cachedResponse || fetchPromise;
