@@ -18,6 +18,9 @@
 body {
     font-family: monospace;
     background: #000;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 }
 #game-container {
 	width: 496px;
@@ -96,6 +99,13 @@ button:hover {
 	background-color: #000;
 	border: 2px solid #0F0;
 }
+.spacer {
+	flex: 1;
+}
+.home-link {
+	padding: 20px;
+	align-self: flex-start;
+}
 </style>
 </head>
 <body>
@@ -148,5 +158,7 @@ button:hover {
 	gtag('js', new Date());
 	gtag('config', 'G-N8SN5SJEFW');
 </script>
+<div class="spacer"></div>
+<a href="../" class="home-link"><img src="../assets/icon-152x152.png" alt="Games Home" style="border-radius: 16px; width: 70px;" /></a>
 </body>
 </html>

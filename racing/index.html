@@ -70,9 +70,11 @@ body, p, li, label {
 }
 #start-btn {
 	display: block;
+	margin-top: 15px;
 }
 #restart-btn {
 	display: none;
+	margin-top: 15px;
 }
 #finish-line {
 	width: 600px;
@@ -512,13 +514,14 @@ function restartGame() {
 
 <div id="commands">
 	<form name="controls" onsubmit="return false;">
-		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
-		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
 		<p>Use the left & right arrow key<br /> to avoid the rocks!</p>
 		<label><input type="radio" id="easy" value="easy" name="mode" onclick="easyMode(); window.location.hash = 'easy'; this.blur();" checked="checked"> Easy Mode</label><br />
 		<label><input type="radio" id="hard" value="hard" name="mode" onclick="hardMode(); window.location.hash = 'hard';this.blur();"> Hard Mode</label><br />
 		<label><input type="radio" id="impossible" value="impossible" name="mode" onclick="impossibleMode(); window.location.hash = 'impossible';this.blur();"> Impossible Mode</label>
+		<button onclick="startGame(); this.blur();" id="start-btn" class="btn">Start</button>
+		<button onclick="restartGame();" id="restart-btn" class="btn">Restart</button>
 	</form>
+	<a href="../" class="home-link"><img src="../assets/icon-152x152.png" alt="Games Home" style="border-radius: 16px; width: 70px; box-shadow: #0005 1px 1px 15px;" /></a>
 </div>
 
 <div id="touch-controls" class="">

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pk-games-v1';
+const CACHE_NAME = 'pk-games-v7';
 const urlsToCache = [
 	'/index.html',
 	'/logo2.png',
@@ -37,13 +37,36 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+	const { request } = event;
+	const url = new URL(request.url);
+	
+	// Skip non-GET requests
+	if (request.method !== 'GET') {
+		return;
+	}
+	
+	// Network-only for HTML files (never use cache, always fresh)
+	if (request.destination === 'document' || url.pathname.endsWith('.html')) {
+		event.respondWith(
+			fetch(request, { cache: 'no-store' })
+				.catch(() => caches.match(request))
+		);
+		return;
+	}
+	
+	// Stale-while-revalidate for other resources
 	event.respondWith(
-		caches.match(event.request)
-			.then((response) => {
-				if (response) {
-					return response;
-				}
-				return fetch(event.request);
-			})
+		caches.match(request).then((cachedResponse) => {
+			const fetchPromise = fetch(request).then((networkResponse) => {
+				// Update cache with fresh content
+				caches.open(CACHE_NAME).then((cache) => {
+					cache.put(request, networkResponse.clone());
+				});
+				return networkResponse;
+			});
+			
+			// Return cached version immediately, but update in background
+			return cachedResponse || fetchPromise;
+		})
 	);
 });

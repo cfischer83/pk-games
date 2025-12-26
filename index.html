@@ -19,7 +19,12 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/icon-512x512.png" />
 <script>
 if ('serviceWorker' in navigator) {
-	navigator.serviceWorker.register('/sw.js');
+	navigator.serviceWorker.register('/sw.js').then((registration) => {
+		// Check for updates periodically
+		setInterval(() => {
+			registration.update();
+		}, 60000); // Check every minute
+	});
 }
 </script>
 <!--- End App Install pieces -->
@@ -386,6 +391,21 @@ nav a:hover {
 		</div>
 	</div>
 <footer>
+<script>
+	async function clearCacheAndUpdate() {
+	// Unregister all service workers
+	const registrations = await navigator.serviceWorker.getRegistrations();
+	await Promise.all(registrations.map(reg => reg.unregister()));
+
+	// Clear all caches
+	const cacheNames = await caches.keys();
+	await Promise.all(cacheNames.map(name => caches.delete(name)));
+
+	// Hard reload (bypass cache)
+	window.location.reload(true);
+}
+</script>
+	<p><a href="#" onclick="clearCacheAndUpdate();">Clear cache</a></p>
 	<p>&copy; Cory Fischer. All games created by Cory Fischer for fun. Not AI-generated unless specified.<br />
 		Checkout games by <a href="https://alex.planetkodiak.com">Alex Fischer</a><br /><br /></p>
 </footer>
