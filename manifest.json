@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Planet Kodiak Games",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "short_name": "PK Games",
   "description": "Games built by Cory Fischer",
   "start_url": "/",

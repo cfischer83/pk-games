@@ -508,6 +508,7 @@
      */
     function updateViewportScale() {
         const gameContainer = document.getElementById('game-container');
+        const menu = document.getElementById('menu');
         const wrapper = document.getElementById('mobile-game-wrapper');
         const viewport = document.getElementById('viewport');
         const leftControls = document.getElementById('touch-controls-left');
@@ -546,6 +547,8 @@
             gameContainer.style.zoom = zoom;
             gameContainer.style.transform = '';
             gameContainer.style.transformOrigin = '';
+
+			menu.style.zoom = zoom;
             
             if (viewport) {
                 viewport.style.width = '';
@@ -563,7 +566,9 @@
             gameContainer.style.width = scaledWidth + 'px';
             gameContainer.style.height = scaledHeight + 'px';
             gameContainer.style.zoom = '';
-            
+
+			menu.style.zoom = '';
+
             // Use both transform and -webkit-transform for Safari
             const transformValue = `scale(${zoom})`;
             gameContainer.style.transform = transformValue;

@@ -173,7 +173,9 @@ document.addEventListener('keyup', (e) => {
 function updateCamera() {
     const p = game.player;
     // Keep camera centered using actual window width - CSS zoom handles the visual scaling
-    const targetX = Math.max(0, p.x - window.innerWidth/2 + GAME_CONFIG.camera.lookAheadPx);
+	const viewport = document.getElementById("viewport");
+	const width = (viewport.clientWidth) ? viewport.clientWidth : window.innerWidth;
+    const targetX = Math.max(0, p.x - width/2 + GAME_CONFIG.camera.lookAheadPx);
     
     game.camera.x = targetX;
 }

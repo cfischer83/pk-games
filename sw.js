@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pk-games-v8';
+const CACHE_NAME = 'pk-games-v9';
 const urlsToCache = [
 	'/index.html',
 	'/logo2.png',
