@@ -45,6 +45,7 @@
 #touch-controls-left,
 #touch-controls-right {
     display: none;
+	height: 110%;
 }
 
 /* Padding to account for overflow area in iOS */
