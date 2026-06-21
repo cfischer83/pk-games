@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0b2e" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="JETS" />
+<title>JETS — Planet Kodiak Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./style.css" />
+<link rel="stylesheet" href="./mobile.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body class="state-menu">
+
+  <!-- ===== 3D render canvas mounts here ===== -->
+  <div id="scene-root"></div>
+
+  <!-- ===== HUD overlay (in-game) ===== -->
+  <div id="hud" aria-hidden="true">
+    <div class="hud-row hud-top">
+      <div class="hud-block">
+        <span class="hud-label">LIVES</span>
+        <div id="hud-lives" class="icon-row"></div>
+      </div>
+      <div class="hud-block hud-center">
+        <span class="hud-label">TIME</span>
+        <div id="hud-time" class="hud-big">0:00</div>
+        <div id="hud-progress"><div id="hud-progress-fill"></div></div>
+      </div>
+      <div class="hud-block hud-right">
+        <span class="hud-label">BOMBS</span>
+        <div id="hud-bombs" class="icon-row"></div>
+        <span class="hud-label" style="margin-top:8px">SCORE</span>
+        <div id="hud-score" class="hud-mid">0</div>
+      </div>
+    </div>
+    <div id="hud-message"></div>
+    <div id="pad-hint" class="hud-pad-hint">🎮 CONTROLLER READY</div>
+  </div>
+
+  <!-- ===== Main menu / title screen ===== -->
+  <div id="menu" class="overlay">
+    <div class="panel">
+      <h1 class="title">JE<span class="t-accent">T</span>S</h1>
+      <p class="subtitle">PLANET&nbsp;KODIAK&nbsp;//&nbsp;SECTOR&nbsp;1</p>
+
+      <button id="btn-start" class="btn btn-primary">START&nbsp;MISSION</button>
+
+      <div class="options">
+        <button id="btn-music" class="btn btn-toggle" data-on="true">MUSIC: ON</button>
+        <button id="btn-sfx" class="btn btn-toggle" data-on="true">SFX: ON</button>
+        <button id="btn-help" class="btn btn-ghost">HOW TO PLAY</button>
+      </div>
+
+      <p class="best-line">BEST SURVIVAL: <span id="best-time">--</span></p>
+      <p class="hint">Audio starts after you press START.</p>
+    </div>
+  </div>
+
+  <!-- ===== How-to-play overlay ===== -->
+  <div id="help" class="overlay hidden">
+    <div class="panel panel-wide">
+      <h2 class="panel-title">HOW TO PLAY</h2>
+      <p class="brief">Survive 90 seconds over the city. You auto-fly forward. Dodge buildings &amp; hills, dodge enemy fire, and blast the red jets. You can take 3 hits.</p>
+      <div class="controls-grid">
+        <div class="ctrl-col">
+          <h3>KEYBOARD</h3>
+          <ul>
+            <li><b>↑ ↓ ← →</b> / <b>WASD</b> — fly &amp; change altitude</li>
+            <li><b>SPACE</b> — fire (hold for auto)</li>
+            <li><b>ENTER</b> — drop smart bomb (×3)</li>
+            <li><b>P</b> — pause</li>
+          </ul>
+        </div>
+        <div class="ctrl-col">
+          <h3>GAMEPAD</h3>
+          <ul>
+            <li><b>Stick / D-Pad</b> — fly</li>
+            <li><b>A / RT</b> — fire</li>
+            <li><b>B / X</b> — smart bomb</li>
+            <li><b>Start</b> — pause</li>
+          </ul>
+        </div>
+        <div class="ctrl-col">
+          <h3>TOUCH</h3>
+          <ul>
+            <li><b>Left pad</b> — fly &amp; altitude</li>
+            <li><b>FIRE</b> — hold to shoot</li>
+            <li><b>BOMB</b> — smart bomb</li>
+            <li><b>❚❚</b> — pause</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tip">Altitude matters: tall buildings can only be cleared by flying high — your shadow on the ground shows how low you are.</p>
+      <button id="btn-help-close" class="btn btn-primary">GOT IT</button>
+    </div>
+  </div>
+
+  <!-- ===== Pause overlay ===== -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2 class="panel-title">PAUSED</h2>
+      <button id="btn-resume" class="btn btn-primary">RESUME</button>
+      <button id="btn-pause-music" class="btn btn-toggle" data-on="true">MUSIC: ON</button>
+      <button id="btn-pause-sfx" class="btn btn-toggle" data-on="true">SFX: ON</button>
+      <button id="btn-quit" class="btn btn-ghost">QUIT TO MENU</button>
+    </div>
+  </div>
+
+  <!-- ===== Game over overlay ===== -->
+  <div id="gameover" class="overlay hidden">
+    <div class="panel">
+      <h2 id="go-title" class="panel-title">MISSION FAILED</h2>
+      <p id="go-stats" class="go-stats"></p>
+      <button id="btn-again" class="btn btn-primary">FLY AGAIN</button>
+      <button id="btn-go-menu" class="btn btn-ghost">MAIN MENU</button>
+    </div>
+  </div>
+
+  <!-- ===== Loading screen ===== -->
+  <div id="loading" class="overlay">
+    <div class="panel">
+      <h2 class="panel-title loading-pulse">LOADING…</h2>
+    </div>
+  </div>
+
+  <!-- ===== Mobile / touch controls ===== -->
+  <div id="touch-ui" aria-hidden="true">
+    <button id="touch-pause" class="touch-pause-btn">❚❚</button>
+    <div id="touch-left" class="touch-zone">
+      <div id="joystick" class="joystick">
+        <div id="joystick-knob" class="joystick-knob"></div>
+      </div>
+      <span class="touch-cap">FLY</span>
+    </div>
+    <div id="touch-right" class="touch-zone">
+      <button id="touch-bomb" class="action-btn bomb-btn">BOMB<span id="touch-bomb-count">3</span></button>
+      <button id="touch-fire" class="action-btn fire-btn">FIRE</button>
+    </div>
+  </div>
+
+  <!-- ===== Rotate-device prompt (portrait on phones) ===== -->
+  <div id="rotate-overlay">
+    <div class="rotate-inner">
+      <div class="rotate-phone">📱</div>
+      <p>ROTATE YOUR DEVICE</p>
+      <p class="rotate-sub">JETS plays best in landscape</p>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+/* ============================================================
+   JETS — mobile / touch controls
+   On-screen joystick (left) + FIRE / BOMB (right) + pause.
+   Only shown on touch devices. Wired to InputManager in main.js.
+   ============================================================ */
+
+#touch-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;   /* zones re-enable pointer events individually */
+  display: none;
+}
+
+/* Show only on touch devices while playing/paused */
+body.touch-device.state-playing #touch-ui,
+body.touch-device.state-paused  #touch-ui { display: block; }
+
+.touch-zone {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  padding: 0 22px calc(22px + env(safe-area-inset-bottom));
+}
+#touch-left  { left: 0;  padding-left: calc(18px + env(safe-area-inset-left)); }
+#touch-right { right: 0; padding-right: calc(18px + env(safe-area-inset-right)); gap: 16px; }
+
+.touch-cap {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #6fe9ff;
+  margin-top: 10px;
+  opacity: .7;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---------- Joystick ---------- */
+.joystick {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47,127,224,0.18), rgba(8,8,30,0.55));
+  border: 3px solid rgba(73,182,255,0.6);
+  box-shadow: 0 0 18px rgba(47,127,224,0.4), inset 0 0 22px rgba(0,0,0,0.6);
+  touch-action: none;
+}
+.joystick-knob {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 58px; height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6fe9ff, #2f7fe0 70%, #143a7a);
+  border: 3px solid #cdefff;
+  box-shadow: 0 0 14px rgba(111,233,255,0.7);
+  transition: transform .03s linear;
+  will-change: transform;
+}
+.joystick.active .joystick-knob { box-shadow: 0 0 22px rgba(111,233,255,1); }
+
+/* ---------- Action buttons ---------- */
+.action-btn {
+  font-family: 'Press Start 2P', monospace;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  font-size: 14px;
+  color: #fff;
+  border: 3px solid;
+  position: relative;
+  cursor: pointer;
+  pointer-events: auto;
+  text-shadow: 1px 1px 0 #000;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+.action-btn:active, .action-btn.pressed { transform: scale(0.9); }
+
+.fire-btn {
+  background: radial-gradient(circle at 35% 30%, #ff8a3d, #d11f1f 75%);
+  border-color: #ffd23f;
+  box-shadow: 0 0 18px rgba(255,59,59,0.6);
+  width: 116px; height: 116px;
+  font-size: 16px;
+}
+.fire-btn.pressed { box-shadow: 0 0 28px rgba(255,138,61,1); }
+
+.bomb-btn {
+  background: radial-gradient(circle at 35% 30%, #ffe88a, #d99a00 75%);
+  border-color: #fff;
+  color: #1a1400;
+  box-shadow: 0 0 16px rgba(255,210,63,0.6);
+  flex-direction: column;
+  gap: 2px;
+}
+.bomb-btn span { font-size: 11px; color: #1a1400; }
+.bomb-btn.depleted { opacity: 0.35; filter: grayscale(1); }
+
+.touch-pause-btn {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+  pointer-events: auto;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: #fff;
+  width: 48px; height: 44px;
+  background: rgba(8,8,30,0.6);
+  border: 2px solid rgba(73,182,255,0.7);
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-pause-btn:active { transform: scale(0.92); }
+
+/* ---------- Rotate-device prompt ---------- */
+#rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #05051a;
+  text-align: center;
+}
+body.touch-device.portrait.state-playing #rotate-overlay,
+body.touch-device.portrait.state-paused  #rotate-overlay { display: flex; }
+.rotate-phone {
+  font-size: 64px;
+  animation: rotateHint 1.8s ease-in-out infinite;
+}
+@keyframes rotateHint {
+  0%, 40% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+.rotate-inner p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px; color: #ffd23f; margin-top: 24px; letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #000;
+}
+.rotate-sub { font-size: 9px !important; color: #6fe9ff !important; margin-top: 12px !important; }
+
+/* Hide the joystick caption when space is tight (short landscape) */
+@media (max-height: 420px) {
+  .joystick { width: 112px; height: 112px; }
+  .joystick-knob { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  .fire-btn { width: 100px; height: 100px; }
+  .action-btn { width: 84px; height: 84px; }
+  .touch-cap { display: none; }
+}
