@@ -11,10 +11,11 @@ import { AudioEngine } from './audio.js';
 import { InputManager } from './input.js';
 import { Hud } from './hud.js';
 import { Game } from './game.js';
-import { STORE } from './config.js';
+import { Gallery, EDITABLE_COLORS } from './gallery.js';
+import { STORE, PALETTE } from './config.js';
 import { LEVELS } from './levels.js';
 
-const App = { MENU: 'menu', PLAYING: 'playing', PAUSED: 'paused', GAMEOVER: 'gameover' };
+const App = { MENU: 'menu', PLAYING: 'playing', PAUSED: 'paused', GAMEOVER: 'gameover', GALLERY: 'gallery' };
 
 // ---------------------------------------------------------------------------
 // Boot
@@ -26,6 +27,7 @@ const hud = new Hud();
 const sceneRoot = document.getElementById('scene-root');
 let appState = App.MENU;
 let helpOpen = false;
+let debugOpen = false;
 let currentLevel = 0;
 let rafId = 0;
 let padHintShown = false;
@@ -40,6 +42,10 @@ const game = new Game({
   hud,
   onGameOver: handleGameOver,
 });
+
+// Debug asset gallery (lazily built on first open; shares the game's renderer).
+let gallery = null;
+let galleryColorsBuilt = false;
 
 input.start();
 
@@ -84,6 +90,32 @@ el('btn-quit').addEventListener('click', () => { audio.uiSelect(); quitToMenu();
 // gameover buttons
 el('btn-again').addEventListener('click', () => { audio.uiSelect(); startGame(); });
 el('btn-go-menu').addEventListener('click', () => { audio.uiSelect(); quitToMenu(); });
+
+// debug dialog + gallery
+const elDebug = el('debug-dialog');
+const elGalleryUI = el('gallery-ui');
+el('btn-gallery').addEventListener('click', () => { unlockAudio(); enterGallery(); });
+el('btn-debug-close').addEventListener('click', () => { audio.uiSelect(); debugOpen = false; hide(elDebug); });
+el('gx-back').addEventListener('click', () => { audio.uiSelect(); exitGallery(); });
+elGalleryUI.querySelectorAll('.gx-btn').forEach((b) => {
+  b.addEventListener('click', () => {
+    const a = b.dataset.action;
+    if (a === 'firePlayer') gallery.firePlayer();
+    else if (a === 'fireEnemy') gallery.fireEnemy();
+    else gallery.explode(a);          // 'small' | 'big' | 'bomb' | 'muzzle'
+  });
+});
+
+// Ctrl+D on the main menu opens the debug dialog.
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && (e.code === 'KeyD' || e.key === 'd' || e.key === 'D')) {
+    if (appState === App.MENU && !helpOpen) {
+      e.preventDefault();
+      debugOpen = true;
+      show(elDebug);
+    }
+  }
+});
 
 // Now that `el` and the buttons exist, paint initial toggle/best-time state.
 reflectToggles();
@@ -182,6 +214,55 @@ function quitToMenu() {
   updateBestTime();
 }
 
+// ---- Debug asset gallery --------------------------------------------------
+function enterGallery() {
+  debugOpen = false;
+  hide(elDebug); hide(elMenu);
+  input.reset();                 // clear the Ctrl+D keys so the jet doesn't drift
+  appState = App.GALLERY;
+  setBodyState('gallery');
+  if (!gallery) gallery = new Gallery({ renderer: game.renderer, audio });
+  if (!galleryColorsBuilt) { buildGalleryColors(); galleryColorsBuilt = true; }
+  gallery.start();
+  show(elGalleryUI);
+}
+
+function exitGallery() {
+  appState = App.MENU;
+  setBodyState('menu');
+  hide(elGalleryUI);
+  gallery.stop();
+  show(elMenu);
+  game.toAttract();              // resume the attract backdrop behind the menu
+}
+
+function buildGalleryColors() {
+  const root = el('gx-colors');
+  root.innerHTML = '';
+  const toHex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
+  for (const grp of EDITABLE_COLORS) {
+    const h = document.createElement('div');
+    h.className = 'gx-group-title';
+    h.textContent = grp.group;
+    root.appendChild(h);
+    for (const [key, label] of grp.items) {
+      const row = document.createElement('label');
+      row.className = 'gx-color-row';
+      const span = document.createElement('span');
+      span.textContent = label;
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = toHex(PALETTE[key] != null ? PALETTE[key] : 0xffffff);
+      input.addEventListener('input', () => {
+        gallery.setColor(key, parseInt(input.value.slice(1), 16));
+      });
+      row.appendChild(span);
+      row.appendChild(input);
+      root.appendChild(row);
+    }
+  }
+}
+
 function handleGameOver(win, stats) {
   appState = App.GAMEOVER;
   setBodyState('gameover');
@@ -236,9 +317,12 @@ function loop(now) {
 
   updatePadHint(s);
 
+  // Gallery owns the canvas while active; the game does not render.
+  if (appState === App.GALLERY) { gallery.frame(now, s); return; }
+
   switch (appState) {
     case App.MENU:
-      if (!helpOpen && s.startPressed) { unlockAudio(); startGame(); }
+      if (!helpOpen && !debugOpen && s.startPressed) { unlockAudio(); startGame(); }
       break;
     case App.PLAYING:
       if (s.pausePressed) { pauseGame(); break; }
@@ -273,7 +357,8 @@ function updatePadHint(s) {
 // Resize + orientation
 // ---------------------------------------------------------------------------
 function onResize() {
-  game.resize();
+  game.resize();          // also updates the shared renderer's size
+  if (gallery) gallery.resize();
   updateOrientation();
 }
 window.addEventListener('resize', onResize);

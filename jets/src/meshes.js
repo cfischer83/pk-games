@@ -31,8 +31,10 @@ import { PALETTE } from './config.js';
 function mat(color, opts = {}) {
   return new THREE.MeshStandardMaterial({
     color,
-    roughness: opts.roughness ?? 0.55,
-    metalness: opts.metalness ?? 0.25,
+    roughness: opts.roughness ?? 0.6,
+    // Low metalness by default: there is no environment map, so metallic surfaces
+    // would reflect a black void and read as dark/muddy. Matte = colors show true.
+    metalness: opts.metalness ?? 0.05,
     emissive: opts.emissive ?? 0x000000,
     emissiveIntensity: opts.emissiveIntensity ?? 1.0,
     transparent: opts.transparent ?? false,
@@ -46,32 +48,37 @@ function mat(color, opts = {}) {
 // ---- Shared materials (reused across all instances) ------------------------
 // Player jet
 const M = {
-  jetBody:      mat(PALETTE.jetBody,     { roughness: 0.4, metalness: 0.45 }),
-  jetBodyDark:  mat(PALETTE.jetBodyDark, { roughness: 0.5, metalness: 0.5 }),
-  jetAccent:    mat(PALETTE.jetAccent,   { roughness: 0.45, metalness: 0.2,
+  jetBody:      mat(PALETTE.jetBody,     { roughness: 0.5, metalness: 0.05 }),
+  jetBodyDark:  mat(PALETTE.jetBodyDark, { roughness: 0.55, metalness: 0.08 }),
+  jetAccent:    mat(PALETTE.jetAccent,   { roughness: 0.5, metalness: 0.05,
                                            emissive: PALETTE.jetAccent, emissiveIntensity: 0.18 }),
-  jetCockpit:   mat(PALETTE.jetCockpit,  { roughness: 0.15, metalness: 0.6,
+  jetCockpit:   mat(PALETTE.jetCockpit,  { roughness: 0.2, metalness: 0.1,
                                            emissive: PALETTE.jetCockpit, emissiveIntensity: 0.55 }),
-  jetEngine:    mat(PALETTE.jetEngine,   { roughness: 0.3, metalness: 0.1,
+  jetEngine:    mat(PALETTE.jetEngine,   { roughness: 0.3, metalness: 0.05,
                                            emissive: PALETTE.jetEngine, emissiveIntensity: 1.7 }),
-  jetIntake:    mat(PALETTE.jetIntake,   { roughness: 0.7, metalness: 0.3 }),
+  jetIntake:    mat(PALETTE.jetIntake,   { roughness: 0.75, metalness: 0.08 }),
 
   // Enemy jet
-  enemyBody:     mat(PALETTE.enemyBody,     { roughness: 0.45, metalness: 0.4 }),
-  enemyBodyDark: mat(PALETTE.enemyBodyDark, { roughness: 0.55, metalness: 0.45 }),
-  enemyAccent:   mat(PALETTE.enemyAccent,   { roughness: 0.6, metalness: 0.4 }),
-  enemyCockpit:  mat(PALETTE.enemyCockpit,  { roughness: 0.2, metalness: 0.5,
+  enemyBody:     mat(PALETTE.enemyBody,     { roughness: 0.5, metalness: 0.05 }),
+  enemyBodyDark: mat(PALETTE.enemyBodyDark, { roughness: 0.6, metalness: 0.08 }),
+  enemyAccent:   mat(PALETTE.enemyAccent,   { roughness: 0.65, metalness: 0.06 }),
+  enemyCockpit:  mat(PALETTE.enemyCockpit,  { roughness: 0.25, metalness: 0.1,
                                               emissive: PALETTE.enemyCockpit, emissiveIntensity: 0.7 }),
-  enemyEngine:   mat(PALETTE.jetEngine,     { roughness: 0.3, metalness: 0.1,
+  enemyEngine:   mat(PALETTE.jetEngine,     { roughness: 0.3, metalness: 0.05,
                                               emissive: PALETTE.enemyBody, emissiveIntensity: 1.4 }),
 
   // Buildings
-  buildingTop:  mat(PALETTE.buildingTop, { roughness: 0.8, metalness: 0.1 }),
-  roofDetail:   mat(PALETTE.buildingTop, { roughness: 0.7, metalness: 0.3 }),
+  buildingTop:  mat(PALETTE.buildingTop, { roughness: 0.85, metalness: 0.05 }),
+  roofDetail:   mat(PALETTE.buildingTop, { roughness: 0.75, metalness: 0.08 }),
 
   // Hill
   hill:     mat(PALETTE.hill,     { roughness: 0.9, metalness: 0.0 }),
   hillDark: mat(PALETTE.hillDark, { roughness: 0.95, metalness: 0.0 }),
+
+  // Tree
+  treeTrunk: mat(PALETTE.treeTrunk, { roughness: 0.9, metalness: 0.0 }),
+  treeLeaf:  mat(PALETTE.treeLeaf,  { roughness: 0.85, metalness: 0.0 }),
+  treeLeaf2: mat(PALETTE.treeLeaf2, { roughness: 0.85, metalness: 0.0 }),
 
   // Window materials (3 looks, reused for every building's window quads)
   windowLit:  new THREE.MeshStandardMaterial({
@@ -98,8 +105,8 @@ const M = {
   }),
 
   // Bomb
-  bombBody:  mat(PALETTE.bomb,  { roughness: 0.4, metalness: 0.5 }),
-  bombFin:   mat(PALETTE.enemyAccent, { roughness: 0.6, metalness: 0.4 }),
+  bombBody:  mat(PALETTE.bomb,  { roughness: 0.45, metalness: 0.1 }),
+  bombFin:   mat(PALETTE.enemyAccent, { roughness: 0.65, metalness: 0.08 }),
   bombTip:   new THREE.MeshStandardMaterial({
     color: PALETTE.bombFlash, roughness: 0.2, metalness: 0.0,
     emissive: PALETTE.bombFlash, emissiveIntensity: 2.0,
@@ -114,10 +121,10 @@ const M = {
 
 // Building body materials keyed by variant (cached; reused across buildings).
 const BUILDING_BODY = [
-  mat(PALETTE.buildingA, { roughness: 0.7, metalness: 0.25 }),
-  mat(PALETTE.buildingB, { roughness: 0.7, metalness: 0.25 }),
-  mat(PALETTE.buildingC, { roughness: 0.7, metalness: 0.25 }),
-  mat(PALETTE.buildingD, { roughness: 0.7, metalness: 0.25 }),
+  mat(PALETTE.buildingA, { roughness: 0.75, metalness: 0.06 }),
+  mat(PALETTE.buildingB, { roughness: 0.75, metalness: 0.06 }),
+  mat(PALETTE.buildingC, { roughness: 0.75, metalness: 0.06 }),
+  mat(PALETTE.buildingD, { roughness: 0.75, metalness: 0.06 }),
 ];
 
 // Shared instanced-window resources. Every building renders ALL of its windows
@@ -163,6 +170,17 @@ function glowSprite(color, size) {
   s.scale.set(size, size, 1);
   return s;
 }
+
+// Shared engine-exhaust glow materials. Shared (not per-jet) so the gallery's
+// colour editor can recolour every jet's exhaust glow live.
+const ENGINE_GLOW = {
+  player: new THREE.SpriteMaterial({
+    map: glowTexture(), color: PALETTE.jetEngine,
+    blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }),
+  enemy: new THREE.SpriteMaterial({
+    map: glowTexture(), color: PALETTE.enemyEngine,
+    blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }),
+};
 
 // -----------------------------------------------------------------------------
 // Light-saber bolt: an opaque white-hot CORE, an additive colored BLADE sheath
@@ -297,8 +315,9 @@ export function createPlayerJet() {
   burner.position.set(-5.3, 0, 0);
   g.add(burner);
 
-  // Glowing exhaust plume (additive halo).
-  const exhaust = glowSprite(PALETTE.jetEngine, 6.5);
+  // Glowing exhaust plume (shared additive halo material, recolourable).
+  const exhaust = new THREE.Sprite(ENGINE_GLOW.player);
+  exhaust.scale.set(6.5, 6.5, 1);
   exhaust.position.set(-6.4, 0, 0);
   g.add(exhaust);
 
@@ -378,8 +397,9 @@ export function createEnemyJet() {
   burner.position.set(-3.4, 0, 0);
   inner.add(burner);
 
-  // Glowing engine plume (additive halo), tinted toward the enemy body color.
-  const exhaust = glowSprite(0xff7a3d, 4.6);
+  // Glowing engine plume (shared additive halo material, recolourable).
+  const exhaust = new THREE.Sprite(ENGINE_GLOW.enemy);
+  exhaust.scale.set(4.6, 4.6, 1);
   exhaust.position.set(-4.2, 0, 0);
   inner.add(exhaust);
 
@@ -601,6 +621,35 @@ export function createHill(opts = {}) {
 }
 
 // =============================================================================
+// TREE — a simple low-poly tree (tapered trunk + stacked conical foliage).
+// opts = { height }. Base at y=0. userData = { radius, height }.
+// =============================================================================
+export function createTree(opts = {}) {
+  const height = opts.height ?? 12;
+  const g = new THREE.Group();
+
+  const trunkH = height * 0.4;
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(height * 0.06, height * 0.1, trunkH, 7), M.treeTrunk);
+  trunk.position.y = trunkH / 2;
+  g.add(trunk);
+
+  // Two/three stacked cones of foliage.
+  const tiers = 3;
+  for (let i = 0; i < tiers; i++) {
+    const r = height * (0.30 - i * 0.07);
+    const h = height * 0.30;
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8),
+      i % 2 === 0 ? M.treeLeaf : M.treeLeaf2);
+    cone.position.y = trunkH + i * (h * 0.55) + h * 0.2;
+    g.add(cone);
+  }
+
+  g.userData = { radius: height * 0.3, height };
+  return g;
+}
+
+// =============================================================================
 // SHADOW — flat dark disc on the XZ plane. Game places at (x, 0.05, z) and
 // scales by altitude. renderOrder = -1, depthWrite off, semi-transparent.
 // =============================================================================
@@ -676,4 +725,39 @@ export function createBomb() {
 
   g.userData = { hitRadius: 2, tip, tipMaterial: tipMat };
   return g;
+}
+
+// =============================================================================
+// Live recolor (used by the debug gallery). Updates the shared PALETTE entry so
+// newly-built meshes pick it up, AND mutates the cached material(s) for that key
+// so already-built meshes recolor instantly.
+// =============================================================================
+const COLOR_MAT_MAP = {
+  jetBody: [M.jetBody], jetBodyDark: [M.jetBodyDark], jetAccent: [M.jetAccent],
+  jetCockpit: [M.jetCockpit], jetEngine: [M.jetEngine, ENGINE_GLOW.player], jetIntake: [M.jetIntake],
+  enemyBody: [M.enemyBody], enemyBodyDark: [M.enemyBodyDark],
+  enemyAccent: [M.enemyAccent], enemyCockpit: [M.enemyCockpit],
+  enemyEngine: [M.enemyEngine, ENGINE_GLOW.enemy],
+  buildingTop: [M.buildingTop, M.roofDetail],
+  hill: [M.hill], hillDark: [M.hillDark],
+  treeTrunk: [M.treeTrunk], treeLeaf: [M.treeLeaf], treeLeaf2: [M.treeLeaf2],
+  buildingA: [BUILDING_BODY[0]], buildingB: [BUILDING_BODY[1]],
+  buildingC: [BUILDING_BODY[2]], buildingD: [BUILDING_BODY[3]],
+};
+
+/**
+ * Recolor a palette element by key. Returns true if a cached material updated.
+ * @param {string} key  a PALETTE key
+ * @param {number} hex  0xRRGGBB
+ */
+export function setMatColor(key, hex) {
+  if (key in PALETTE) PALETTE[key] = hex;
+  const mats = COLOR_MAT_MAP[key];
+  if (!mats) return false;
+  for (const m of mats) {
+    if (m.color) m.color.setHex(hex);
+    // keep any glow in sync with the surface color
+    if (m.emissive && m.emissive.getHex() !== 0x000000) m.emissive.setHex(hex);
+  }
+  return true;
 }

@@ -159,6 +159,44 @@
     </div>
   </div>
 
+  <!-- ===== Debug dialog (Ctrl+D on the main menu) ===== -->
+  <div id="debug-dialog" class="overlay hidden">
+    <div class="panel">
+      <h2 class="panel-title">DEBUG</h2>
+      <p class="brief">Developer tools. Press <b>Ctrl+D</b> on the menu to open this.</p>
+      <button id="btn-gallery" class="btn btn-primary">🎨 ASSET GALLERY</button>
+      <button id="btn-debug-close" class="btn btn-ghost">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- ===== Asset gallery control panel ===== -->
+  <div id="gallery-ui" class="hidden">
+    <div class="gx-head">
+      <span class="gx-title">ASSET GALLERY</span>
+      <button id="gx-back" class="gx-back">✕ EXIT</button>
+    </div>
+    <p class="gx-hint">Move: WASD / arrows · Fire: SPACE (jet flies in place, doesn't advance)</p>
+
+    <div class="gx-section">
+      <h4>ACTIONS</h4>
+      <div class="gx-btn-row">
+        <button class="gx-btn" data-action="firePlayer">Fire Player</button>
+        <button class="gx-btn" data-action="fireEnemy">Fire Enemy</button>
+        <button class="gx-btn" data-action="muzzle">Muzzle</button>
+      </div>
+      <div class="gx-btn-row">
+        <button class="gx-btn" data-action="small">Explosion ·</button>
+        <button class="gx-btn" data-action="big">Explosion ✦</button>
+        <button class="gx-btn" data-action="bomb">Bomb Blast</button>
+      </div>
+    </div>
+
+    <div class="gx-section">
+      <h4>COLORS</h4>
+      <div id="gx-colors"></div>
+    </div>
+  </div>
+
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

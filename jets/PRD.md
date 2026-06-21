@@ -126,14 +126,28 @@ The engine already accepts a level index (`game.start(levelIndex)`). Per‑level
 
 ---
 
-## 8. Running / installing
+## 8. Debug / Asset Gallery (`src/gallery.js`)
+
+A no‑gameplay art‑review mode. On the **main menu press `Ctrl+D`** to open the debug dialog, then **Asset Gallery**.
+
+- Every asset laid out with labels: the player jet, enemy jets, building variants A–D, hill, **trees**, bomb, road + intersection sample, and static player/enemy bolts.
+- The **player jet is controllable but does not advance** — move it within a box (WASD/arrows, inverted vertical like gameplay) to inspect banking, pitch, and the shadow; hold **Space** to fire.
+- A side panel of **actions**: fire player/enemy bolts, muzzle flash, and play each explosion (small / big / bomb blast).
+- A **live colour editor**: pick colours for jet, enemy, building, terrain, projectile, and environment elements — `meshes.setMatColor()` mutates the shared cached materials so already‑placed meshes recolour instantly (and `PALETTE` updates so future meshes match).
+- Reuses the game's single `WebGLRenderer`/canvas — the gallery has its own scene/camera/effects and renders while the game is paused; exiting returns to the menu attract backdrop.
+
+> Trees (`createTree()`) now also scatter through the streamed city — they fill otherwise‑empty lots **between** the roads (never on a road or building) and act as low obstacles you fly over.
+
+---
+
+## 9. Running / installing
 
 - Local: from the repo root run `python3 -m http.server` and open `/jets/`. (ES modules require http, not `file://`.)
 - The game is a standalone folder; to feature it on the Planet Kodiak homepage, add a card linking to `jets/` in the root `index.html` (left to the site owner — this build only touches the `jets/` directory).
 
 ---
 
-## 9. Quality notes / verification
+## 10. Quality notes / verification
 
 - Built with a parallel module workflow (audio/meshes/input) against fixed interface contracts, then an integrator, then an adversarial multi‑pass code review.
 - Verified: module import graph resolves, no syntax imbalances, all DOM ids present, camera projection derived correct (forward→up‑right), no per‑frame allocations in the hot path, draw calls bounded via instancing.

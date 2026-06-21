@@ -26,7 +26,7 @@ export const PALETTE = {
   // environment
   sky:          0x0b0b2e,   // deep indigo background
   skyHorizon:   0x241a5c,   // purple horizon glow
-  ground:       0x1d1d4c,   // night ground base (light enough to read shadows)
+  ground:       0x6464aa,   // night ground base (light enough to read shadows)
   groundEdge:   0x262665,
   road:         0x2f7fe0,   // bright blue roads (signature Zaxxon look)
   roadDark:     0x1f57a8,
@@ -35,7 +35,7 @@ export const PALETTE = {
   grid:         0x3344aa,   // faint grid glow on ground
 
   // player jet (white/silver F-16 with red + blue accents)
-  jetBody:      0xe9eef5,
+  jetBody:      0xffff00,	// 0xe9eef5 originally
   jetBodyDark:  0xb7c2d0,
   jetAccent:    0xff3b3b,   // red stripes / tail
   jetCockpit:   0x49b6ff,   // blue canopy
@@ -47,9 +47,10 @@ export const PALETTE = {
   enemyBodyDark:0xb02414,
   enemyAccent:  0x2a2a33,
   enemyCockpit: 0xffd23f,
+  enemyEngine:  0xff7a3d,   // enemy exhaust glow
 
   // buildings
-  buildingA:    0x7a8aa0,   // steel gray
+  buildingA:    0xbc8d57,   // steel gray
   buildingB:    0x5d6b86,   // bluish gray
   buildingC:    0x8a6f9e,   // muted purple tower
   buildingD:    0x4a8c8c,   // teal block
@@ -61,6 +62,9 @@ export const PALETTE = {
   // hills / terrain obstacles
   hill:         0x2f7d4f,   // green hill
   hillDark:     0x1d5436,
+  treeTrunk:    0x6b4a2b,   // brown trunk
+  treeLeaf:     0x2f9e44,   // foliage
+  treeLeaf2:    0x3fbf57,   // lighter foliage
 
   // projectiles
   playerBullet: 0xff0000,   // red
@@ -141,7 +145,7 @@ export const GAME = {
   // bullet travels along +X, so the "aim" axes are lateral (Z) and altitude (Y);
   // a generous vertical window means you don't need a pixel-perfect altitude.
   BULLET_HIT_LATERAL: 4.5,   // extra Z tolerance
-  BULLET_HIT_VERTICAL: 9.0,  // extra Y tolerance (the big one for hittability)
+  BULLET_HIT_VERTICAL: 19.0,  // extra Y tolerance (the big one for hittability)
   BULLET_HIT_FORWARD: 3.0,   // extra X tolerance along travel
 
   // bombs (now a projectile that arcs forward and lands before detonating)

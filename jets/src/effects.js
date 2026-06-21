@@ -25,9 +25,10 @@ export class Effects {
     this._tmp = new THREE.Vector3();
 
     // ---- Particle pool ----
-    // Shared octahedron geometry (cheap, faceted spark look). Each particle owns
-    // its own MeshBasicMaterial so opacity/color can fade independently.
-    const geo = new THREE.OctahedronGeometry(0.5, 0);
+    // Shared rounded geometry (subdivided icosahedron => smooth blobs rather than
+    // hard squares, for a more natural fireball). Each particle owns its own
+    // MeshBasicMaterial so opacity/color can fade independently.
+    const geo = new THREE.IcosahedronGeometry(0.55, 1);
     this._sharedGeo = geo;
     this.particles = [];
     for (let i = 0; i < PARTICLE_COUNT; i++) {

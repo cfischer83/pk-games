@@ -14,7 +14,7 @@
 
 import * as THREE from 'three';
 import { PALETTE, GAME } from './config.js';
-import { createBuilding, createHill } from './meshes.js';
+import { createBuilding, createHill, createTree } from './meshes.js';
 
 const GROUND_W = 1040;           // ground width (Z) — wide enough that long cross-streets stay on ground
 const GROUND_L = 1500;           // ground length (X)
@@ -41,6 +41,7 @@ const DASH_PITCH = 12;           // 120/12 = 10 dashes/segment -> seamless, even
 
 const BUILDING_POOL = 52;   // >= peak demand (5 segments x 2 lots x 5 columns)
 const HILL_POOL = 10;
+const TREE_POOL = 22;       // trees fill otherwise-empty lots between the roads
 
 function std(color, emissive, ei = 0) {
   return new THREE.MeshStandardMaterial({
@@ -65,6 +66,7 @@ export class World {
 
     this.buildingPool = [];
     this.hillPool = [];
+    this.treePool = [];
     this._buildObstaclePools();
 
     this.activeObstacles = [];
@@ -226,6 +228,16 @@ export class World {
         group: g, type: 'hill', active: false, x: 0, z: 0, radius, height,
       });
     }
+    for (let i = 0; i < TREE_POOL; i++) {
+      const height = 7 + rng() * 6;            // 7..13
+      const g = createTree({ height });
+      g.visible = false;
+      this.scene.add(g);
+      // collide as a low obstacle (reuses the hill collision path): radius/height
+      this.treePool.push({
+        group: g, type: 'tree', active: false, x: 0, z: 0, radius: height * 0.32, height,
+      });
+    }
   }
 
   _firstInactive(pool) {
@@ -237,6 +249,7 @@ export class World {
   reset(playerX = 0, level = null) {
     for (const b of this.buildingPool) { b.active = false; b.group.visible = false; }
     for (const h of this.hillPool) { h.active = false; h.group.visible = false; }
+    for (const tr of this.treePool) { tr.active = false; tr.group.visible = false; }
     this.activeObstacles.length = 0;
     // Start populating one segment ahead so the immediate launch area is open.
     this._nextSegX = Math.floor(playerX / SEG_PITCH) * SEG_PITCH + SEG_PITCH;
@@ -269,21 +282,33 @@ export class World {
         const blockZ = BLOCK_COLUMNS[c];
         const scenery = blockZ <= -100 || blockZ >= 100;
         const fill = scenery ? 0.6 : density;
-        if (rng() > fill) continue;
-        const wantHill = level && level.hills && !scenery && rng() < 0.15;
+        const roll = rng();
         // jitter along X within the lot (Z stays exactly on the block centre so
-        // columns line up crisply parallel to the roads). Compute it first so the
-        // finish-gate clear test reflects the building's actual position.
+        // columns line up crisply parallel to the roads). Compute first so the
+        // finish-gate clear test reflects the object's actual position.
         const x = lotX + (rng() - 0.5) * 16;
         if (Math.abs(x - this.finishX) < 80) continue;
-        const rec = this._firstInactive(wantHill ? this.hillPool : this.buildingPool)
-          || this._firstInactive(this.buildingPool);
+
+        let rec = null;
+        let isTree = false;
+        if (roll < fill) {
+          // a building (sometimes a hill)
+          const wantHill = level && level.hills && !scenery && rng() < 0.15;
+          rec = this._firstInactive(wantHill ? this.hillPool : this.buildingPool)
+            || this._firstInactive(this.buildingPool);
+        } else if (roll < fill + 0.45) {
+          // otherwise often a tree, filling the empty lot (never on a road/building)
+          rec = this._firstInactive(this.treePool);
+          isTree = true;
+        }
         if (!rec) continue;
+
         rec.active = true;
         rec.x = x;
         rec.z = blockZ;
-        rec.group.position.set(rec.x, 0, rec.z);
-        rec.group.rotation.y = 0;            // axis-aligned to the grid
+        rec.group.position.set(x, 0, blockZ);
+        // buildings line up to the grid; trees can face any direction
+        rec.group.rotation.y = isTree ? rng() * Math.PI * 2 : 0;
         rec.group.visible = true;
         this.activeObstacles.push(rec);
       }
