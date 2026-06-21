@@ -270,15 +270,18 @@ function handleGameOver(win, stats) {
   input.reset();
   gameoverReady = false;
   setTimeout(() => { gameoverReady = true; }, 650);
-  // persist best survival time
+  // persist best survival time + per-level high score
   const best = saveBest(stats.timeSurvived);
+  const levelId = (stats.level && stats.level.id) || 1;
+  const hi = saveHiScore(levelId, stats.score);
   el('go-title').textContent = win ? 'SECTOR CLEAR!' : 'MISSION FAILED';
   el('go-title').style.color = win ? 'var(--c-green)' : 'var(--c-red)';
   el('go-stats').innerHTML =
-    `SURVIVED: ${fmtTime(stats.timeSurvived)}<br>` +
     `SCORE: ${stats.score}<br>` +
     (win ? `BONUS LIVES: ${stats.livesLeft}<br>` : '') +
-    `BEST: ${fmtTime(best)}`;
+    (hi.isNew ? `<span class="new-hi">★ NEW HIGH SCORE ★</span><br>`
+              : `HIGH SCORE: ${hi.best}<br>`) +
+    `SURVIVED: ${fmtTime(stats.timeSurvived)} · BEST: ${fmtTime(best)}`;
   el('btn-again').textContent = win ? 'NEXT RUN' : 'FLY AGAIN';
   show(elGameOver);
 }
@@ -300,6 +303,30 @@ function updateBestTime() {
   try { best = parseFloat(localStorage.getItem(STORE.BEST) || '0') || 0; } catch (_e) {}
   const span = el('best-time');
   if (span) span.textContent = best > 0 ? fmtTime(best) : '--';
+  updateHiScore();
+}
+
+// ---------------------------------------------------------------------------
+// Per-level high score (points)
+// ---------------------------------------------------------------------------
+function hiScoreKey(levelId) { return `${STORE.HISCORE}.${levelId}`; }
+function getHiScore(levelId) {
+  try { return parseInt(localStorage.getItem(hiScoreKey(levelId)) || '0', 10) || 0; } catch (_e) { return 0; }
+}
+function saveHiScore(levelId, score) {
+  const s = Math.round(score);
+  const prev = getHiScore(levelId);
+  if (s > prev) {
+    try { localStorage.setItem(hiScoreKey(levelId), String(s)); } catch (_e) {}
+    return { best: s, isNew: true };
+  }
+  return { best: prev, isNew: false };
+}
+function updateHiScore() {
+  const lvl = LEVELS[currentLevel] || LEVELS[0];
+  const hs = getHiScore(lvl ? lvl.id : 1);
+  const span = el('hi-score');
+  if (span) span.textContent = hs > 0 ? String(hs) : '--';
 }
 function fmtTime(s) {
   s = Math.max(0, Math.floor(s));

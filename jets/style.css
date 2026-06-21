@@ -98,7 +98,7 @@ html, body {
   font-size: 11px;
   color: var(--c-yellow);
   letter-spacing: 2px;
-  margin-bottom: 26px;
+  margin: 26px 0;
   text-shadow: 2px 2px 0 #000;
 }
 .panel-title {
@@ -172,6 +172,12 @@ html, body {
 }
 
 .go-stats { font-size: 11px; line-height: 2; color: var(--c-cyan); margin-bottom: 20px; }
+.go-stats .new-hi {
+  color: var(--c-yellow);
+  text-shadow: 0 0 10px rgba(255,210,63,0.8);
+  animation: hiPulse 0.5s steps(2) infinite;
+}
+@keyframes hiPulse { 50% { opacity: 0.45; } }
 .loading-pulse { animation: pulse 1s steps(2) infinite; }
 @keyframes pulse { 50% { opacity: .3; } }
 

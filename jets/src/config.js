@@ -198,4 +198,5 @@ export const STORE = {
   MUSIC: 'jets.musicEnabled',
   SFX:   'jets.sfxEnabled',
   BEST:  'jets.bestTime',
+  HISCORE: 'jets.hiscore',     // per-level: `${HISCORE}.<levelId>`
 };

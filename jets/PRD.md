@@ -24,7 +24,9 @@ All v1 requirements are built and playable.
 | F‑16 player jet, banks on strafe, pitches on climb | ✅ |
 | Ground shadow shows altitude | ✅ Per‑jet shadow, scales/fades with height |
 | Can't crash into the ground; can hit buildings/hills/jets/projectiles | ✅ Altitude floor + AABB/cylinder collisions |
+| Projectiles can't pass through solid objects | ✅ Player & enemy bolts (and bombs) burst on buildings/trees/hills; pass over if high enough |
 | 3‑hit life meter, i‑frames, explosions | ✅ |
+| Per‑level high score | ✅ Saved in `localStorage` (`jets.hiscore.<levelId>`); shown on menu + game‑over |
 | Enemy jets that shoot bright lasers | ✅ Green saber bolts fired mostly forward; enemies climb over buildings |
 | City with roads, windowed buildings, hills | ✅ Streaming neon grid; cross‑streets recede endlessly into the fog |
 | ~90‑second level | ✅ Difficulty ramps; a glowing checkered **finish line** on the ground marks the end |

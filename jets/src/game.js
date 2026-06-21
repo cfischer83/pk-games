@@ -456,7 +456,7 @@ export class Game {
       bm.group.rotation.set(0, 0, -pitch);
       bm.group.rotation.y = bm.spin;
       this._updateShadow(bm.shadow, bm.x, Math.max(bm.y, 0), bm.z, true);
-      if (bm.y <= 2 || bm.fuse <= 0) {
+      if (bm.y <= 2 || bm.fuse <= 0 || this._obstacleBlocks(bm.x, bm.y, bm.z, 2)) {
         bm.active = false;
         bm.group.visible = false;
         bm.shadow.visible = false;
@@ -626,6 +626,24 @@ export class Game {
     if (!this._endingTimer) this.player.score += score;
   }
 
+  /** True if point (x,y,z) with radius r is inside any solid obstacle
+   *  (building / tree / hill). Used so projectiles can't pass through what jets
+   *  can't. A projectile flying ABOVE an obstacle's height passes freely. */
+  _obstacleBlocks(x, y, z, r) {
+    const obs = this.world.activeObstacles;
+    for (let i = 0; i < obs.length; i++) {
+      const o = obs[i];
+      if (o.type === 'building') {
+        if (Math.abs(x - o.x) < o.halfW + r && Math.abs(z - o.z) < o.halfD + r &&
+            y < o.height + r) return true;
+      } else { // hill / tree (radius + height)
+        const dx = x - o.x, dz = z - o.z, rr = o.radius + r;
+        if (dx * dx + dz * dz < rr * rr && y < o.height + r) return true;
+      }
+    }
+    return false;
+  }
+
   // ---------------------------------------------------------------------------
   // Projectiles
   // ---------------------------------------------------------------------------
@@ -677,6 +695,22 @@ export class Game {
           this._killEnemy(e, 150);
           break;
         }
+      }
+      // player bullet vs building / tree / hill — burst and stop (no pass-through)
+      if (b.active && this._obstacleBlocks(b.x, b.y, b.z, 1.4)) {
+        b.active = false; b.mesh.visible = false;
+        this.effects.spawnExplosion(b.x, b.y, b.z, { scale: 0.7 });
+        this.audio.explosionSmall();
+      }
+    }
+
+    // enemy bullets vs building / tree / hill — burst and stop too
+    for (const b of this.enemyBullets) {
+      if (!b.active) continue;
+      if (this._obstacleBlocks(b.x, b.y, b.z, 1.6)) {
+        b.active = false; b.mesh.visible = false;
+        this.effects.spawnExplosion(b.x, b.y, b.z, { scale: 0.65 });
+        this.audio.explosionSmall();
       }
     }
 
