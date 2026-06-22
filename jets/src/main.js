@@ -54,7 +54,7 @@ let musicEnabled = readBool(STORE.MUSIC, true);
 let sfxEnabled = readBool(STORE.SFX, true);
 audio.setMusicEnabled(musicEnabled);
 audio.setSfxEnabled(sfxEnabled);
-// NOTE: reflectToggles()/updateBestTime() touch the `el` DOM helper, which is a
+// NOTE: reflectToggles()/updateHiScore() touch the `el` DOM helper, which is a
 // `const` declared below — they are called after that section to avoid the TDZ.
 
 function readBool(key, dflt) {
@@ -117,22 +117,20 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Now that `el` and the buttons exist, paint initial toggle/best-time state.
+// Now that `el` and the buttons exist, paint initial toggle + high-score state.
 reflectToggles();
-updateBestTime();
+updateHiScore();
 
 // ---------------------------------------------------------------------------
 // Audio unlock — must happen inside a user gesture
 // ---------------------------------------------------------------------------
-let audioUnlocked = false;
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  audio.resume();
-}
-// Backup unlock on the very first interaction anywhere.
-window.addEventListener('pointerdown', unlockAudio, { once: true });
-window.addEventListener('keydown', unlockAudio, { once: true });
+// audio.resume() is idempotent and a no-op once the context is running, so we
+// just call it on any interaction. Not latched on a flag: a gamepad press that
+// a browser doesn't count as a user-activation gesture won't permanently block
+// a later real gesture (mouse/key/touch) from unlocking audio.
+function unlockAudio() { audio.resume(); }
+window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('keydown', unlockAudio);
 
 // ---------------------------------------------------------------------------
 // Toggles
@@ -180,8 +178,16 @@ function startGame() {
   input.reset();          // start neutral; held keys re-assert via keydown
   appState = App.PLAYING;
   setBodyState('playing');
+  const lvl = LEVELS[currentLevel] || LEVELS[0];
   game.start(currentLevel);
   if (musicEnabled) audio.startMusic();
+  sendAnalytics('start', lvl ? lvl.id : 1, 0);
+}
+
+/** Report a game event to GA4 via the page's pkAnalytics(action, level, score). */
+function sendAnalytics(action, level, score) {
+  try { if (typeof window.pkAnalytics === 'function') window.pkAnalytics(action, level, Math.round(score) || 0); }
+  catch (_e) {}
 }
 
 function pauseGame() {
@@ -211,7 +217,7 @@ function quitToMenu() {
   show(elMenu);
   audio.stopMusic();
   game.toAttract();
-  updateBestTime();
+  updateHiScore();
 }
 
 // ---- Debug asset gallery --------------------------------------------------
@@ -270,18 +276,17 @@ function handleGameOver(win, stats) {
   input.reset();
   gameoverReady = false;
   setTimeout(() => { gameoverReady = true; }, 650);
-  // persist best survival time + per-level high score
-  const best = saveBest(stats.timeSurvived);
+  // persist per-level high score + report the result to analytics
   const levelId = (stats.level && stats.level.id) || 1;
   const hi = saveHiScore(levelId, stats.score);
+  sendAnalytics(win ? 'win' : 'lose', levelId, stats.score);
   el('go-title').textContent = win ? 'SECTOR CLEAR!' : 'MISSION FAILED';
   el('go-title').style.color = win ? 'var(--c-green)' : 'var(--c-red)';
   el('go-stats').innerHTML =
     `SCORE: ${stats.score}<br>` +
     (win ? `BONUS LIVES: ${stats.livesLeft}<br>` : '') +
-    (hi.isNew ? `<span class="new-hi">★ NEW HIGH SCORE ★</span><br>`
-              : `HIGH SCORE: ${hi.best}<br>`) +
-    `SURVIVED: ${fmtTime(stats.timeSurvived)} · BEST: ${fmtTime(best)}`;
+    (hi.isNew ? `<span class="new-hi">★ NEW HIGH SCORE ★</span>`
+              : `HIGH SCORE: ${hi.best}`);
   el('btn-again').textContent = win ? 'NEXT RUN' : 'FLY AGAIN';
   show(elGameOver);
 }
@@ -290,24 +295,7 @@ function openHelp() { helpOpen = true; show(elHelp); audio.uiSelect(); }
 function closeHelp() { helpOpen = false; hide(elHelp); }
 
 // ---------------------------------------------------------------------------
-// Best time
-// ---------------------------------------------------------------------------
-function saveBest(t) {
-  let best = 0;
-  try { best = parseFloat(localStorage.getItem(STORE.BEST) || '0') || 0; } catch (_e) {}
-  if (t > best) { best = t; try { localStorage.setItem(STORE.BEST, String(best)); } catch (_e) {} }
-  return best;
-}
-function updateBestTime() {
-  let best = 0;
-  try { best = parseFloat(localStorage.getItem(STORE.BEST) || '0') || 0; } catch (_e) {}
-  const span = el('best-time');
-  if (span) span.textContent = best > 0 ? fmtTime(best) : '--';
-  updateHiScore();
-}
-
-// ---------------------------------------------------------------------------
-// Per-level high score (points)
+// Per-level high score (points) — the only stat we surface in menus
 // ---------------------------------------------------------------------------
 function hiScoreKey(levelId) { return `${STORE.HISCORE}.${levelId}`; }
 function getHiScore(levelId) {
@@ -328,11 +316,70 @@ function updateHiScore() {
   const span = el('hi-score');
   if (span) span.textContent = hs > 0 ? String(hs) : '--';
 }
-function fmtTime(s) {
-  s = Math.max(0, Math.floor(s));
-  const m = Math.floor(s / 60), r = s % 60;
-  return `${m}:${r < 10 ? '0' : ''}${r}`;
+
+// ---------------------------------------------------------------------------
+// Gamepad menu navigation
+// ---------------------------------------------------------------------------
+// A focus ring is shown ONLY when the controller is the active input device
+// (body.gamepad-active). Mouse/keyboard/touch use restores the normal look.
+let usingGamepad = false;
+let navOverlayEl = null;
+let navButtons = [];
+let navIndex = 0;
+
+function setUsingGamepad(on) {
+  if (usingGamepad === on) return;
+  usingGamepad = on;
+  document.body.classList.toggle('gamepad-active', on);
 }
+
+/** The overlay currently accepting menu navigation, or null (gameplay/gallery). */
+function currentOverlay() {
+  if (appState === App.MENU) {
+    if (debugOpen) return elDebug;
+    if (helpOpen) return elHelp;
+    return elMenu;
+  }
+  if (appState === App.PAUSED) return elPause;
+  if (appState === App.GAMEOVER) return elGameOver;
+  return null;
+}
+
+function refreshNav() {
+  const ov = currentOverlay();
+  if (ov === navOverlayEl) return;
+  navButtons.forEach((b) => b.classList.remove('gp-focus'));   // clear old overlay
+  navOverlayEl = ov;
+  navButtons = ov
+    ? Array.from(ov.querySelectorAll('button')).filter((b) => b.offsetParent !== null && !b.disabled)
+    : [];
+  navIndex = 0;
+  applyFocus();
+}
+function applyFocus() {
+  navButtons.forEach((b, i) => b.classList.toggle('gp-focus', i === navIndex));
+}
+function moveFocus(delta) {
+  if (!navButtons.length) return;
+  navIndex = (navIndex + delta + navButtons.length) % navButtons.length;
+  applyFocus();
+  audio.uiMove();
+}
+function activateFocus() {
+  const b = navButtons[navIndex];
+  if (b) b.click();
+}
+function menuBack() {
+  if (debugOpen) { debugOpen = false; hide(elDebug); }
+  else if (helpOpen) { closeHelp(); }
+  else if (appState === App.PAUSED) { resumeGame(); }
+  else if (appState === App.GAMEOVER && gameoverReady) { quitToMenu(); }
+}
+
+// Switching back to mouse/keyboard hides the controller focus ring.
+window.addEventListener('pointerdown', () => setUsingGamepad(false));
+window.addEventListener('pointermove', () => setUsingGamepad(false));
+window.addEventListener('keydown', () => setUsingGamepad(false));
 
 // ---------------------------------------------------------------------------
 // Master loop — the ONLY place input.update() is called
@@ -343,22 +390,38 @@ function loop(now) {
   const s = input.state;
 
   updatePadHint(s);
+  if (s.gamepadActivity) setUsingGamepad(true);
 
   // Gallery owns the canvas while active; the game does not render.
   if (appState === App.GALLERY) { gallery.frame(now, s); return; }
 
+  // ---- Gamepad menu navigation (when a menu overlay is up) ----
+  refreshNav();
+  // On the game-over screen, ignore controller input until it's armed (so a
+  // mashed A from dying can't instantly skip the screen) — mirrors the keyboard.
+  const navLocked = appState === App.GAMEOVER && !gameoverReady;
+  if (navOverlayEl && !navLocked) {
+    if (s.navUp || s.navLeft) moveFocus(-1);
+    if (s.navDown || s.navRight) moveFocus(1);
+    if (s.menuConfirm) { unlockAudio(); activateFocus(); }
+    if (s.menuBack) menuBack();
+  }
+
   switch (appState) {
     case App.MENU:
-      if (!helpOpen && !debugOpen && s.startPressed) { unlockAudio(); startGame(); }
+      // Keyboard shortcut (Enter/Space) only when NOT navigating by controller,
+      // so a gamepad A press activates the focused item instead of force-starting.
+      if (!usingGamepad && !helpOpen && !debugOpen && s.startPressed) { unlockAudio(); startGame(); }
       break;
     case App.PLAYING:
       if (s.pausePressed) { pauseGame(); break; }
       break;
     case App.PAUSED:
-      if (s.pausePressed || s.startPressed) { resumeGame(); }
+      if (s.pausePressed) { resumeGame(); }            // Start always toggles
+      else if (!usingGamepad && s.startPressed) { resumeGame(); }
       break;
     case App.GAMEOVER:
-      if (gameoverReady && s.startPressed) { startGame(); }
+      if (!usingGamepad && gameoverReady && s.startPressed) { startGame(); }
       break;
   }
 

@@ -117,6 +117,13 @@ export class InputManager {
     // For anyPressed we track the count of distinct held keys/buttons; an edge
     // fires when any newly-held key/button appears this frame.
     this._prevAnyHeld = false;
+    // Gamepad-only menu-navigation edges (dpad/stick + face buttons).
+    this._prevNavUp = false;
+    this._prevNavDown = false;
+    this._prevNavLeft = false;
+    this._prevNavRight = false;
+    this._prevConfirm = false;
+    this._prevBack = false;
 
     // Gamepad connection tracking.
     this._gamepadConnected = false;
@@ -131,6 +138,14 @@ export class InputManager {
       pausePressed: false,
       startPressed: false,
       anyPressed: false,
+      // ---- gamepad-only menu navigation ----
+      navUp: false,
+      navDown: false,
+      navLeft: false,
+      navRight: false,
+      menuConfirm: false,   // gamepad A
+      menuBack: false,      // gamepad B
+      gamepadActivity: false, // any gamepad button/stick used this frame
     };
 
     this._started = false;
@@ -340,6 +355,9 @@ export class InputManager {
     let gPause = false;
     let gStart = false;
     let gAny = false;
+    // gamepad-only menu navigation (held this frame)
+    let gNavUp = false, gNavDown = false, gNavLeft = false, gNavRight = false;
+    let gConfirm = false, gBack = false;
 
     if (pad) {
       const axes = pad.axes || [];
@@ -367,6 +385,14 @@ export class InputManager {
       gBomb = bHeld || xHeld;
       gPause = startHeld;
       gStart = aHeld || startHeld;
+
+      // menu navigation: dpad or a firm stick flick; A confirms, B goes back
+      gNavUp = btnPressed(buttons, GP.DPAD_UP) || lyRaw < -0.5;
+      gNavDown = btnPressed(buttons, GP.DPAD_DOWN) || lyRaw > 0.5;
+      gNavLeft = btnPressed(buttons, GP.DPAD_LEFT) || lx < -0.5;
+      gNavRight = btnPressed(buttons, GP.DPAD_RIGHT) || lx > 0.5;
+      gConfirm = aHeld;
+      gBack = bHeld;
 
       // anyPressed: was ANY button held this frame?
       for (let i = 0; i < buttons.length; i++) {
@@ -416,11 +442,25 @@ export class InputManager {
       tMoveX !== 0 || tMoveY !== 0;
     const anyPressed = (anyHeldNow && !this._prevAnyHeld) || touchActivity;
 
+    // Gamepad-only menu-navigation edges (rising transitions).
+    const navUp = gNavUp && !this._prevNavUp;
+    const navDown = gNavDown && !this._prevNavDown;
+    const navLeft = gNavLeft && !this._prevNavLeft;
+    const navRight = gNavRight && !this._prevNavRight;
+    const menuConfirm = gConfirm && !this._prevConfirm;
+    const menuBack = gBack && !this._prevBack;
+
     // Update previous-held bookkeeping for next frame.
     this._prevBombHeld = bombHeld;
     this._prevPauseHeld = pauseHeld;
     this._prevStartHeld = startHeldNow;
     this._prevAnyHeld = anyHeldNow;
+    this._prevNavUp = gNavUp;
+    this._prevNavDown = gNavDown;
+    this._prevNavLeft = gNavLeft;
+    this._prevNavRight = gNavRight;
+    this._prevConfirm = gConfirm;
+    this._prevBack = gBack;
 
     // ---------- Commit snapshot ----------
     const s = this._state;
@@ -431,6 +471,13 @@ export class InputManager {
     s.pausePressed = pausePressed;
     s.startPressed = startPressed;
     s.anyPressed = anyPressed;
+    s.navUp = navUp;
+    s.navDown = navDown;
+    s.navLeft = navLeft;
+    s.navRight = navRight;
+    s.menuConfirm = menuConfirm;
+    s.menuBack = menuBack;
+    s.gamepadActivity = gAny;
   }
 
   /** True if any code in `codes` is currently in the held set `keys`. */
@@ -510,7 +557,9 @@ export class InputManager {
     this._prevStartHeld = false;
     this._prevAnyHeld = false;
 
-    // Zero the live snapshot too.
+    // Zero the live snapshot too. (We deliberately do NOT clear the _prevNav*
+    // bookkeeping: preserving it prevents a held gamepad button from synthesizing
+    // a phantom nav/confirm edge on the next update after a reset.)
     const s = this._state;
     s.moveX = 0;
     s.moveY = 0;
@@ -519,5 +568,8 @@ export class InputManager {
     s.pausePressed = false;
     s.startPressed = false;
     s.anyPressed = false;
+    s.navUp = s.navDown = s.navLeft = s.navRight = false;
+    s.menuConfirm = s.menuBack = false;
+    s.gamepadActivity = false;
   }
 }

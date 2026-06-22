@@ -63,9 +63,9 @@
         <button id="btn-help" class="btn btn-ghost">HOW TO PLAY</button>
       </div>
 
-      <p class="best-line">HIGH SCORE: <span id="hi-score">--</span></p>
-      <p class="best-line">BEST SURVIVAL: <span id="best-time">--</span></p>
+      <p class="hi-line">HIGH SCORE<span id="hi-score">--</span></p>
       <p class="hint">Audio starts after you press START.</p>
+      <p class="hint"><a href="../index.html">PK Games Home</a></p>
     </div>
   </div>
 
@@ -199,5 +199,21 @@
   </div>
 
   <script type="module" src="./src/main.js"></script>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-N8SN5SJEFW"></script>
+	<script type="text/javascript">
+		function pkAnalytics(action, level, score) {
+			console.log("send to ga4: action="+action);
+			gtag('event', 'PlayJets', {
+				'game_action': action,
+				'game_level': level,
+				'game_difficulty': "normal",
+				'game_details': "normal" + ":" + level + ":" + action + ":score=" + score
+			});
+		}
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-N8SN5SJEFW');
+	</script>
 </body>
 </html>

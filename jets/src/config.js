@@ -34,7 +34,7 @@ export const PALETTE = {
   roadEdge:     0x5fb0ff,   // glowing road edge
   grid:         0x3344aa,   // faint grid glow on ground
 
-  // player jet (white/silver F-16 with red + blue accents)
+  // player jet (white/silver F-16 with yellow + red accents)
   jetBody:      0xffff00,	// 0xe9eef5 originally
   jetBodyDark:  0xb7c2d0,
   jetAccent:    0xff3b3b,   // red stripes / tail

@@ -34,9 +34,10 @@ All v1 requirements are built and playable.
 | Space = fire, hold for continuous, never runs out | ✅ |
 | 3 smart bombs (Enter) that clear a large area | ✅ Lobbed projectile → lands → area wipe + shockwave + flash |
 | P pauses | ✅ |
-| Gamepad support | ✅ Standard mapping (stick/d‑pad, A/RT fire, B/X bomb, Start pause) |
+| Gamepad support | ✅ Standard mapping (fly + fire/bomb/pause) **and full menu navigation** (stick/D‑pad + A/B, with a focus ring only in controller mode) |
 | Sound effects + music, music toggle in menu | ✅ Web Audio synth; Music + SFX toggles (persisted) |
 | Mobile touch controls | ✅ Virtual joystick + FIRE/BOMB/pause, landscape prompt |
+| Analytics | ✅ `pkAnalytics(action, level, score)` fired on `start` / `win` / `lose` (GA4 via index.html) |
 | Built for more levels later | ✅ Data‑driven `levels.js` |
 
 ---
@@ -49,8 +50,10 @@ All v1 requirements are built and playable.
 | Fire (hold for auto) | Space | A or RT | FIRE button |
 | Smart bomb (×3) | Enter | B or X | BOMB button |
 | Pause | P | Start | ❚❚ button |
-| Confirm menus | Enter / Space | A / Start | tap |
+| Confirm menus | Enter / Space | A (select focused) | tap |
+| Navigate menus | — | Stick / D‑pad; **A** select, **B** back | tap |
 
+- **Menus support a game controller**: the stick or D‑pad moves the highlight between buttons, **A** activates the focused button, **B** backs out (close help, resume, quit). A focus ring is shown **only while the controller is the active device** — using the mouse/keyboard hides it again.
 - **Left/Right** strafes horizontally (jet banks into the turn).
 - **Up/Down** changes altitude (jet pitches). **Vertical is inverted, flight‑stick style: press _down_ to climb and _up_ to dive.** Your high‑contrast **shadow** on the ground shows how low you are — tall buildings can only be cleared by flying high.
 - Forward motion is automatic and speeds up slightly through the run.
