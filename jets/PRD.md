@@ -97,7 +97,7 @@ jets/
 **Key design points**
 
 - **Single loop, single input poll.** `main.js` owns the only `requestAnimationFrame` loop and is the only caller of `input.update()` (once/frame). It dispatches by app state and calls `game.frame(now, inputState)`.
-- **Fixed‑timestep simulation** (60 Hz accumulator, clamped, spiral‑guarded) for deterministic feel; rendering each frame.
+- **Fixed‑timestep simulation** (60 Hz accumulator, clamped, spiral‑guarded) for deterministic feel; rendering each frame. **Render interpolation** draws every entity (and the camera) *between* its two latest sim states using the leftover accumulator as the blend factor — so motion stays smooth on any refresh rate (120 Hz ProMotion, 144 Hz, vsync jitter) instead of lurching when steps‑per‑frame varies between 0/1/2.
 - **Streaming world**: the player advances forever along +X; ground/roads follow continuously, periodic decor snaps to a pitch, and buildings/hills are pre‑built once into pools and recycled (spawn ahead, despawn behind) — no per‑frame allocation.
 - **Pooling everywhere**: bullets, enemies, particles, and obstacles are pre‑allocated and reused. Building windows and road dashes are single `InstancedMesh`es (one draw call each) for mobile performance.
 - **Attract mode**: the menu renders the live game as a scrolling backdrop (auto‑piloted jet, no fire/collisions/SFX).
@@ -155,7 +155,7 @@ A no‑gameplay art‑review mode. On the **main menu press `Ctrl+D`** to open t
 ## 10. Quality notes / verification
 
 - Built with a parallel module workflow (audio/meshes/input) against fixed interface contracts, then an integrator, then an adversarial multi‑pass code review.
-- Verified: module import graph resolves, no syntax imbalances, all DOM ids present, camera projection derived correct (forward→up‑right), no per‑frame allocations in the hot path, draw calls bounded via instancing.
+- Verified: module import graph resolves, no syntax imbalances, all DOM ids present, camera projection derived correct (forward→up‑right), no per‑frame allocations in the hot path (including the interpolation pass), draw calls bounded via instancing.
 - Tunables live in `config.js` (`CAMERA`, `GAME`) — camera zoom/framing, speeds, fire rate, enemy pacing, and collision sizes are all adjustable in one place.
 
 ### Possible future polish

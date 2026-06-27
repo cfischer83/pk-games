@@ -140,12 +140,12 @@ export class Game {
     this.playerBullets = this._makePool(PLAYER_BULLETS, () => {
       const m = createPlayerBullet();
       m.visible = false; this.scene.add(m);
-      return { mesh: m, active: false, x: 0, y: 0, z: 0, life: 0 };
+      return { mesh: m, active: false, x: 0, y: 0, z: 0, px: 0, life: 0 };
     });
     this.enemyBullets = this._makePool(ENEMY_BULLETS, () => {
       const m = createEnemyBullet();
       m.visible = false; this.scene.add(m);
-      return { mesh: m, active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0 };
+      return { mesh: m, active: false, x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vx: 0, vy: 0, vz: 0, life: 0 };
     });
     this.enemies = this._makePool(ENEMIES, () => {
       const g = createEnemyJet();
@@ -154,7 +154,7 @@ export class Game {
       this.scene.add(g); this.scene.add(sh);
       return {
         group: g, shadow: sh, active: false,
-        x: 0, y: 0, z: 0, vz: 0, targetZ: 0,
+        x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vz: 0, targetZ: 0,
         phase: 0, fireTimer: 0, bank: 0, hp: 1, deadFor: 0,
       };
     });
@@ -164,7 +164,7 @@ export class Game {
       const sh = createShadow();
       g.visible = false; sh.visible = false;
       this.scene.add(g); this.scene.add(sh);
-      return { group: g, shadow: sh, active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, fuse: 0, spin: 0 };
+      return { group: g, shadow: sh, active: false, x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, vx: 0, vy: 0, vz: 0, fuse: 0, spin: 0 };
     });
 
     this._enemySpawnTimer = 0;
@@ -179,6 +179,10 @@ export class Game {
   _resetRunState() {
     const p = this.player;
     p.x = 0; p.y = 36; p.z = 0; p.vz = 0; p.vy = 0;
+    // prev (px) + render (rx) poses for interpolation — start collapsed so the
+    // first frame draws exactly at the spawn position (no streak from origin).
+    p.px = p.x; p.py = p.y; p.pz = p.z;
+    p.rx = p.x; p.ry = p.y; p.rz = p.z;
     p.bank = 0; p.pitch = 0;
     p.alive = true;
     p.lives = GAME.PLAYER_MAX_HITS;
@@ -275,16 +279,69 @@ export class Game {
       this._accum += frameMs;
       let steps = 0;
       while (this._accum >= STEP_MS && steps < 6) {
+        this._snapshotPrev();          // remember pre-step pose for interpolation
         this._step(STEP_MS / 1000, input);
         this._accum -= STEP_MS;
         steps++;
       }
       if (steps === 6) this._accum = 0;   // avoid spiral of death
       if (this.mode === Mode.PLAYING) this._updateHud();
+      // Render BETWEEN the two latest sim states (alpha = how far into the next
+      // step we've accumulated) so motion is smooth no matter the display's
+      // refresh rate — 120Hz ProMotion, 144Hz, or plain vsync jitter. Without
+      // this the world scroll lurches whenever steps-per-frame varies (0/1/2).
+      this._renderInterpolate(this._accum / STEP_MS);
     }
 
     this._frameCamera(false, frameMs / 1000);
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render interpolation
+  // ---------------------------------------------------------------------------
+  // Snapshot every active entity's pose at the START of a sim step; after the
+  // step its live x/y/z is the END pose. _renderInterpolate() then draws at the
+  // lerp of the two, decoupling visual smoothness from the fixed 60Hz sim.
+  _snapshotPrev() {
+    const p = this.player;
+    p.px = p.x; p.py = p.y; p.pz = p.z;
+    for (const e of this.enemies) if (e.active) { e.px = e.x; e.py = e.y; e.pz = e.z; }
+    for (const b of this.playerBullets) if (b.active) b.px = b.x;
+    for (const b of this.enemyBullets) if (b.active) { b.px = b.x; b.py = b.y; b.pz = b.z; }
+    for (const bm of this.bombProjectiles) if (bm.active) { bm.px = bm.x; bm.py = bm.y; bm.pz = bm.z; }
+  }
+
+  _renderInterpolate(alpha) {
+    const a = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
+    const ia = 1 - a;
+    const p = this.player;
+    // Player render pose drives the camera too (see _frameCamera).
+    p.rx = p.px * ia + p.x * a;
+    p.ry = p.py * ia + p.y * a;
+    p.rz = p.pz * ia + p.z * a;
+    p.group.position.set(p.rx, p.ry, p.rz);
+    p.shadow.position.x = p.rx; p.shadow.position.z = p.rz;
+
+    for (const e of this.enemies) {
+      if (!e.active) continue;
+      const x = e.px * ia + e.x * a, y = e.py * ia + e.y * a, z = e.pz * ia + e.z * a;
+      e.group.position.set(x, y, z);
+      e.shadow.position.x = x; e.shadow.position.z = z;
+    }
+    for (const b of this.playerBullets) {
+      if (b.active) b.mesh.position.x = b.px * ia + b.x * a;
+    }
+    for (const b of this.enemyBullets) {
+      if (!b.active) continue;
+      b.mesh.position.set(b.px * ia + b.x * a, b.py * ia + b.y * a, b.pz * ia + b.z * a);
+    }
+    for (const bm of this.bombProjectiles) {
+      if (!bm.active) continue;
+      const x = bm.px * ia + bm.x * a, y = bm.py * ia + bm.y * a, z = bm.pz * ia + bm.z * a;
+      bm.group.position.set(x, y, z);
+      bm.shadow.position.x = x; bm.shadow.position.z = z;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -411,6 +468,7 @@ export class Game {
     const p = this.player;
     b.active = true;
     b.x = p.x + 6.5; b.y = p.y; b.z = p.z;
+    b.px = b.x;                      // collapse interpolation on the spawn frame
     b.life = GAME.BULLET_LIFETIME;
     b.mesh.position.set(b.x, b.y, b.z);
     b.mesh.visible = true;
@@ -431,6 +489,7 @@ export class Game {
 
     bm.active = true;
     bm.x = p.x + 4; bm.y = p.y - 1; bm.z = p.z;
+    bm.px = bm.x; bm.py = bm.y; bm.pz = bm.z;   // collapse interpolation on launch
     bm.vx = GAME.BOMB_LAUNCH_VX;
     bm.vy = GAME.BOMB_LAUNCH_VY;
     bm.vz = 0;
@@ -518,6 +577,7 @@ export class Game {
     e.x = p.x + GAME.SPAWN_AHEAD * (0.85 + Math.random() * 0.25);
     e.z = (Math.random() - 0.5) * 150;
     e.y = GAME.ENEMY_ALT_MIN + Math.random() * (GAME.ENEMY_ALT_MAX - GAME.ENEMY_ALT_MIN);
+    e.px = e.x; e.py = e.y; e.pz = e.z;   // collapse interpolation on spawn
     e.baseY = e.y;             // preferred cruise altitude; climbs to clear buildings
     e.targetZ = THREE.MathUtils.clamp(p.z + (Math.random() - 0.5) * 60, -80, 80);
     e.vz = 0;
@@ -608,6 +668,7 @@ export class Game {
 
     b.active = true;
     b.x = e.x - 5; b.y = e.y; b.z = e.z;
+    b.px = b.x; b.py = b.y; b.pz = b.z;   // collapse interpolation on spawn
     b.vx = _v1.x * GAME.ENEMY_BULLET_SPEED;
     b.vy = _v1.y * GAME.ENEMY_BULLET_SPEED;
     b.vz = _v1.z * GAME.ENEMY_BULLET_SPEED;
@@ -914,10 +975,16 @@ export class Game {
   _frameCamera(snap, dt = 1 / 60) {
     const p = this.player;
     const o = CAMERA.OFFSET;
-    const focusY = FOCUS_BASE_Y + (p.y - FOCUS_BASE_Y) * CAMERA.FOLLOW_ALT;
-    const focusZ = p.z * CAMERA.FOLLOW_STRAFE;
+    // Track the interpolated render pose (rx/ry/rz) so the camera — and thus the
+    // whole scrolling world — moves smoothly, not in 60Hz sim quanta. On a snap
+    // (start/attract/resize) there's no interpolated pose yet, so use the sim pose.
+    const rx = snap ? p.x : p.rx;
+    const ry = snap ? p.y : p.ry;
+    const rz = snap ? p.z : p.rz;
+    const focusY = FOCUS_BASE_Y + (ry - FOCUS_BASE_Y) * CAMERA.FOLLOW_ALT;
+    const focusZ = rz * CAMERA.FOLLOW_STRAFE;
 
-    const targetX = p.x + o.x;
+    const targetX = rx + o.x;
     const targetY = focusY + o.y;
     const targetZ = focusZ + o.z;
 
