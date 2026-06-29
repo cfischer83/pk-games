@@ -66,6 +66,23 @@ export const PALETTE = {
   treeLeaf:     0x2f9e44,   // foliage
   treeLeaf2:    0x3fbf57,   // lighter foliage
 
+  // ---- Level 2: RED CANYON theme ----
+  canyonSky:    0x3a1d2b,   // dusty red-violet dusk (scene background)
+  canyonFloor:  0x8a4a30,   // red-orange rock floor
+  canyonFloorEdge: 0x5c2c1e,
+  canyonMesa:   0x4a2118,   // distant mesa silhouettes
+  rock:         0x9c4a2c,   // spires / hoodoo columns (sunlit red rock)
+  rockDark:     0x6a3018,   // shaded rock / bases
+  rockLight:    0xc26a3c,   // sunlit highlight
+  hoodooCap:    0x7a3a22,   // darker caprock on hoodoos
+  canyonWall:   0x8f3f24,   // canyon wall faces
+  canyonWallDark: 0x57271a, // wall shadow/base
+  river:        0x2f9fd0,   // winding water (cool blue vs warm rock)
+  riverEdge:    0x6fd6ff,   // bright water glint
+  cactus:       0x3f8a4a,   // saguaro green
+  cactusDark:   0x2c6437,   // shaded cactus
+  cactusFlower: 0xff5e8a,   // little bloom accent
+
   // projectiles
   playerBullet: 0xff0000,   // red
   playerBulletCore: 0xffffff,
@@ -199,4 +216,18 @@ export const STORE = {
   SFX:   'jets.sfxEnabled',
   BEST:  'jets.bestTime',
   HISCORE: 'jets.hiscore',     // per-level: `${HISCORE}.<levelId>`
+  CLEARED: 'jets.cleared',     // per-level win flag: `${CLEARED}.<levelId>` = 'true'
+};
+
+// ---- Per-theme scene visuals (sky + fog) -----------------------------------
+// game.js applies these when switching the active world for a level's theme.
+export const THEMES = {
+  city: {
+    sky: 0x0b0b2e,                                  // deep indigo night
+    fog: { color: 0x0b0b2e, near: 380, far: 700 },
+  },
+  canyon: {
+    sky: PALETTE.canyonSky,                          // dusty red-violet dusk
+    fog: { color: 0x6a3320, near: 300, far: 640 },   // warm rock haze
+  },
 };

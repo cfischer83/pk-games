@@ -52,6 +52,10 @@ html, body {
     linear-gradient(160deg, var(--c-bg) 0%, #05051a 55%, #120833 100%);
 }
 .overlay.hidden { display: none; }
+/* Generic hide — used by show()/hide() for non-overlay elements too (the menu
+   Start button and sector list swap via this). !important so it wins over an
+   element's own display (e.g. .btn { display:block }) regardless of order. */
+.hidden { display: none !important; }
 
 /* animated scanline + star sheen on overlays */
 .overlay::before {
@@ -74,7 +78,7 @@ html, body {
 .panel {
   position: relative;
   z-index: 1;
-  width: min(440px, 92vw);
+  width: min(500px, 92vw);
   background: var(--c-panel);
   border: 3px solid var(--c-line);
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(47,127,224,0.5), 8px 8px 0 rgba(0,0,0,0.6);
@@ -96,10 +100,12 @@ html, body {
 .title .t-accent { color: var(--c-red); text-shadow: 0 0 10px var(--c-red), 4px 4px 0 #000; }
 .subtitle {
   font-size: 11px;
+  line-height: 1rem;
   color: var(--c-yellow);
   letter-spacing: 2px;
   margin: 26px 0;
   text-shadow: 2px 2px 0 #000;
+  word-wrap: break-word;
 }
 .panel-title {
   font-size: clamp(20px, 5vw, 30px);
@@ -153,6 +159,39 @@ html, body {
 
 .btn-ghost { border-color: transparent; color: #9fb4d8; font-size: 12px; box-shadow: none; }
 .btn-ghost:hover { background: transparent; color: #fff; box-shadow: none; text-shadow: 0 0 10px var(--c-cyan); }
+
+/* Sector picker — shown on the menu once a second sector is unlocked. */
+.sector-list { margin: 6px 0 4px; }
+.sector-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1rem;
+  border-color: var(--c-yellow);
+  color: var(--c-yellow);
+  box-shadow: 0 0 14px rgba(255,210,63,0.30);
+}
+.sector-btn:hover, .sector-btn:focus-visible {
+  background: var(--c-yellow);
+  color: #1a1400;
+  box-shadow: 0 0 24px rgba(255,210,63,0.7);
+}
+.sector-btn .sector-name { letter-spacing: 1px; }
+.sector-btn .sector-hi { font-size: 11px; color: var(--c-cyan); white-space: nowrap; }
+.sector-btn:hover .sector-hi { color: #06212b; }
+.sector-btn.sector-locked {
+  border-color: #555;
+  color: #7a7a90;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+.sector-btn.sector-locked:hover { background: #0a0a1e; color: #7a7a90; box-shadow: none; }
+.sector-btn.sector-locked .sector-hi { color: #7a7a90; }
+/* Debug dialog: one gallery button per sector. */
+#debug-levels { margin-bottom: 6px; }
 
 .options { margin: 20px 0 8px; }
 .best-line { font-size: 10px; color: #9fb4d8; margin-top: 16px; letter-spacing: 1px; }

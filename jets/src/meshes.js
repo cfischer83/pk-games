@@ -18,6 +18,14 @@
 import * as THREE from 'three';
 import { PALETTE } from './config.js';
 
+// Lazy-built procedural texture caches. Declared up here (not next to their
+// builder functions below) because the shared material table `M` calls
+// rockTexture() during module init — these vars must already be initialized
+// then, or accessing them throws a temporal-dead-zone ReferenceError.
+let _rockTex = null;
+let _sandTex = null;
+let _waterTex = null;
+
 // -----------------------------------------------------------------------------
 // Material factory helpers + module-scope cache
 // -----------------------------------------------------------------------------
@@ -79,6 +87,18 @@ const M = {
   treeTrunk: mat(PALETTE.treeTrunk, { roughness: 0.9, metalness: 0.0 }),
   treeLeaf:  mat(PALETTE.treeLeaf,  { roughness: 0.85, metalness: 0.0 }),
   treeLeaf2: mat(PALETTE.treeLeaf2, { roughness: 0.85, metalness: 0.0 }),
+
+  // Canyon (level 2): textured smooth sandstone for spires/hoodoos/walls; cactus.
+  rock:           rockMat(PALETTE.rock),
+  rockDark:       rockMat(PALETTE.rockDark),
+  rockLight:      rockMat(PALETTE.rockLight),
+  hoodooCap:      rockMat(PALETTE.hoodooCap),
+  canyonWall:     rockMat(PALETTE.canyonWall),
+  canyonWallDark: rockMat(PALETTE.canyonWallDark),
+  cactus:         mat(PALETTE.cactus,       { roughness: 0.85, metalness: 0.0, flatShading: false }),
+  cactusDark:     mat(PALETTE.cactusDark,   { roughness: 0.9, metalness: 0.0, flatShading: false }),
+  cactusFlower:   mat(PALETTE.cactusFlower, { roughness: 0.6, metalness: 0.0, flatShading: false,
+                                              emissive: PALETTE.cactusFlower, emissiveIntensity: 0.25 }),
 
   // Window materials (3 looks, reused for every building's window quads)
   windowLit:  new THREE.MeshStandardMaterial({
@@ -227,6 +247,226 @@ function box(w, h, d, material, x = 0, y = 0, z = 0) {
   m.castShadow = false;
   m.receiveShadow = false;
   return m;
+}
+
+// -----------------------------------------------------------------------------
+// Natural-rock helpers (canyon theme): procedural canvas textures + a cheap
+// multi-octave noise used to DISPLACE geometry so rocks read as eroded sandstone
+// instead of clean primitives. All displacement is POSITION-based (vertices at
+// the same point move identically) so welded edges/seams never crack open.
+// -----------------------------------------------------------------------------
+
+/** Cheap fbm-ish value field in [~-1.15, 1.15]; deterministic, no allocation. */
+function fbm(x, y, z) {
+  return 0.55 * Math.sin(x * 0.70 + y * 0.60 + z * 0.50)
+       + 0.30 * Math.sin(x * 1.60 - y * 1.30 + z * 1.10 + 1.7)
+       + 0.18 * Math.sin(x * 3.10 + y * 2.70 - z * 2.20 + 4.3)
+       + 0.12 * Math.sin(-x * 5.30 + y * 4.90 + z * 4.10 + 2.1);
+}
+
+/** Displace by an (x,y,z)->[dx,dy,dz] field in local space (no crack at seams). */
+function displaceXYZ(geo, fn) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const d = fn(x, y, z);
+    pos.setXYZ(i, x + d[0], y + d[1], z + d[2]);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+/** Displace radially in XZ by an (x,y,z)->scalar field (for lathed columns). */
+function displaceRadial(geo, fn) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const r = Math.hypot(x, z);
+    if (r > 1e-4) {
+      const d = fn(x, y, z);
+      pos.setXYZ(i, x + (x / r) * d, y, z + (z / r) * d);
+    }
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+/** Tile a texture across a geometry by scaling its UVs (RepeatWrapping). */
+function scaleUV(geo, su, sv) {
+  const uv = geo.attributes.uv;
+  if (!uv) return;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  uv.needsUpdate = true;
+}
+
+// Procedural sandstone: light, grayscale-ish horizontal sedimentary bands +
+// speckle + faint cracks. Grayscale so each material's `color` provides the hue
+// (and the gallery colour editor still works by tinting). Cached + shared.
+function rockTexture() {
+  if (_rockTex) return _rockTex;
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 256;
+  const ctx = c.getContext('2d');
+  let seed = 0x9e37 >>> 0;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  ctx.fillStyle = '#b8b8b8'; ctx.fillRect(0, 0, 128, 256);
+  // sedimentary bands (value variation = light/dark strata)
+  let y = 0;
+  while (y < 256) {
+    const h = 3 + rnd() * 20;
+    const v = 150 + Math.floor(rnd() * 105);
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(0, y, 128, h);
+    // a slightly darker sub-line for layering
+    ctx.fillStyle = `rgba(60,50,45,${0.10 + rnd() * 0.18})`;
+    ctx.fillRect(0, y, 128, 1);
+    y += h;
+  }
+  // grain speckle
+  for (let i = 0; i < 3000; i++) {
+    const a = rnd() * 0.22;
+    ctx.fillStyle = rnd() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
+    ctx.fillRect(rnd() * 128, rnd() * 256, 1, 1);
+  }
+  // a few weathered vertical cracks
+  ctx.strokeStyle = 'rgba(45,38,34,0.5)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    let x = rnd() * 128;
+    ctx.beginPath(); ctx.moveTo(x, 0);
+    for (let yy = 0; yy <= 256; yy += 14) { x += (rnd() - 0.5) * 9; ctx.lineTo(x, yy); }
+    ctx.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  _rockTex = t;
+  return t;
+}
+
+// Cracked-desert floor: soft mottled patches, dry cracks, scattered pebbles and
+// grain. Grayscale (the floor material's `color` supplies the warm hue). Tiled
+// at a medium scale so the cracks/pebbles actually read from the iso distance.
+export function sandTexture() {
+  if (_sandTex) return _sandTex;
+  const SZ = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = SZ;
+  const ctx = c.getContext('2d');
+  let seed = 0x51ed >>> 0;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  ctx.fillStyle = '#c8c8c8'; ctx.fillRect(0, 0, SZ, SZ);
+
+  // soft mottled patches (large-scale lightness variation)
+  for (let i = 0; i < 30; i++) {
+    const x = rnd() * SZ, y = rnd() * SZ, r = 16 + rnd() * 54;
+    const light = rnd() < 0.5;
+    const v = light ? 205 + rnd() * 45 : 150 + rnd() * 40;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${v},${v},${v},${0.16 + rnd() * 0.16})`);
+    g.addColorStop(1, `rgba(${v},${v},${v},0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  }
+  // fine grain
+  for (let i = 0; i < 7000; i++) {
+    const a = rnd() * 0.16;
+    ctx.fillStyle = rnd() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
+    ctx.fillRect(rnd() * SZ, rnd() * SZ, 1, 1);
+  }
+  // scattered pebbles
+  for (let i = 0; i < 260; i++) {
+    const r = 0.8 + rnd() * 2.6;
+    const dark = rnd() < 0.5;
+    ctx.fillStyle = dark ? `rgba(70,55,42,${0.3 + rnd() * 0.3})` : `rgba(235,215,192,${0.25 + rnd() * 0.3})`;
+    ctx.beginPath(); ctx.arc(rnd() * SZ, rnd() * SZ, r, 0, 7); ctx.fill();
+  }
+  // dry mud cracks (wandering dark lines with the odd branch)
+  ctx.strokeStyle = 'rgba(64,46,36,0.42)';
+  for (let i = 0; i < 9; i++) {
+    ctx.lineWidth = 0.8 + rnd() * 1.4;
+    let x = rnd() * SZ, y = rnd() * SZ;
+    const ang0 = rnd() * 7;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    let ang = ang0;
+    for (let s = 0; s < 22; s++) {
+      ang += (rnd() - 0.5) * 0.9;
+      x += Math.cos(ang) * (4 + rnd() * 5);
+      y += Math.sin(ang) * (4 + rnd() * 5);
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(26, 24);
+  t.colorSpace = THREE.SRGBColorSpace;
+  _sandTex = t;
+  return t;
+}
+
+// Rippling water: grayscale value field (wavy ripple bands + caustic sparkle +
+// depth streaks). The river material's `color`/`emissive` provide the blue; the
+// canyon world animates `.offset.x` over time so the surface appears to flow.
+export function waterTexture() {
+  if (_waterTex) return _waterTex;
+  const SZ = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = SZ;
+  const ctx = c.getContext('2d');
+  let seed = 0x7a71 >>> 0;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  ctx.fillStyle = '#9aa0a4'; ctx.fillRect(0, 0, SZ, SZ);
+  // wavy ripple highlights (run along the flow direction)
+  for (let i = 0; i < 30; i++) {
+    const y = rnd() * SZ, amp = 1.5 + rnd() * 5, freq = 0.05 + rnd() * 0.09, v = 165 + Math.floor(rnd() * 80);
+    ctx.strokeStyle = `rgba(${v},${v},${v},${0.35 + rnd() * 0.4})`;
+    ctx.lineWidth = 1 + rnd() * 1.6;
+    ctx.beginPath();
+    for (let x = 0; x <= SZ; x += 4) ctx.lineTo(x, y + Math.sin(x * freq + i) * amp);
+    ctx.stroke();
+  }
+  // caustic sparkle
+  for (let i = 0; i < 320; i++) {
+    const v = 205 + rnd() * 50, s = rnd() * 1.7;
+    ctx.fillStyle = `rgba(${v},${v},${v},${rnd() * 0.55})`;
+    ctx.fillRect(rnd() * SZ, rnd() * SZ, s, s);
+  }
+  // darker depth streaks
+  for (let i = 0; i < 10; i++) {
+    ctx.strokeStyle = `rgba(35,48,60,${0.1 + rnd() * 0.16})`;
+    ctx.lineWidth = 2 + rnd() * 3;
+    let x = rnd() * SZ; ctx.beginPath(); ctx.moveTo(x, 0);
+    for (let y = 0; y <= SZ; y += 8) { x += (rnd() - 0.5) * 8; ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  // Feather the BANKS (top/bottom in V) to transparent so the river edges fade
+  // softly into the ground instead of reading as hard rectangular strips. V is
+  // not tiled (repeat.y = 1) so this maps once across the river's width.
+  ctx.globalCompositeOperation = 'destination-in';
+  const fade = ctx.createLinearGradient(0, 0, 0, SZ);
+  fade.addColorStop(0.00, 'rgba(0,0,0,0)');
+  fade.addColorStop(0.34, 'rgba(0,0,0,1)');
+  fade.addColorStop(0.66, 'rgba(0,0,0,1)');
+  fade.addColorStop(1.00, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 0, SZ, SZ);
+  ctx.globalCompositeOperation = 'source-over';
+
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(6, 1);
+  t.colorSpace = THREE.SRGBColorSpace;
+  _waterTex = t;
+  return t;
+}
+
+/** Smooth, textured sandstone material; `color` supplies the rock hue. */
+function rockMat(color) {
+  const t = rockTexture();
+  return new THREE.MeshStandardMaterial({
+    color, map: t, bumpMap: t, bumpScale: 0.6,
+    roughness: 1.0, metalness: 0.0, flatShading: false,
+  });
 }
 
 // =============================================================================
@@ -650,6 +890,170 @@ export function createTree(opts = {}) {
 }
 
 // =============================================================================
+// CANYON ASSETS (level 2) — red-rock spires, hoodoos, walls, and cactus.
+// All sit base-at-y=0. Each builder takes a `seed` so the streamed pool gets
+// varied-but-stable silhouettes (no per-frame flicker). Collision data is set
+// by the world record (spires/hoodoos collide as AABB 'building'; walls as
+// 'wall'; cactus as a low 'tree'-style cylinder).
+// =============================================================================
+
+/** Tiny seeded LCG → [0,1). Stable per call sequence for one builder. */
+function lcg(seed) {
+  let s = (seed | 0) >>> 0 || 1;
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+// ---- SPIRE: an eroded sandstone column (lathed profile + radial noise). -----
+// userData = { radius, height }.
+export function createSpire(opts = {}) {
+  const height = opts.height ?? 44;
+  const radius = opts.radius ?? 5;
+  const rand = lcg(opts.seed ?? ((height * 911) ^ (radius * 4099)));
+  const g = new THREE.Group();
+
+  // Profile: a swelling base tapering to a narrow top, with a couple of bulges
+  // so the silhouette wanders like weathered rock instead of a clean cone.
+  const steps = 12;
+  const pts = [];
+  const swellPh = rand() * 6;
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps;
+    let r = radius * (1.0 - 0.78 * f);
+    r *= 0.82 + 0.30 * Math.sin(f * 6.0 + swellPh);
+    pts.push(new THREE.Vector2(Math.max(0.5, r), f * height));
+  }
+  pts.push(new THREE.Vector2(0.02, height));          // close the tip
+  const geo = new THREE.LatheGeometry(pts, 14);
+  const ph = rand() * 9;
+  displaceRadial(geo, (x, y, z) => fbm(x * 0.5 + ph, y * 0.16, z * 0.5) * radius * 0.22);
+  scaleUV(geo, (2 * Math.PI * radius) / 26, height / 30);
+  g.add(new THREE.Mesh(geo, M.rock));
+
+  // dark grounding skirt where it meets the floor
+  const skirt = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 1.12, radius * 1.32, height * 0.1, 14), M.rockDark);
+  skirt.position.y = height * 0.05;
+  g.add(skirt);
+
+  g.userData = { radius, height };
+  return g;
+}
+
+// ---- HOODOO: pinched lathed column topped by a wide lumpy caprock. ----------
+// userData = { radius, height } — radius is the caprock radius (forgiving hit).
+export function createHoodoo(opts = {}) {
+  const height = opts.height ?? 26;
+  const rand = lcg(opts.seed ?? (height * 2657));
+  const trunkR = (opts.radius ?? 3.4) * (0.85 + rand() * 0.2);
+  const g = new THREE.Group();
+
+  const neck = height * 0.72;
+  const pts = [
+    new THREE.Vector2(trunkR * 0.95, 0),
+    new THREE.Vector2(trunkR * 0.78, neck * 0.22),
+    new THREE.Vector2(trunkR * 0.50, neck * 0.50),     // pinch
+    new THREE.Vector2(trunkR * 0.64, neck * 0.76),
+    new THREE.Vector2(trunkR * 0.56, neck),
+  ];
+  const tg = new THREE.LatheGeometry(pts, 12);
+  const ph = rand() * 9;
+  displaceRadial(tg, (x, y, z) => fbm(x * 0.6 + ph, y * 0.2, z * 0.6) * trunkR * 0.18);
+  scaleUV(tg, (2 * Math.PI * trunkR) / 22, neck / 24);
+  g.add(new THREE.Mesh(tg, M.rock));
+
+  // wide flattened caprock (lumpy squashed sphere)
+  const capR = trunkR * 2.0;
+  const capGeo = new THREE.SphereGeometry(capR, 12, 9);
+  capGeo.scale(1, 0.42, 1);
+  displaceRadial(capGeo, (x, y, z) => fbm(x * 0.5 + ph, y * 0.4, z * 0.5) * capR * 0.12);
+  const cap = new THREE.Mesh(capGeo, M.hoodooCap);
+  cap.position.y = neck + capR * 0.16;
+  g.add(cap);
+
+  g.userData = { radius: capR, height };
+  return g;
+}
+
+// ---- CANYON WALL CHUNK: a tall eroded rock mass spanning `length` along X. --
+// A single noise-DISPLACED box (position-based displacement keeps it watertight
+// — no cracked edges) so it reads as a rough cliff from any angle, with the
+// sandstone texture giving sedimentary banding. Streamed end-to-end to form the
+// continuous left/right walls. userData = { halfW (X), halfD (Z), height }.
+export function createCanyonWall(opts = {}) {
+  const length = opts.length ?? 26;       // along X (abuts neighbours)
+  const depth = opts.depth ?? 18;          // thickness along Z
+  const height = opts.height ?? 88;        // visual height (well above max altitude)
+  const rand = lcg(opts.seed ?? (length * 131 + height * 17));
+  const ph = rand() * 12;
+  const g = new THREE.Group();
+
+  const geo = new THREE.BoxGeometry(length, height, depth, 5, 16, 3);
+  geo.translate(0, height / 2, 0);          // base at y=0
+  const amp = Math.min(length, depth) * 0.22;
+  displaceXYZ(geo, (x, y, z) => {
+    const f = y / height;                   // 0 base .. 1 top
+    const grow = Math.min(1, f * 5);        // keep the foot planted on the ground
+    const dx = fbm(x * 0.16 + ph, y * 0.10, z * 0.16) * amp * grow;
+    const dz = fbm(x * 0.16 + ph + 3.1, y * 0.10, z * 0.16 + 1.7) * amp * grow;
+    let dy = 0;
+    if (f > 0.58) dy = -((f - 0.58) / 0.42) * (0.6 + 0.5 * fbm(x * 0.4 + ph, 0, z * 0.4)) * height * 0.14;
+    return [dx, dy, dz];
+  });
+  scaleUV(geo, length / 22, height / 28);
+  g.add(new THREE.Mesh(geo, M.canyonWall));
+
+  g.userData = { halfW: length / 2, halfD: depth / 2, height: Math.min(height, 80) };
+  return g;
+}
+
+// ---- CACTUS: a small saguaro (trunk + arms + bloom). Low obstacle. ----------
+// userData = { radius, height }.
+export function createCactus(opts = {}) {
+  const height = opts.height ?? 9;
+  const rand = lcg(opts.seed ?? (height * 5381));
+  const g = new THREE.Group();
+  const r = height * 0.12;
+
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.1, height, 9), M.cactus);
+  trunk.position.y = height / 2;
+  g.add(trunk);
+  // rounded crown
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 7), M.cactus);
+  crown.position.y = height;
+  g.add(crown);
+
+  // 0–2 arms: short upright limbs joined by an elbow.
+  const arms = (rand() * 3) | 0;
+  for (let i = 0; i < arms; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const atY = height * (0.4 + rand() * 0.2);
+    const armLen = height * (0.3 + rand() * 0.15);
+    const elbow = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r * 0.7, r * 2.2, 7), M.cactus);
+    elbow.rotation.z = Math.PI / 2;
+    elbow.position.set(side * r * 1.4, atY, 0);
+    g.add(elbow);
+    const up = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r * 0.7, armLen, 7), M.cactus);
+    up.position.set(side * r * 2.3, atY + armLen / 2, 0);
+    g.add(up);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(r * 0.7, 7, 6), M.cactus);
+    tip.position.set(side * r * 2.3, atY + armLen, 0);
+    g.add(tip);
+  }
+  // little bloom
+  if (rand() < 0.6) {
+    const bloom = new THREE.Mesh(new THREE.SphereGeometry(r * 0.6, 7, 6), M.cactusFlower);
+    bloom.position.y = height + r * 0.6;
+    g.add(bloom);
+  }
+  // shaded ridge down the trunk
+  const ridge = box(r * 0.4, height * 0.9, r * 0.4, M.cactusDark, r * 0.9, height * 0.5, 0);
+  g.add(ridge);
+
+  g.userData = { radius: r * 2.6, height };
+  return g;
+}
+
+// =============================================================================
 // SHADOW — flat dark disc on the XZ plane. Game places at (x, 0.05, z) and
 // scales by altitude. renderOrder = -1, depthWrite off, semi-transparent.
 // =============================================================================
@@ -743,6 +1147,10 @@ const COLOR_MAT_MAP = {
   treeTrunk: [M.treeTrunk], treeLeaf: [M.treeLeaf], treeLeaf2: [M.treeLeaf2],
   buildingA: [BUILDING_BODY[0]], buildingB: [BUILDING_BODY[1]],
   buildingC: [BUILDING_BODY[2]], buildingD: [BUILDING_BODY[3]],
+  // canyon
+  rock: [M.rock], rockDark: [M.rockDark], rockLight: [M.rockLight],
+  hoodooCap: [M.hoodooCap], canyonWall: [M.canyonWall], canyonWallDark: [M.canyonWallDark],
+  cactus: [M.cactus], cactusDark: [M.cactusDark], cactusFlower: [M.cactusFlower],
 };
 
 /**

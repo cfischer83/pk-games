@@ -53,9 +53,11 @@
   <div id="menu" class="overlay">
     <div class="panel">
       <h1 class="title">JE<span class="t-accent">T</span>S</h1>
-      <p class="subtitle">PLANET&nbsp;KODIAK&nbsp;//&nbsp;SECTOR&nbsp;1</p>
+      <p class="subtitle">BY PLANET KODIAK</p>
 
       <button id="btn-start" class="btn btn-primary">START&nbsp;MISSION</button>
+      <!-- Sector picker: shown once more than one sector is unlocked (main.js). -->
+      <div id="sector-list" class="sector-list hidden"></div>
 
       <div class="options">
         <button id="btn-music" class="btn btn-toggle" data-on="true">MUSIC: ON</button>
@@ -63,7 +65,6 @@
         <button id="btn-help" class="btn btn-ghost">HOW TO PLAY</button>
       </div>
 
-      <p class="hi-line">HIGH SCORE<span id="hi-score">--</span></p>
       <p class="hint">Audio starts after you press START.</p>
       <p class="hint"><a href="../index.html">PK Games Home</a></p>
     </div>
@@ -164,8 +165,8 @@
   <div id="debug-dialog" class="overlay hidden">
     <div class="panel">
       <h2 class="panel-title">DEBUG</h2>
-      <p class="brief">Developer tools. Press <b>Ctrl+D</b> on the menu to open this.</p>
-      <button id="btn-gallery" class="btn btn-primary">🎨 ASSET GALLERY</button>
+      <p class="brief">Asset gallery — pick the sector to inspect its art.</p>
+      <div id="debug-levels"></div>
       <button id="btn-debug-close" class="btn btn-ghost">CLOSE</button>
     </div>
   </div>

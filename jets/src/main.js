@@ -11,7 +11,7 @@ import { AudioEngine } from './audio.js';
 import { InputManager } from './input.js';
 import { Hud } from './hud.js';
 import { Game } from './game.js';
-import { Gallery, EDITABLE_COLORS } from './gallery.js';
+import { Gallery, getEditableColors } from './gallery.js';
 import { STORE, PALETTE } from './config.js';
 import { LEVELS } from './levels.js';
 
@@ -32,6 +32,9 @@ let currentLevel = 0;
 let rafId = 0;
 let padHintShown = false;
 let padHintTimer = 0;
+// On the game-over screen: index of the next sector to advance to ('NEXT
+// SECTOR'), or null to replay the current one ('FLY AGAIN').
+let goNextIndex = null;
 // Briefly ignore "confirm" input right after the game-over screen appears so a
 // fire/bomb key still held from dying can't instantly skip the screen.
 let gameoverReady = false;
@@ -43,9 +46,11 @@ const game = new Game({
   onGameOver: handleGameOver,
 });
 
-// Debug asset gallery (lazily built on first open; shares the game's renderer).
-let gallery = null;
-let galleryColorsBuilt = false;
+// Debug asset gallery — one per theme, lazily built on first open; all share
+// the game's single renderer.
+const galleries = { city: null, canyon: null };
+let activeGallery = null;
+let galleryColorsTheme = null;
 
 input.start();
 
@@ -54,7 +59,7 @@ let musicEnabled = readBool(STORE.MUSIC, true);
 let sfxEnabled = readBool(STORE.SFX, true);
 audio.setMusicEnabled(musicEnabled);
 audio.setSfxEnabled(sfxEnabled);
-// NOTE: reflectToggles()/updateHiScore() touch the `el` DOM helper, which is a
+// NOTE: reflectToggles()/refreshMenu() touch the `el` DOM helper, which is a
 // `const` declared below — they are called after that section to avoid the TDZ.
 
 function readBool(key, dflt) {
@@ -88,21 +93,22 @@ el('btn-pause-sfx').addEventListener('click', () => toggleSfx());
 el('btn-quit').addEventListener('click', () => { audio.uiSelect(); quitToMenu(); });
 
 // gameover buttons
-el('btn-again').addEventListener('click', () => { audio.uiSelect(); startGame(); });
+el('btn-again').addEventListener('click', () => { audio.uiSelect(); flyAgainOrNext(); });
 el('btn-go-menu').addEventListener('click', () => { audio.uiSelect(); quitToMenu(); });
 
 // debug dialog + gallery
 const elDebug = el('debug-dialog');
 const elGalleryUI = el('gallery-ui');
-el('btn-gallery').addEventListener('click', () => { unlockAudio(); enterGallery(); });
+buildDebugLevels();               // one "GALLERY: SECTOR n" button per level
 el('btn-debug-close').addEventListener('click', () => { audio.uiSelect(); debugOpen = false; hide(elDebug); });
 el('gx-back').addEventListener('click', () => { audio.uiSelect(); exitGallery(); });
 elGalleryUI.querySelectorAll('.gx-btn').forEach((b) => {
   b.addEventListener('click', () => {
+    if (!activeGallery) return;
     const a = b.dataset.action;
-    if (a === 'firePlayer') gallery.firePlayer();
-    else if (a === 'fireEnemy') gallery.fireEnemy();
-    else gallery.explode(a);          // 'small' | 'big' | 'bomb' | 'muzzle'
+    if (a === 'firePlayer') activeGallery.firePlayer();
+    else if (a === 'fireEnemy') activeGallery.fireEnemy();
+    else activeGallery.explode(a);          // 'small' | 'big' | 'bomb' | 'muzzle'
   });
 });
 
@@ -117,9 +123,9 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Now that `el` and the buttons exist, paint initial toggle + high-score state.
+// Now that `el` and the buttons exist, paint initial toggle + menu/level state.
 reflectToggles();
-updateHiScore();
+refreshMenu();
 
 // ---------------------------------------------------------------------------
 // Audio unlock — must happen inside a user gesture
@@ -216,20 +222,21 @@ function quitToMenu() {
   hide(elPause); hide(elGameOver);
   show(elMenu);
   audio.stopMusic();
-  game.toAttract();
-  updateHiScore();
+  refreshMenu();                 // rebuild sector list (picks up new unlocks)
+  game.toAttract(currentLevel);  // preview the selected sector's theme
 }
 
-// ---- Debug asset gallery --------------------------------------------------
-function enterGallery() {
+// ---- Debug asset gallery (per theme) --------------------------------------
+function enterGallery(theme = 'city') {
   debugOpen = false;
   hide(elDebug); hide(elMenu);
   input.reset();                 // clear the Ctrl+D keys so the jet doesn't drift
   appState = App.GALLERY;
   setBodyState('gallery');
-  if (!gallery) gallery = new Gallery({ renderer: game.renderer, audio });
-  if (!galleryColorsBuilt) { buildGalleryColors(); galleryColorsBuilt = true; }
-  gallery.start();
+  if (!galleries[theme]) galleries[theme] = new Gallery({ renderer: game.renderer, audio, theme });
+  activeGallery = galleries[theme];
+  if (galleryColorsTheme !== theme) { buildGalleryColors(theme); galleryColorsTheme = theme; }
+  activeGallery.start();
   show(elGalleryUI);
 }
 
@@ -237,16 +244,29 @@ function exitGallery() {
   appState = App.MENU;
   setBodyState('menu');
   hide(elGalleryUI);
-  gallery.stop();
+  if (activeGallery) activeGallery.stop();
   show(elMenu);
-  game.toAttract();              // resume the attract backdrop behind the menu
+  game.toAttract(currentLevel);  // resume the attract backdrop behind the menu
 }
 
-function buildGalleryColors() {
+/** Build a "GALLERY: SECTOR n — NAME" button per level into the debug dialog. */
+function buildDebugLevels() {
+  const root = el('debug-levels');
+  root.innerHTML = '';
+  LEVELS.forEach((lvl) => {
+    const b = document.createElement('button');
+    b.className = 'btn btn-primary';
+    b.textContent = `🎨 SECTOR ${lvl.id} — ${lvl.name}`;
+    b.addEventListener('click', () => { unlockAudio(); enterGallery(lvl.theme); });
+    root.appendChild(b);
+  });
+}
+
+function buildGalleryColors(theme) {
   const root = el('gx-colors');
   root.innerHTML = '';
   const toHex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0').slice(-6);
-  for (const grp of EDITABLE_COLORS) {
+  for (const grp of getEditableColors(theme)) {
     const h = document.createElement('div');
     h.className = 'gx-group-title';
     h.textContent = grp.group;
@@ -260,7 +280,7 @@ function buildGalleryColors() {
       input.type = 'color';
       input.value = toHex(PALETTE[key] != null ? PALETTE[key] : 0xffffff);
       input.addEventListener('input', () => {
-        gallery.setColor(key, parseInt(input.value.slice(1), 16));
+        if (activeGallery) activeGallery.setColor(key, parseInt(input.value.slice(1), 16));
       });
       row.appendChild(span);
       row.appendChild(input);
@@ -280,6 +300,19 @@ function handleGameOver(win, stats) {
   const levelId = (stats.level && stats.level.id) || 1;
   const hi = saveHiScore(levelId, stats.score);
   sendAnalytics(win ? 'win' : 'lose', levelId, stats.score);
+
+  // Clearing a sector unlocks the next one. Offer 'NEXT SECTOR' on a win if a
+  // further (now-unlocked) level exists; otherwise replay the current one.
+  let nextLabel;
+  if (win) {
+    markCleared(levelId);
+    const next = currentLevel + 1;
+    if (next < LEVELS.length) { goNextIndex = next; nextLabel = 'NEXT SECTOR ▸'; }
+    else { goNextIndex = null; nextLabel = 'PLAY AGAIN'; }
+  } else {
+    goNextIndex = null; nextLabel = 'FLY AGAIN';
+  }
+
   el('go-title').textContent = win ? 'SECTOR CLEAR!' : 'MISSION FAILED';
   el('go-title').style.color = win ? 'var(--c-green)' : 'var(--c-red)';
   el('go-stats').innerHTML =
@@ -287,8 +320,14 @@ function handleGameOver(win, stats) {
     (win ? `BONUS LIVES: ${stats.livesLeft}<br>` : '') +
     (hi.isNew ? `<span class="new-hi">★ NEW HIGH SCORE ★</span>`
               : `HIGH SCORE: ${hi.best}`);
-  el('btn-again').textContent = win ? 'NEXT RUN' : 'FLY AGAIN';
+  el('btn-again').textContent = nextLabel;
   show(elGameOver);
+}
+
+/** Game-over primary button: advance to the unlocked next sector, or replay. */
+function flyAgainOrNext() {
+  if (goNextIndex != null) currentLevel = goNextIndex;
+  startGame();
 }
 
 function openHelp() { helpOpen = true; show(elHelp); audio.uiSelect(); }
@@ -310,11 +349,72 @@ function saveHiScore(levelId, score) {
   }
   return { best: prev, isNew: false };
 }
-function updateHiScore() {
-  const lvl = LEVELS[currentLevel] || LEVELS[0];
-  const hs = getHiScore(lvl ? lvl.id : 1);
-  const span = el('hi-score');
-  if (span) span.textContent = hs > 0 ? String(hs) : '--';
+
+// ---------------------------------------------------------------------------
+// Progression — clearing a sector unlocks the next (persisted in localStorage)
+// ---------------------------------------------------------------------------
+function clearedKey(levelId) { return `${STORE.CLEARED}.${levelId}`; }
+function isCleared(levelId) {
+  try { return localStorage.getItem(clearedKey(levelId)) === 'true'; } catch (_e) { return false; }
+}
+function markCleared(levelId) {
+  try { localStorage.setItem(clearedKey(levelId), 'true'); } catch (_e) {}
+}
+/** A sector is unlocked if it's the first, or the previous sector was cleared. */
+function isUnlocked(index) {
+  if (index <= 0) return true;
+  const prev = LEVELS[index - 1];
+  return prev ? isCleared(prev.id) : false;
+}
+function unlockedCount() {
+  let n = 0;
+  for (let i = 0; i < LEVELS.length; i++) if (isUnlocked(i)) n++;
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Main-menu sector picker
+// ---------------------------------------------------------------------------
+// Until a second sector is unlocked, the menu keeps its single START button.
+// Once you can choose, the START button is replaced by a list of buttons for the
+// UNLOCKED sectors only — locked sectors aren't shown at all until you earn them.
+function refreshMenu() {
+  const list = el('sector-list');
+  const startBtn = el('btn-start');
+  let highest = 0;
+  for (let i = 0; i < LEVELS.length; i++) if (isUnlocked(i)) highest = i;
+
+  if (unlockedCount() <= 1) {
+    // Single sector: keep the START button, and carry its high score on it so
+    // the score is always tied to a level (no ambiguous generic readout).
+    show(startBtn);
+    hide(list);
+    currentLevel = 0;
+    const hi1 = getHiScore((LEVELS[0] && LEVELS[0].id) || 1);
+    startBtn.textContent = hi1 > 0 ? `START · HI ${hi1}` : 'START MISSION';
+  } else {
+    hide(startBtn);
+    show(list);
+    list.innerHTML = '';
+    LEVELS.forEach((lvl, i) => {
+      if (!isUnlocked(i)) return;            // hide locked sectors entirely
+      const hs = getHiScore(lvl.id);
+      const b = document.createElement('button');
+      b.className = 'btn sector-btn';
+      b.innerHTML = `<span class="sector-name">LEVEL ${lvl.id}: ${lvl.name}</span>` +
+                    (hs > 0 ? `<span class="sector-hi">HI ${hs}</span>` : '');
+      b.addEventListener('click', () => launchLevel(i));
+      list.appendChild(b);
+    });
+    currentLevel = highest;
+  }
+}
+
+/** Select + immediately start a sector from the menu picker. */
+function launchLevel(i) {
+  unlockAudio();
+  currentLevel = i;
+  startGame();
 }
 
 // ---------------------------------------------------------------------------
@@ -393,7 +493,7 @@ function loop(now) {
   if (s.gamepadActivity) setUsingGamepad(true);
 
   // Gallery owns the canvas while active; the game does not render.
-  if (appState === App.GALLERY) { gallery.frame(now, s); return; }
+  if (appState === App.GALLERY && activeGallery) { activeGallery.frame(now, s); return; }
 
   // ---- Gamepad menu navigation (when a menu overlay is up) ----
   refreshNav();
@@ -448,7 +548,7 @@ function updatePadHint(s) {
 // ---------------------------------------------------------------------------
 function onResize() {
   game.resize();          // also updates the shared renderer's size
-  if (gallery) gallery.resize();
+  for (const k in galleries) { if (galleries[k]) galleries[k].resize(); }
   updateOrientation();
 }
 window.addEventListener('resize', onResize);
@@ -591,6 +691,7 @@ function flash(elm) {
 // ---------------------------------------------------------------------------
 // Reveal — start in attract mode behind the menu
 // ---------------------------------------------------------------------------
-game.toAttract();
+refreshMenu();
+game.toAttract(currentLevel);
 setBodyState('menu');
 hide(elLoading);

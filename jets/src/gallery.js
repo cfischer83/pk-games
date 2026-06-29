@@ -16,19 +16,27 @@ import { Effects } from './effects.js';
 import {
   createPlayerJet, createEnemyJet, createShadow, createBomb,
   createBuilding, createHill, createTree,
-  createPlayerBullet, createEnemyBullet, setMatColor,
+  createSpire, createHoodoo, createCactus, createCanyonWall,
+  createPlayerBullet, createEnemyBullet, setMatColor, sandTexture, waterTexture,
 } from './meshes.js';
 
-// Colour swatches exposed to the editor UI (built by main.js).
+// Colour groups shared across themes (jets + projectiles look identical).
+const JET_COLORS = { group: 'Player Jet', items: [
+  ['jetBody', 'Body'], ['jetBodyDark', 'Body (dark)'], ['jetAccent', 'Accent / tail'],
+  ['jetCockpit', 'Cockpit'], ['jetEngine', 'Engine glow'], ['jetIntake', 'Intake'],
+] };
+const ENEMY_COLORS = { group: 'Enemy Jet', items: [
+  ['enemyBody', 'Body'], ['enemyBodyDark', 'Body (dark)'], ['enemyAccent', 'Accent'],
+  ['enemyCockpit', 'Cockpit'], ['enemyEngine', 'Engine glow'],
+] };
+const PROJECTILE_COLORS = { group: 'Projectiles', items: [
+  ['playerBullet', 'Player blade'], ['playerBulletCore', 'Player core'],
+  ['enemyBullet', 'Enemy blade'], ['enemyBulletCore', 'Enemy core'],
+] };
+
+// Colour swatches exposed to the editor UI (built by main.js). City theme.
 export const EDITABLE_COLORS = [
-  { group: 'Player Jet', items: [
-    ['jetBody', 'Body'], ['jetBodyDark', 'Body (dark)'], ['jetAccent', 'Accent / tail'],
-    ['jetCockpit', 'Cockpit'], ['jetEngine', 'Engine glow'], ['jetIntake', 'Intake'],
-  ] },
-  { group: 'Enemy Jet', items: [
-    ['enemyBody', 'Body'], ['enemyBodyDark', 'Body (dark)'], ['enemyAccent', 'Accent'],
-    ['enemyCockpit', 'Cockpit'], ['enemyEngine', 'Engine glow'],
-  ] },
+  JET_COLORS, ENEMY_COLORS,
   { group: 'Buildings', items: [
     ['buildingA', 'Variant A'], ['buildingB', 'Variant B'], ['buildingC', 'Variant C'],
     ['buildingD', 'Variant D'], ['buildingTop', 'Roofs / details'],
@@ -37,23 +45,44 @@ export const EDITABLE_COLORS = [
     ['hill', 'Hill'], ['hillDark', 'Hill base'], ['treeTrunk', 'Tree trunk'],
     ['treeLeaf', 'Tree leaves'], ['treeLeaf2', 'Tree leaves 2'],
   ] },
-  { group: 'Projectiles', items: [
-    ['playerBullet', 'Player blade'], ['playerBulletCore', 'Player core'],
-    ['enemyBullet', 'Enemy blade'], ['enemyBulletCore', 'Enemy core'],
-  ] },
+  PROJECTILE_COLORS,
   { group: 'Environment', items: [
     ['sky', 'Sky'], ['ground', 'Ground'], ['road', 'Roads'], ['roadLine', 'Road lines'],
     ['roadEdge', 'Road edges / intersection'],
   ] },
 ];
 
+// Canyon theme swatches.
+export const EDITABLE_COLORS_CANYON = [
+  JET_COLORS, ENEMY_COLORS,
+  { group: 'Canyon Rock', items: [
+    ['rock', 'Rock'], ['rockDark', 'Rock (shaded)'], ['rockLight', 'Rock (sunlit)'],
+    ['hoodooCap', 'Hoodoo cap'], ['canyonWall', 'Wall'], ['canyonWallDark', 'Wall base'],
+  ] },
+  { group: 'Flora & Water', items: [
+    ['cactus', 'Cactus'], ['cactusDark', 'Cactus (shaded)'], ['cactusFlower', 'Bloom'],
+    ['river', 'River'],
+  ] },
+  PROJECTILE_COLORS,
+  { group: 'Environment', items: [
+    ['canyonSky', 'Sky'], ['canyonFloor', 'Floor'], ['canyonFloorEdge', 'Floor edge'],
+    ['canyonMesa', 'Distant mesa'],
+  ] },
+];
+
+/** Editor colour groups for a theme ('city' | 'canyon'). */
+export function getEditableColors(theme) {
+  return theme === 'canyon' ? EDITABLE_COLORS_CANYON : EDITABLE_COLORS;
+}
+
 const STRAFE = 52, CLIMB = 42;
 
 export class Gallery {
-  /** @param {{renderer: THREE.WebGLRenderer, audio: object}} opts */
-  constructor({ renderer, audio }) {
+  /** @param {{renderer: THREE.WebGLRenderer, audio: object, theme?: string}} opts */
+  constructor({ renderer, audio, theme = 'city' }) {
     this.renderer = renderer;
     this.audio = audio;
+    this.theme = theme;
     this.active = false;
     this._lastNow = null;
     this._time = 0;
@@ -111,37 +140,17 @@ export class Gallery {
 
   // ---- Layout --------------------------------------------------------------
   _build() {
-    // Large ground so its edges never show on screen ("ground start").
-    this._groundMat = new THREE.MeshStandardMaterial({ color: PALETTE.ground, roughness: 0.95, metalness: 0.0 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1500, 1300), this._groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.set(20, 0, 10);
-    this.scene.add(ground);
+    // Per-theme sky behind the assets.
+    this.scene.background.setHex(this.theme === 'canyon' ? PALETTE.canyonSky : PALETTE.sky);
+    this._buildCommon();
+    if (this.theme === 'canyon') this._buildCanyonEnv();
+    else this._buildCityEnv();
+  }
 
-    this._roadMat = new THREE.MeshStandardMaterial({
-      color: PALETTE.road, roughness: 0.7, emissive: PALETTE.road, emissiveIntensity: 0.2 });
-    this._dashMat = new THREE.MeshStandardMaterial({
-      color: PALETTE.roadLine, roughness: 0.5, emissive: PALETTE.roadLine, emissiveIntensity: 0.6 });
-    this._edgeMat = new THREE.MeshStandardMaterial({
-      color: PALETTE.roadEdge, roughness: 0.4, emissive: PALETTE.roadEdge, emissiveIntensity: 0.55 });
-
-    // Everything below is authored in SCREEN space via _worldAt(sR, sU, y):
-    //   sR = screen-right, sU = screen-up (world-ortho units from the look-at).
-
-    // Roads: a long crossroads low on screen that runs off all edges.
-    const ri = this._worldAt(6, -72, 0);    // intersection world position (low/front)
-    const lroad = new THREE.Mesh(new THREE.PlaneGeometry(720, 16), this._roadMat);
-    lroad.rotation.x = -Math.PI / 2; lroad.position.set(ri.x, 0.04, ri.z); this.scene.add(lroad);
-    const croad = new THREE.Mesh(new THREE.PlaneGeometry(16, 560), this._roadMat);
-    croad.rotation.x = -Math.PI / 2; croad.position.set(ri.x, 0.035, ri.z); this.scene.add(croad);
-    const inter = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), this._edgeMat);
-    inter.rotation.x = -Math.PI / 2; inter.position.set(ri.x, 0.08, ri.z); this.scene.add(inter);
-    for (let i = 0; i < 30; i++) {
-      const d = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 1.1), this._dashMat);
-      d.rotation.x = -Math.PI / 2; d.position.set(ri.x - 188 + i * 13, 0.07, ri.z); this.scene.add(d);
-    }
-    this._labelAt('ROADS + INTERSECTION', -34, -58);
-
+  // Assets shared by every theme: the controllable jet, enemy jets, bomb, bolts.
+  // Authored in SCREEN space via _worldAt(sR, sU, y): sR = screen-right,
+  // sU = screen-up (world-ortho units from the look-at).
+  _buildCommon() {
     // Player jet — controllable (see _updatePlayer). Has a shadow.
     const jp = this._worldAt(-84, -8, 22);
     this.jet = createPlayerJet();
@@ -158,6 +167,48 @@ export class Gallery {
     this.enemyB = createEnemyJet(); this.enemyB.position.set(eb.x, 30, eb.z); this.scene.add(this.enemyB);
     this.enemyBShadow = createShadow(); this.scene.add(this.enemyBShadow);
     this._labelAt('ENEMY JET', -56, 46);
+
+    // Bomb (spins in place)
+    const bp = this._worldAt(-116, -44, 16);
+    this.bomb = createBomb(); this.bomb.position.set(bp.x, 16, bp.z); this.bomb.scale.setScalar(2.0);
+    this.scene.add(this.bomb);
+    this._labelAt('BOMB', -116, -28);
+
+    // Static bullet samples — small and stationary, at the bolts' true size.
+    this._samplePlayer = null; this._sampleEnemy = null;
+    this._rebuildSampleBolts();
+    this._labelAt('BOLTS', -116, 24);
+  }
+
+  // City env: ground, roads, buildings A–D, hill, trees.
+  _buildCityEnv() {
+    // Large ground so its edges never show on screen ("ground start").
+    this._groundMat = new THREE.MeshStandardMaterial({ color: PALETTE.ground, roughness: 0.95, metalness: 0.0 });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1500, 1300), this._groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(20, 0, 10);
+    this.scene.add(ground);
+
+    this._roadMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.road, roughness: 0.7, emissive: PALETTE.road, emissiveIntensity: 0.2 });
+    this._dashMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.roadLine, roughness: 0.5, emissive: PALETTE.roadLine, emissiveIntensity: 0.6 });
+    this._edgeMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.roadEdge, roughness: 0.4, emissive: PALETTE.roadEdge, emissiveIntensity: 0.55 });
+
+    // Roads: a long crossroads low on screen that runs off all edges.
+    const ri = this._worldAt(6, -72, 0);    // intersection world position (low/front)
+    const lroad = new THREE.Mesh(new THREE.PlaneGeometry(720, 16), this._roadMat);
+    lroad.rotation.x = -Math.PI / 2; lroad.position.set(ri.x, 0.04, ri.z); this.scene.add(lroad);
+    const croad = new THREE.Mesh(new THREE.PlaneGeometry(16, 560), this._roadMat);
+    croad.rotation.x = -Math.PI / 2; croad.position.set(ri.x, 0.035, ri.z); this.scene.add(croad);
+    const inter = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), this._edgeMat);
+    inter.rotation.x = -Math.PI / 2; inter.position.set(ri.x, 0.08, ri.z); this.scene.add(inter);
+    for (let i = 0; i < 30; i++) {
+      const d = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 1.1), this._dashMat);
+      d.rotation.x = -Math.PI / 2; d.position.set(ri.x - 188 + i * 13, 0.07, ri.z); this.scene.add(d);
+    }
+    this._labelAt('ROADS + INTERSECTION', -34, -58);
 
     // Buildings A..D — a level LEFT-TO-RIGHT row (vary screen-right, same base),
     // well spaced so each reads fully without overlap.
@@ -182,17 +233,57 @@ export class Gallery {
     const tp2 = this._worldAt(40, -22, 0);
     const t2 = createTree({ height: 10 }); t2.position.set(tp2.x, 0, tp2.z); this.scene.add(t2);
     this._labelAt('TREE', 18, -26);
+  }
 
-    // Bomb (spins in place)
-    const bp = this._worldAt(-116, -44, 16);
-    this.bomb = createBomb(); this.bomb.position.set(bp.x, 16, bp.z); this.bomb.scale.setScalar(2.0);
-    this.scene.add(this.bomb);
-    this._labelAt('BOMB', -116, -28);
+  // Canyon env: red floor, winding river, a wall chunk, spires, hoodoos, cactus.
+  _buildCanyonEnv() {
+    this._canyonFloorMat = new THREE.MeshStandardMaterial({ color: PALETTE.canyonFloor, map: sandTexture(), roughness: 0.97, metalness: 0.0 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(1500, 1300), this._canyonFloorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(20, 0, 10);
+    this.scene.add(floor);
 
-    // Static bullet samples — small and stationary, at the bolts' true size.
-    this._samplePlayer = null; this._sampleEnemy = null;
-    this._rebuildSampleBolts();
-    this._labelAt('BOLTS', -116, 24);
+    this._canyonEdgeMat = new THREE.MeshStandardMaterial({ color: PALETTE.canyonFloorEdge, roughness: 0.98 });
+    this._mesaMat = new THREE.MeshStandardMaterial({ color: PALETTE.canyonMesa, roughness: 0.98 });
+
+    // River sample — textured rippling water ribbon low on screen.
+    this._riverMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.river, map: waterTexture(), bumpMap: waterTexture(), bumpScale: 0.25,
+      emissive: PALETTE.river, emissiveIntensity: 0.16, roughness: 0.25, metalness: 0.0,
+      transparent: true, depthWrite: false });
+    const rv = this._worldAt(2, -70, 0);
+    const river = new THREE.Mesh(new THREE.PlaneGeometry(360, 18), this._riverMat);
+    river.rotation.x = -Math.PI / 2; river.position.set(rv.x, 0.04, rv.z); this.scene.add(river);
+    this._labelAt('RIVER', -28, -58);
+
+    // Canyon wall chunk (kept shorter than in-game so it fits the frame).
+    const wp = this._worldAt(-26, 6, 0);
+    const wall = createCanyonWall({ length: 30, depth: 16, height: 42, seed: 99 });
+    wall.position.set(wp.x, 0, wp.z); this.scene.add(wall);
+    this._labelAt('CANYON WALL', -26, 44);
+
+    // Spires — two of differing height.
+    const spireH = [40, 52];
+    [2, 22].forEach((sR, i) => {
+      const sp = this._worldAt(sR, 4, 0);
+      const s = createSpire({ height: spireH[i], radius: 5, seed: (i + 1) * 313 });
+      s.position.set(sp.x, 0, sp.z); this.scene.add(s);
+    });
+    this._labelAt('SPIRE', 12, 4 + 52 * 0.84 + 6);
+
+    // Hoodoo.
+    const hp = this._worldAt(42, 4, 0);
+    const hoodoo = createHoodoo({ height: 28, seed: 7 });
+    hoodoo.position.set(hp.x, 0, hp.z); this.scene.add(hoodoo);
+    this._labelAt('HOODOO', 42, 4 + 28 * 0.9 + 6);
+
+    // Cactus — a lower row.
+    [16, 36].forEach((sR, i) => {
+      const cp = this._worldAt(sR, -40, 0);
+      const c = createCactus({ height: i === 0 ? 11 : 8, seed: (i + 3) * 101 });
+      c.position.set(cp.x, 0, cp.z); this.scene.add(c);
+    });
+    this._labelAt('CACTUS', 26, -24);
   }
 
   _rebuildSampleBolts() {
@@ -360,11 +451,19 @@ export class Gallery {
   /** Recolour an element live (PALETTE + cached materials + local env/bolts). */
   setColor(key, hex) {
     setMatColor(key, hex);
+    // city env
     if (key === 'sky') this.scene.background.setHex(hex);
-    else if (key === 'ground') this._groundMat.color.setHex(hex);
-    else if (key === 'road') { this._roadMat.color.setHex(hex); this._roadMat.emissive.setHex(hex); }
-    else if (key === 'roadLine') { this._dashMat.color.setHex(hex); this._dashMat.emissive.setHex(hex); }
-    else if (key === 'roadEdge') { this._edgeMat.color.setHex(hex); this._edgeMat.emissive.setHex(hex); }
+    else if (key === 'ground') this._groundMat && this._groundMat.color.setHex(hex);
+    else if (key === 'road') { if (this._roadMat) { this._roadMat.color.setHex(hex); this._roadMat.emissive.setHex(hex); } }
+    else if (key === 'roadLine') { if (this._dashMat) { this._dashMat.color.setHex(hex); this._dashMat.emissive.setHex(hex); } }
+    else if (key === 'roadEdge') { if (this._edgeMat) { this._edgeMat.color.setHex(hex); this._edgeMat.emissive.setHex(hex); } }
+    // canyon env
+    else if (key === 'canyonSky') this.scene.background.setHex(hex);
+    else if (key === 'canyonFloor') this._canyonFloorMat && this._canyonFloorMat.color.setHex(hex);
+    else if (key === 'canyonFloorEdge') this._canyonEdgeMat && this._canyonEdgeMat.color.setHex(hex);
+    else if (key === 'canyonMesa') this._mesaMat && this._mesaMat.color.setHex(hex);
+    else if (key === 'river') { if (this._riverMat) { this._riverMat.color.setHex(hex); this._riverMat.emissive.setHex(hex); } }
+    else if (key === 'riverEdge') { if (this._riverEdgeMat) { this._riverEdgeMat.color.setHex(hex); this._riverEdgeMat.emissive.setHex(hex); } }
     // bolts read PALETTE at build time, so rebuild the static samples (blade or core)
     else if (key.startsWith('playerBullet') || key.startsWith('enemyBullet')) this._rebuildSampleBolts();
   }

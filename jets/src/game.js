@@ -18,8 +18,9 @@
 // =============================================================================
 
 import * as THREE from 'three';
-import { CAMERA, GAME, PALETTE } from './config.js';
+import { CAMERA, GAME, PALETTE, THEMES } from './config.js';
 import { World } from './world.js';
+import { CanyonWorld } from './canyon.js';
 import { Effects } from './effects.js';
 import { getLevel } from './levels.js';
 import {
@@ -60,18 +61,36 @@ export class Game {
     this._initScene();
     this._initEntities();
 
-    this.world = new World(this.scene);
+    // Two worlds share the one scene; only the active level's theme is visible.
+    this.cityWorld = new World(this.scene);
+    this.canyonWorld = new CanyonWorld(this.scene);
+    this.world = this.cityWorld;
 
     this.finishGate = this._buildFinishGate();
     this.scene.add(this.finishGate);
     this.finishX = Infinity;
 
     this.level = getLevel(0);
+    this._setActiveWorld(this.level.theme);
     this._resetRunState();
 
     this.resize();
     this.world.reset(this.player.x, this.level);
     this._frameCamera(true);    // snap camera to start
+  }
+
+  /** Make `theme`'s world the active/visible one and apply its sky + fog. */
+  _setActiveWorld(theme) {
+    const isCanyon = theme === 'canyon';
+    this.world = isCanyon ? this.canyonWorld : this.cityWorld;
+    this.cityWorld.setVisible(!isCanyon);
+    this.canyonWorld.setVisible(isCanyon);
+    const v = THEMES[theme] || THEMES.city;
+    this.scene.background.setHex(v.sky);
+    this.renderer.setClearColor(v.sky, 1);
+    this.scene.fog.color.setHex(v.fog.color);
+    this.scene.fog.near = v.fog.near;
+    this.scene.fog.far = v.fog.far;
   }
 
   // ---------------------------------------------------------------------------
@@ -226,6 +245,7 @@ export class Game {
   /** Begin a fresh playthrough of `levelIndex`. */
   start(levelIndex = 0) {
     this.level = getLevel(levelIndex);
+    this._setActiveWorld(this.level.theme);
     this._resetRunState();
     this.effects.reset();
     // The player starts at x=0; the finish is the distance covered over the
@@ -248,7 +268,11 @@ export class Game {
   resume() {
     if (this.mode === Mode.PAUSED) { this.mode = Mode.PLAYING; this._resetTiming(); }
   }
-  toAttract() {
+  /** Decorative menu backdrop. `levelIndex` picks which theme to show behind
+   *  the menu (so it previews the sector the player has selected). */
+  toAttract(levelIndex = 0) {
+    this.level = getLevel(levelIndex);
+    this._setActiveWorld(this.level.theme);
     this.mode = Mode.ATTRACT;
     this._resetRunState();
     this.effects.reset();
@@ -575,11 +599,14 @@ export class Game {
     const p = this.player;
     e.active = true;
     e.x = p.x + GAME.SPAWN_AHEAD * (0.85 + Math.random() * 0.25);
-    e.z = (Math.random() - 0.5) * 150;
+    // Spawn inside the navigable lane (the canyon corridor; the open city lane).
+    const corr = this.world.corridorAt(e.x);
+    const lane = Math.max(8, corr.half - 10);
+    e.z = corr.center + (Math.random() - 0.5) * 2 * lane;
     e.y = GAME.ENEMY_ALT_MIN + Math.random() * (GAME.ENEMY_ALT_MAX - GAME.ENEMY_ALT_MIN);
     e.px = e.x; e.py = e.y; e.pz = e.z;   // collapse interpolation on spawn
     e.baseY = e.y;             // preferred cruise altitude; climbs to clear buildings
-    e.targetZ = THREE.MathUtils.clamp(p.z + (Math.random() - 0.5) * 60, -80, 80);
+    e.targetZ = THREE.MathUtils.clamp(p.z + (Math.random() - 0.5) * 60, corr.center - lane, corr.center + lane);
     e.vz = 0;
     e.phase = Math.random() * Math.PI * 2;
     e.fireTimer = GAME.ENEMY_FIRE_MIN + Math.random() * (GAME.ENEMY_FIRE_MAX - GAME.ENEMY_FIRE_MIN);
@@ -605,6 +632,10 @@ export class Game {
       const desiredVz = homing + Math.cos(e.phase) * weave * 0.04;
       e.vz += (desiredVz - e.vz) * Math.min(1, dt * 3);
       e.z += e.vz * dt;
+      // Keep within the navigable lane so they thread the canyon, not the walls.
+      const corr = this.world.corridorAt(e.x);
+      const lane = Math.max(6, corr.half - 8);
+      e.z = THREE.MathUtils.clamp(e.z, corr.center - lane, corr.center + lane);
       e.bank += ((-e.vz * 0.02) - e.bank) * Math.min(1, dt * 6);
 
       // Building avoidance: climb to clear any building in the flight path, then
@@ -694,7 +725,7 @@ export class Game {
     const obs = this.world.activeObstacles;
     for (let i = 0; i < obs.length; i++) {
       const o = obs[i];
-      if (o.type === 'building') {
+      if (o.type === 'building' || o.type === 'wall') {
         if (Math.abs(x - o.x) < o.halfW + r && Math.abs(z - o.z) < o.halfD + r &&
             y < o.height + r) return true;
       } else { // hill / tree (radius + height)
@@ -777,13 +808,13 @@ export class Game {
 
     if (!p.alive || p.invuln > 0) return;
 
-    // player vs obstacles
+    // player vs obstacles (buildings + canyon walls collide as AABB)
     for (const o of this.world.activeObstacles) {
-      if (o.type === 'building') {
+      if (o.type === 'building' || o.type === 'wall') {
         if (Math.abs(p.x - o.x) < o.halfW + PLAYER_HIT_R &&
             Math.abs(p.z - o.z) < o.halfD + PLAYER_HIT_R &&
             (p.y - PLAYER_HIT_R) < o.height) {
-          this._hitPlayer('building'); return;
+          this._hitPlayer(o.type); return;
         }
       } else { // hill
         const dx = p.x - o.x, dz = p.z - o.z;

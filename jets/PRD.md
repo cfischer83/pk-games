@@ -10,6 +10,8 @@
 
 You pilot an F‑16‑style jet over a neon city. The world scrolls diagonally up‑and‑to‑the‑right (classic Zaxxon angle) while the camera stays anchored to you. Dodge buildings and hills, weave through enemy laser fire, and blast the oncoming red jets. Survive **90 seconds** to clear Sector 1.
 
+**Sector 2 — RED CANYON** (unlocked by clearing Sector 1): the same jet threads a winding red‑rock corridor with narrow squeezes and open chambers, dodging free‑standing spires and hoodoos (which damage on contact, like buildings) over a meandering river and scattered cactus. A touch faster and busier than Sector 1; the navigation is the new test. The world is theme‑driven, so more sectors slot in the same way.
+
 Original high‑resolution low‑poly graphics, bright saturated colors, an orthographic 3/4 isometric view, and a synthesized chiptune soundtrack.
 
 ---
@@ -29,6 +31,9 @@ All v1 requirements are built and playable.
 | Per‑level high score | ✅ Saved in `localStorage` (`jets.hiscore.<levelId>`); shown on menu + game‑over |
 | Enemy jets that shoot bright lasers | ✅ Green saber bolts fired mostly forward; enemies climb over buildings |
 | City with roads, windowed buildings, hills | ✅ Streaming neon grid; cross‑streets recede endlessly into the fog |
+| **Sector 2 — Red Canyon** | ✅ Winding rock corridor (narrow/wide), streamed spires + hoodoos (collide), winding river + cactus; reuses the same enemy jets |
+| **Level progression / unlock** | ✅ Clearing a sector sets a per‑level flag in `localStorage`; the next sector unlocks. Sector 2 is gated behind a Sector‑1 win |
+| **Sector‑select menu** | ✅ Once a 2nd sector is unlocked the menu shows a sector picker (locked sectors disabled with 🔒); win screen offers **NEXT SECTOR** |
 | ~90‑second level | ✅ Difficulty ramps; a glowing checkered **finish line** on the ground marks the end |
 | WASD + arrow keys, plane tilts | ✅ |
 | Space = fire, hold for continuous, never runs out | ✅ |
@@ -65,6 +70,7 @@ All v1 requirements are built and playable.
 
 - **Palette** (`config.js → PALETTE`): deep indigo sky, a brighter night ground (so the high‑contrast shadow reads), bright blue roads with yellow dashes and glowing edges, steel/teal/purple buildings with emissive cyan & amber windows, white/red F‑16, crimson enemy jets, white→orange→red explosions. Bright and high‑contrast — a colorful modern take on Zaxxon.
 - **Projectiles** are light‑saber bolts: an opaque white‑hot core, an additive hard‑edged colored blade (red player / green enemy), and a soft additive glow halo. The jet exhausts glow with the same additive‑sprite technique (fake bloom — no post‑processing, mobile‑friendly).
+- **Canyon rock (Sector 2)** is natural, not blocky: spires/hoodoos are lathed profiles and walls are noise‑**displaced** geometry (position‑based, so edges stay watertight), all wearing a **procedural sandstone texture** — grayscale sedimentary banding + grain + cracks drawn on a `<canvas>` at runtime (no asset files; same trick as the glow/label textures), tinted by each material's colour. The floor is a **cracked‑desert** texture (mottled patches, dry mud cracks, pebbles, grain) and the **river is rippling water** — a grayscale ripple/caustic texture whose UVs scroll each frame so it appears to flow. The corridor is wide and roomy (an ~104‑unit lane even at the narrow squeezes), densely dotted with spires and hoodoos (up to two tall hazards per segment in the wider chambers).
 - **Projection**: `OrthographicCamera` at a fixed iso angle (offset behind/above/right of the player). The camera **never rotates** during play — it only translates — so the world scrolls true‑Zaxxon style. World **+X (forward)** reads as up‑and‑right, **+Y** as up, **+Z (strafe)** as right‑and‑down.
 - **Lighting**: hemisphere + directional key + warm fill + ambient; emissive materials for glow. Fog hides spawn/recycle pop‑in.
 - **Coordinate convention** (shared across all modules): `+X` forward, `+Y` up (ground at y=0), `+Z` strafe‑right.
@@ -82,17 +88,20 @@ jets/
   mobile.css            on‑screen touch controls + rotate prompt
   vendor/three.module.js  three.js r160 (vendored for offline/PWA reliability)
   src/
-    config.js   single source of truth: PALETTE, SCALE, CAMERA, GAME tuning, AUDIO, storage keys
-    levels.js   data‑driven level table (LEVELS[] + getLevel) — add entries for new sectors
+    config.js   single source of truth: PALETTE, SCALE, CAMERA, GAME tuning, AUDIO, THEMES (per-theme sky/fog), storage keys
+    levels.js   data‑driven level table (LEVELS[] + getLevel) — each entry has a `theme`; add entries for new sectors
     audio.js    AudioEngine — Web Audio synthesis: chiptune loop + all SFX (no audio files)
-    meshes.js   procedural three.js builders (jets, buildings w/ instanced windows, hills, bullets, shadow, bomb)
+    meshes.js   procedural three.js builders (jets, buildings w/ instanced windows, hills, trees, bomb, bullets, shadow; canyon spire/hoodoo/wall/cactus)
     input.js    InputManager — merges keyboard + gamepad + touch into one normalized snapshot
     effects.js  pooled explosions, shockwaves, muzzle flashes
-    world.js    streaming city: ground/roads/dashes + recycled building/hill pools (collision data)
+    world.js    Sector‑1 city world: ground/roads/dashes + recycled building/hill/tree pools (collision data)
+    canyon.js   Sector‑2 canyon world: streamed corridor walls + spires/hoodoos/cactus/river — same interface as world.js
     hud.js      DOM HUD (lives, bombs, time, score, progress, messages, flashes)
-    game.js     engine: scene/camera/lights, fixed‑timestep loop, player/enemies/bombs/collisions, win/lose, attract mode
-    main.js     bootstrap: single rAF loop, audio lifecycle, menus, state machine, touch wiring
+    game.js     engine: scene/camera/lights, fixed‑timestep loop, render interpolation, player/enemies/bombs/collisions, win/lose, attract mode
+    main.js     bootstrap: single rAF loop, audio lifecycle, menus + sector select, progression/unlock, state machine, touch wiring
 ```
+
+**Pluggable worlds.** A "world" exposes a small interface — `reset(playerX, level)`, `update(dt, playerX, t, level)`, `setFinish(x)`, `setVisible(v)`, `corridorAt(x) → {center, half}`, and an `activeObstacles[]` list (each obstacle carries a `type` + collision shape). `game.js` builds both worlds into the one scene, shows the active level's via `_setActiveWorld(theme)` (which also swaps sky + fog from `THEMES`), and the generic collision/projectile code works unchanged across themes. Canyon walls use a `'wall'` obstacle type — AABB collision like a building, but excluded from enemy climb‑avoidance; enemies are kept inside `corridorAt()`'s lane so they thread the passage instead of the rock.
 
 **Key design points**
 
@@ -113,13 +122,14 @@ Everything is **synthesized at runtime** with the Web Audio API (no audio assets
 
 ---
 
-## 7. Adding more levels (future)
+## 7. Adding more levels
 
-Append a descriptor to `LEVELS` in `src/levels.js`:
+Append a descriptor to `LEVELS` in `src/levels.js`. The `theme` selects which world module renders/streams the level:
 
 ```js
 {
-  id: 2, name: 'CANYON RUN', duration: 100,
+  id: 3, name: 'ICE SHELF', theme: 'city',   // reuse an existing theme…
+  duration: 100,
   forwardSpeed: (t) => 70 + 12 * t,
   enemyInterval: (t) => Math.max(0.5, 2.2 - 1.6 * t),
   obstacleDensity: (t) => 0.35 + 0.4 * t,
@@ -127,15 +137,17 @@ Append a descriptor to `LEVELS` in `src/levels.js`:
 }
 ```
 
-The engine already accepts a level index (`game.start(levelIndex)`). Per‑level theming (palette swaps, new obstacle types, bosses) can hang off the same descriptor.
+- **Reusing a theme** (`'city'` / `'canyon'`): just add the descriptor — the menu auto‑adds a sector button, unlock chaining and per‑level high scores work automatically, and the win screen offers **NEXT SECTOR**.
+- **A brand‑new theme**: add a world module that implements the world interface (see §5), build it in `game.js` alongside the others, branch it in `_setActiveWorld()`, add its sky/fog to `THEMES` in `config.js`, and (optionally) a gallery layout + colour group in `gallery.js`. Sectors unlock linearly: sector *n* opens once sector *n‑1* is cleared (a win), persisted in `localStorage` (`jets.cleared.<levelId>`).
 
 ---
 
 ## 8. Debug / Asset Gallery (`src/gallery.js`)
 
-A no‑gameplay art‑review mode. On the **main menu press `Ctrl+D`** to open the debug dialog, then **Asset Gallery**.
+A no‑gameplay art‑review mode. On the **main menu press `Ctrl+D`** to open the debug dialog, then pick a **sector** — the gallery loads that sector's theme (Sector 1 = city assets, Sector 2 = canyon assets), with a matching colour editor.
 
-- Every asset laid out with labels: the player jet, enemy jets, building variants A–D, hill, **trees**, bomb, road + intersection sample, and static player/enemy bolts.
+- Sector 1 lays out: the player jet, enemy jets, building variants A–D, hill, **trees**, bomb, road + intersection sample, and static player/enemy bolts.
+- Sector 2 lays out: the player + enemy jets, **canyon wall**, **spires**, **hoodoo**, **cactus**, a **river** sample, bomb, and bolts.
 - The **player jet is controllable but does not advance** — move it within a box (WASD/arrows, inverted vertical like gameplay) to inspect banking, pitch, and the shadow; hold **Space** to fire.
 - A side panel of **actions**: fire player/enemy bolts, muzzle flash, and play each explosion (small / big / bomb blast).
 - A **live colour editor**: pick colours for jet, enemy, building, terrain, projectile, and environment elements — `meshes.setMatColor()` mutates the shared cached materials so already‑placed meshes recolour instantly (and `PALETTE` updates so future meshes match).

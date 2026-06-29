@@ -56,12 +56,17 @@ export class World {
     this.scene = scene;
     this.finishX = Infinity;     // set per-level; obstacles clear around it
 
+    // Everything this world owns lives under `root` so the engine can show/hide
+    // the whole city when switching to another level's theme (see CanyonWorld).
+    this.root = new THREE.Group();
+    scene.add(this.root);
+
     this.follow = new THREE.Group();
-    scene.add(this.follow);
+    this.root.add(this.follow);
     this._buildGround();
 
     this.snap = new THREE.Group();
-    scene.add(this.snap);
+    this.root.add(this.snap);
     this._buildDecor();
 
     this.buildingPool = [];
@@ -72,10 +77,20 @@ export class World {
     this.activeObstacles = [];
     this._nextSegX = 0;
     this._rng = mulberry32(0x9e3779b9);
+    this._corr = { center: 0, half: 80 };   // reused by corridorAt() (no alloc)
   }
 
   /** Tell the world where the finish gate is, so it leaves that span clear. */
   setFinish(x) { this.finishX = x; }
+
+  /** Show/hide the whole world (engine swaps worlds per level theme). */
+  setVisible(v) { this.root.visible = v; }
+
+  /** Navigable lane at world-x: {center, half}. The flat city is wide-open, so
+   *  this just reports the generous strafe box (keeps enemies on-screen). Mirrors
+   *  the CanyonWorld interface the engine uses to keep enemies inside the lane.
+   *  Returns a REUSED object (read it immediately) — no per-frame allocation. */
+  corridorAt(_x) { this._corr.center = 0; this._corr.half = 80; return this._corr; }
 
   // ---- Static ground + longitudinal roads ----------------------------------
   _buildGround() {
@@ -212,7 +227,7 @@ export class World {
       const height = 11 + rng() * 36;          // 11..47
       const g = createBuilding({ width, depth, height, variant: i % 4 });
       g.visible = false;
-      this.scene.add(g);
+      this.root.add(g);
       this.buildingPool.push({
         group: g, type: 'building', active: false, x: 0, z: 0,
         halfW: g.userData.halfW, halfD: g.userData.halfD, height: g.userData.height,
@@ -223,7 +238,7 @@ export class World {
       const height = 5 + rng() * 6;
       const g = createHill({ radius, height });
       g.visible = false;
-      this.scene.add(g);
+      this.root.add(g);
       this.hillPool.push({
         group: g, type: 'hill', active: false, x: 0, z: 0, radius, height,
       });
@@ -232,7 +247,7 @@ export class World {
       const height = 7 + rng() * 6;            // 7..13
       const g = createTree({ height });
       g.visible = false;
-      this.scene.add(g);
+      this.root.add(g);
       // collide as a low obstacle (reuses the hill collision path): radius/height
       this.treePool.push({
         group: g, type: 'tree', active: false, x: 0, z: 0, radius: height * 0.32, height,
